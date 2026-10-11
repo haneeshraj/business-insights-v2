@@ -109,6 +109,7 @@ ignore = ["E501"]  # line length is the formatter's job
 
 [tool.ruff.lint.per-file-ignores]
 "src/bi2/core/settings.py" = ["TID251"]
+"eval/**" = ["T20"]  # standalone scripts, whose output is for the person running them
 
 [tool.ruff.format]
 docstring-code-format = true
