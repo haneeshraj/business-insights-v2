@@ -37,6 +37,27 @@ Tests that need network access and API keys are marked `live` and are skipped un
 - **Every new dependency needs a one-line reason** in the dependency table in docs/codebase.md.
 - **Keys never go in files.**
 
+## Commit messages
+
+Each commit message is a type and a short summary, for example `feat: json-ld evidence extractor`. Pick the type by what the change is:
+
+| Type | For |
+|---|---|
+| `feat:` | new behavior |
+| `fix:` | a bug fix |
+| `docs:` | documentation only |
+| `refactor:` | restructuring with no behavior change |
+| `test:` | adding or changing tests |
+| `ci:` | CI workflows |
+| `build:` | packaging and dependencies (`pyproject.toml`, `uv.lock`) |
+| `chore:` | maintenance that fits nowhere else |
+| `perf:` | speed or cost improvements |
+| `style:` | formatting only |
+| `revert:` | undoing an earlier commit |
+| `init:` | initial setup |
+
+Keep the summary short. A longer body isn't needed.
+
 ## Pull requests
 
 - Keep each pull request to one change, with tests.
