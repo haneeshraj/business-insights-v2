@@ -18,6 +18,11 @@ logo_urls = [
 ]
 mcc_codes = ["5814", "5812"]
 address = { street = "225 Delaware Avenue", city = "Buffalo", postal_code = "14202", country = "US" }
+social_links = [
+    "https://facebook.com/SPoTCoffeeCafe",
+    "https://instagram.com/spot.coffee.official",
+    "https://twitter.com/SpotcoffeeHQ",
+]
 notes = "Name and logos from the page. Headquarters address from general knowledge; confirm."
 
 [[site]]
@@ -28,6 +33,12 @@ company_names = ["Bar Volo"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/6813c74dc205632c80511387/01f531f4-c80e-4bd7-a665-8cc6d9b51a36/Bar+Volo+-+Logo+%28Master%29-03.png"]
 mcc_codes = ["5813"]
 address = { street = "17 St Nicholas Street", city = "Toronto", postal_code = "M4Y 3G4", country = "CA" }
+phones = ["+14169280018"]
+social_links = [
+    "https://facebook.com/barvolo",
+    "https://instagram.com/bar_volo",
+    "https://x.com/barvolo",
+]
 notes = "From the page."
 
 [[site]]
@@ -38,6 +49,11 @@ company_names = ["Birreria Volo"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/67830d7a0d5c033da25f8833/fdae3119-55c8-4446-b8a1-f780934db252/Birreria+Volo+-+Illustration+%26+Name.png"]
 mcc_codes = ["5813"]
 address = { street = "612 College Street", city = "Toronto", postal_code = "M6G 1B4", country = "CA" }
+phones = ["+14165317373"]
+social_links = [
+    "https://facebook.com/barvolo",
+    "https://instagram.com/bar_volo",
+]
 notes = "From the page."
 
 [[site]]
@@ -48,6 +64,8 @@ company_names = ["Get Well"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/531752e6e4b05fcac6a76326/38ff5fb9-47f0-4cea-a561-c0252b1f138b/Get+Well+Logo+WEBISODE.png"]
 mcc_codes = ["5813"]
 address = { street = "1181 Dundas Street West", city = "Toronto", country = "CA" }
+phones = ["+16473512337"]
+social_links = ["https://instagram.com/getwellbar"]
 notes = "From the page, which gives no postal code."
 
 [[site]]
@@ -57,6 +75,7 @@ confirmed = false
 company_names = ["The Greater Good"]
 mcc_codes = ["5813"]
 address = { street = "229 Geary Avenue", city = "Toronto", postal_code = "M6H 2C1", country = "CA" }
+social_links = ["https://instagram.com/thegreatergoodbar"]
 notes = "From the page. Logo not checked: the header image looks like a temporary one."
 
 [[site]]
@@ -67,6 +86,7 @@ company_names = ["Imperial Pub"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/596ce5a120099ea7637ef05a/1500349906905-37R6K0H4FVCV9F54MRWE/logo+copy.jpg"]
 mcc_codes = ["5813"]
 address = { street = "54 Dundas Street East", city = "Toronto", country = "CA" }
+social_links = ["https://instagram.com/theimperialpub"]
 notes = "Name and logo from the page. Address from general knowledge; confirm."
 
 [[site]]
@@ -77,6 +97,10 @@ company_names = ["Sweaty Betty's Bar", "Sweaty Betty's"]
 logo_urls = ["https://sweatybettysbar.com/cdn/shop/files/sb_logo.png"]
 mcc_codes = ["5813"]
 address = { street = "13 Ossington Avenue", city = "Toronto", country = "CA" }
+social_links = [
+    "https://facebook.com/SweatyBettysToronto",
+    "https://instagram.com/sweatybettysbar",
+]
 notes = "Name and logo from the page. Address from general knowledge; confirm."
 
 [[site]]
@@ -105,6 +129,7 @@ company_names = ["Ted's Collision Center"]
 logo_urls = ["https://tedscollision.com/wp-content/uploads/sites/12/2023/03/Teds_Collision_Center_Logo_Color.svg"]
 mcc_codes = ["7531", "7538"]
 address = { street = "125 Shoppers Drive", city = "Winchester", postal_code = "40391", country = "US" }
+phones = ["+18597379137"]
 notes = "Now an auto body shop in Kentucky, not a Toronto bar. Its page data names the site 'Test Site', a template leftover. Address from the page; it may have other locations."
 
 [[site]]
@@ -114,6 +139,7 @@ confirmed = false
 company_names = ["The Only Cafe", "The Only Café"]
 mcc_codes = ["5813"]
 address = { street = "972 Danforth Avenue", city = "Toronto", country = "CA" }
+phones = ["+14164633249"]
 notes = "A Google Sites page titled only 'Home'. Address from general knowledge; confirm."
 
 [[site]]
@@ -124,6 +150,14 @@ company_names = ["Collective Arts Brewing", "Collective Arts"]
 logo_urls = ["https://collectiveartscreativity.com/cdn/shop/files/Artboard_1_2x_45564ef7-ad67-4ef6-9f21-cc7742b2c366.png"]
 mcc_codes = ["5921", "5813"]
 address = { street = "207 Burlington Street East", city = "Hamilton", country = "CA" }
+social_links = [
+    "https://facebook.com/collectiveartsbrewing",
+    "https://instagram.com/collectivebrew",
+    "https://linkedin.com/company/collective-arts-brewing",
+    "https://tiktok.com/@collectivearts",
+    "https://twitter.com/CollectiveBrew",
+    "https://youtube.com/@CollectiveArts",
+]
 notes = "Redirects to collectiveartscreativity.com. Address from general knowledge; confirm."
 
 [[site]]
@@ -134,6 +168,11 @@ company_names = ["Rainhard Brewing Co.", "Rainhard Brewing"]
 logo_urls = ["https://rainhardbrewing.com/wp-content/uploads/2021/10/Rainhard-Logo-White-1-e1635533281251.png"]
 mcc_codes = ["5921", "5813"]
 address = { street = "100 Symes Road", city = "Toronto", country = "CA" }
+social_links = [
+    "https://facebook.com/rainhardbrewing",
+    "https://instagram.com/rainhardbrewing",
+    "https://twitter.com/rainhardbrewing",
+]
 notes = "Name and logo from the page. Address from general knowledge; confirm."
 
 [[site]]
@@ -144,6 +183,16 @@ company_names = ["Old Flame Brewing Co."]
 logo_urls = ["https://oldflamebrewingco.ca/cdn/shop/files/old-flame-logo.svg"]
 mcc_codes = ["5921", "5813"]
 address = { street = "135 Perry Street", city = "Port Perry", postal_code = "L9L 1B8", country = "CA" }
+phones = [
+    "+12894852739",
+    "+12898039111",
+]
+social_links = [
+    "https://facebook.com/OldFlameBrewery",
+    "https://instagram.com/oldflamebrewery",
+    "https://linkedin.com/company/old-flame-brewing-company",
+    "https://twitter.com/oldflamebrewery",
+]
 notes = "From the page, which also lists a Newmarket location; Port Perry is the brewery."
 
 [[site]]
@@ -154,6 +203,14 @@ company_names = ["Bellwoods Brewery"]
 logo_urls = ["https://bellwoodsbrewery.com/cdn/shop/files/bellwoods_logo.png"]
 mcc_codes = ["5813", "5921"]
 address = { street = "124 Ossington Avenue", city = "Toronto", postal_code = "M6J 2Z5", country = "CA" }
+phones = ["+14165354586"]
+social_links = [
+    "https://facebook.com/BellwoodsBrewery",
+    "https://instagram.com/bellwoodsbeer",
+    "https://linkedin.com/company/bellwoods-brewery",
+    "https://tiktok.com/@bellwoodsbeer",
+    "https://twitter.com/bellwoodsbeer",
+]
 notes = "From the page's structured data. The bottle shop is next door at 126."
 
 [[site]]
@@ -164,6 +221,15 @@ company_names = ["Left Field Brewery"]
 logo_urls = ["https://www.leftfieldbrewery.ca/wp-content/themes/wptheme-lfb-0.2/dist/images/logo-bg.svg"]
 mcc_codes = ["5813", "5921"]
 address = { street = "36 Wagstaff Drive", city = "Toronto", postal_code = "M4L 3W9", country = "CA" }
+phones = [
+    "+14163501958",
+    "+16473465001",
+]
+social_links = [
+    "https://facebook.com/LeftFieldBrewery",
+    "https://instagram.com/leftfieldbrewery",
+    "https://untappd.com/leftfieldbrewery",
+]
 notes = "From the page, which also lists a Liberty Village location."
 
 [[site]]
@@ -174,6 +240,13 @@ company_names = ["Black Lab Brewing"]
 logo_urls = ["https://www.blacklab.beer/cdn/shop/files/logo2.png"]
 mcc_codes = ["5921", "5813"]
 address = { street = "818 Eastern Avenue", city = "Toronto", country = "CA" }
+phones = ["+16473522525"]
+social_links = [
+    "https://facebook.com/BlackLabBeer",
+    "https://instagram.com/blacklabbeer",
+    "https://twitter.com/blacklabbeer",
+    "https://untappd.com/BlackLabBrewing",
+]
 notes = "Name and logo from the page. Address from general knowledge; confirm."
 
 [[site]]
@@ -193,6 +266,10 @@ confirmed = false
 company_names = ["Saint John's Tavern"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/624efc4154ddfc26d1944a72/0f74ef53-a579-4e5d-95a8-398cbd85145c/SJT-INVS-BLK.png"]
 mcc_codes = ["5813", "5812"]
+social_links = [
+    "https://instagram.com/saintjohnstavern",
+    "https://tiktok.com/@johnstreetvillage",
+]
 notes = "Name and logo from the page. Address not checked yet; add it during review."
 
 [[site]]
@@ -203,6 +280,11 @@ company_names = ["McVeigh's Irish Pub", "McVeighs Irish Pub"]
 logo_urls = ["https://mcveighspub.com/wp-content/uploads/2026/01/Image20260123065148.png"]
 mcc_codes = ["5813"]
 address = { street = "124 Church Street", city = "Toronto", postal_code = "M5C 2G8", country = "CA" }
+phones = ["+14163649698"]
+social_links = [
+    "https://instagram.com/mcveighsirishpub",
+    "https://tiktok.com/@mcveighsirishpub",
+]
 notes = "From the page. Its header images are lazy-loaded placeholders, a good logo test."
 
 [[site]]
@@ -212,6 +294,10 @@ confirmed = false
 company_names = ["Duke's Refresher", "Duke's Refresher + Bar"]
 logo_urls = ["https://dukesrefresher.ca/wp-content/uploads/2019/08/dukes-logo.png"]
 mcc_codes = ["5813", "5812"]
+social_links = [
+    "https://facebook.com/DukesRefresher",
+    "https://instagram.com/dukesrefresherslm",
+]
 notes = "Redirects to one location's page; the business has several. Address not checked."
 
 [[site]]
@@ -222,6 +308,12 @@ company_names = ["Comedy Bar"]
 logo_urls = ["https://comedybar.ca/Content/images/logo.png"]
 mcc_codes = ["7922", "5813"]
 address = { street = "945 Bloor Street West", city = "Toronto", postal_code = "M6H 1L5", country = "CA" }
+phones = ["+14165516540"]
+social_links = [
+    "https://facebook.com/comedybarTO",
+    "https://instagram.com/comedybarto",
+    "https://twitter.com/comedybar",
+]
 notes = "From the page, which also lists a Danforth location. MCC is genuinely ambiguous; confirm."
 
 [[site]]
@@ -232,6 +324,12 @@ company_names = ["Henderson Brewing Company", "Henderson Brewing Co."]
 logo_urls = ["https://shophendersonbrewing.com/cdn/shop/files/Henderson_-_Logo_-_White.png"]
 mcc_codes = ["5921", "5813"]
 address = { street = "128a Sterling Road", city = "Toronto", postal_code = "M6R 2B7", country = "CA" }
+phones = ["+16473519905"]
+social_links = [
+    "https://facebook.com/HendersonBrewing",
+    "https://instagram.com/hendersonbrewing",
+    "https://youtube.com/channel/UCxlwOaEebjDDBCxW8Hzv4_Q",
+]
 notes = "From the page. The site whose logo v1 missed in its bulk run."
 
 [[site]]
@@ -244,6 +342,18 @@ logo_urls = [
     "https://static.wixstatic.com/media/5bc63f_83ae4d9fb61a48408197a557ad8a4d03~mv2.png",
 ]
 mcc_codes = ["7230"]
+phones = [
+    "+14166150088",
+    "+14162260729",
+    "+14163630088",
+    "+16477488820",
+]
+social_links = [
+    "https://facebook.com/n15hairsalon",
+    "https://instagram.com/n15hair",
+    "https://tiktok.com/@n15salon",
+    "https://youtube.com/@N15HairSalon",
+]
 notes = "From the page. Several locations, so the address isn't checked."
 
 # --- Non-food businesses -----------------------------------------------------
@@ -256,6 +366,11 @@ company_names = ["Indigo", "Indigo Books & Music", "Chapters Indigo"]
 logo_urls = ["https://www.indigo.ca/cdn/shop/files/global_header_logo.svg"]
 mcc_codes = ["5942"]
 address = { street = "620 King Street West", city = "Toronto", country = "CA" }
+social_links = [
+    "https://facebook.com/ChaptersIndigo",
+    "https://instagram.com/indigo",
+    "https://tiktok.com/@indigo.ca",
+]
 notes = "Name and logo from the page. Head office address from general knowledge; confirm."
 
 [[site]]
@@ -274,6 +389,12 @@ confirmed = false
 company_names = ["Home Hardware", "Home Hardware Stores Limited"]
 mcc_codes = ["5251"]
 address = { street = "34 Henry Street West", city = "St. Jacobs", country = "CA" }
+social_links = [
+    "https://facebook.com/homehardwarestores",
+    "https://instagram.com/homehardware",
+    "https://pinterest.ca/homehardware",
+    "https://youtube.com/user/HomeHardwareStores",
+]
 notes = "Name from the page. Head office address from general knowledge; confirm."
 
 [[site]]
@@ -292,6 +413,7 @@ confirmed = false
 company_names = ["EQ3"]
 mcc_codes = ["5712"]
 address = { street = "170 Furniture Park", city = "Winnipeg", country = "CA" }
+social_links = ["https://instagram.com/eq3"]
 notes = "Name from the page. Address from general knowledge; confirm."
 
 [[site]]
@@ -302,6 +424,12 @@ company_names = ["Roots", "Roots Canada", "Roots Corporation"]
 logo_urls = ["https://www.roots.com/on/demandware.static/Sites-RootsCA-Site/-/default/dw7fb061c0/images/roots_logo.svg"]
 mcc_codes = ["5651", "5691"]
 address = { street = "1400 Castlefield Avenue", city = "Toronto", postal_code = "M6B 4C4", country = "CA" }
+social_links = [
+    "https://facebook.com/roots",
+    "https://instagram.com/roots",
+    "https://pinterest.ca/roots",
+    "https://tiktok.com/@roots",
+]
 notes = "From the page footer."
 
 [[site]]
@@ -312,6 +440,11 @@ company_names = ["Mejuri", "Mejuri Inc"]
 logo_urls = ["https://mejuri.com/logo.jpg"]
 mcc_codes = ["5944"]
 address = { street = "60 Bloor Street West", city = "Toronto", postal_code = "M4W 3T3", country = "CA" }
+social_links = [
+    "https://facebook.com/mejuri",
+    "https://instagram.com/mejuri",
+    "https://pinterest.com/mejuri",
+]
 notes = "From the page's structured data."
 
 [[site]]
@@ -348,6 +481,11 @@ confirmed = false
 company_names = ["GoodLife Fitness"]
 mcc_codes = ["7997"]
 address = { street = "710 Proudfoot Lane", city = "London", country = "CA" }
+social_links = [
+    "https://facebook.com/goodlifefitness",
+    "https://instagram.com/goodlifefitness",
+    "https://youtube.com/goodlifefitness",
+]
 notes = "Name from the page. Head office from general knowledge; confirm."
 
 [[site]]
@@ -358,6 +496,14 @@ company_names = ["Warby Parker"]
 logo_urls = ["https://img.warbyparker.com/v2/warby-logo-f043b63a4b054f018dbe99454ee56fc9.svg"]
 mcc_codes = ["8043"]
 address = { street = "233 Spring Street", city = "New York", country = "US" }
+phones = ["+18884927297"]
+social_links = [
+    "https://facebook.com/warbyparker",
+    "https://instagram.com/warbyparker",
+    "https://tiktok.com/@warbyparker",
+    "https://twitter.com/warbyparker",
+    "https://youtube.com/warbyparker",
+]
 notes = "Name and logo from the page. Head office from general knowledge; confirm. Its structured-data logo is just the favicon."
 
 [[site]]
@@ -370,6 +516,13 @@ logo_urls = [
     "https://globalpetfoods.com/cdn/shop/files/Global_Pet_Foods_Logo.svg",
 ]
 mcc_codes = ["5995"]
+social_links = [
+    "https://facebook.com/globalpetfoods",
+    "https://instagram.com/globalpetfoods",
+    "https://tiktok.com/@globalpetfoods",
+    "https://x.com/globalpetfoods",
+    "https://youtube.com/user/GlobalPetFoodsStores",
+]
 notes = "From the page. A franchise; head office not checked yet."
 
 [[site]]
@@ -379,6 +532,17 @@ confirmed = false
 company_names = ["The Drake Hotel", "The Drake"]
 mcc_codes = ["7011"]
 address = { street = "1150 Queen Street West", city = "Toronto", postal_code = "M6J 1J3", country = "CA" }
+phones = [
+    "+14165315042",
+    "+16133993338",
+]
+social_links = [
+    "https://facebook.com/drakehotelproperties",
+    "https://facebook.com/thedrakehoteltoronto",
+    "https://instagram.com/thedrake",
+    "https://linkedin.com/company/the-drake-hotel",
+    "https://tiktok.com/@thedrakehotel",
+]
 notes = "From the page. An independent hotel: the right code is the generic 7011, which v1's travel rule couldn't reach."
 
 [[site]]
@@ -414,6 +578,15 @@ confirmed = false
 company_names = ["Flight Centre"]
 logo_urls = ["https://cloudinary.fclmedia.com/fctg/image/upload/websites/fc-global/logo_white.svg"]
 mcc_codes = ["4722"]
+phones = ["+18779675302"]
+social_links = [
+    "https://facebook.com/FlightCentreCA",
+    "https://instagram.com/flightcentreca",
+    "https://linkedin.com/company/flight-centre-brand",
+    "https://pinterest.ca/flightcentreca",
+    "https://tiktok.com/@flightcentre",
+    "https://youtube.com/@flightcentrebrand",
+]
 notes = "From the page. Address not checked yet."
 
 [[site]]
@@ -424,6 +597,13 @@ company_names = ["Rogers", "Rogers Communications"]
 logo_urls = ["https://www.rogers.com/app/prod/assets/i/logo.png"]
 mcc_codes = ["4814"]
 address = { street = "333 Bloor Street East", city = "Toronto", country = "CA" }
+social_links = [
+    "https://facebook.com/Rogers",
+    "https://instagram.com/rogers",
+    "https://linkedin.com/company/rogers-communications",
+    "https://twitter.com/rogers",
+    "https://youtube.com/user/RogersCanada",
+]
 notes = "Name and logo from the page. Head office from general knowledge; confirm."
 
 [[site]]
@@ -433,6 +613,13 @@ confirmed = false
 company_names = ["Toronto Hydro"]
 mcc_codes = ["4900"]
 address = { street = "14 Carlton Street", city = "Toronto", country = "CA" }
+social_links = [
+    "https://facebook.com/TorontoHydro",
+    "https://instagram.com/torontohydro",
+    "https://tiktok.com/@torontohydroofficial",
+    "https://twitter.com/torontohydro",
+    "https://youtube.com/user/TorontoHydro",
+]
 notes = "Name from the page. Head office from general knowledge; confirm."
 
 [[site]]
@@ -443,6 +630,18 @@ company_names = ["Intact Insurance", "Intact Financial Corporation"]
 logo_urls = ["https://www.intact.ca/static/images/intactinsurance.svg"]
 mcc_codes = ["6300"]
 address = { street = "700 University Avenue", city = "Toronto", postal_code = "M5G 0A1", country = "CA" }
+phones = [
+    "+18664642424",
+    "+18332206962",
+    "+18333793508",
+]
+social_links = [
+    "https://facebook.com/intact",
+    "https://instagram.com/intactinsurance",
+    "https://linkedin.com/company/intact",
+    "https://twitter.com/intactinsurance",
+    "https://youtube.com/channel/UC_HXmZRxOXX9V3PpHIxj3KQ",
+]
 notes = "From the page's structured data."
 
 [[site]]
@@ -451,6 +650,13 @@ category = "crypto exchange"
 confirmed = false
 company_names = ["Coinbase"]
 mcc_codes = ["6051"]
+phones = ["+18889087930"]
+social_links = [
+    "https://instagram.com/coinbase",
+    "https://linkedin.com/company/coinbase",
+    "https://tiktok.com/@coinbase",
+    "https://x.com/coinbase",
+]
 notes = "A high-risk category. Coinbase is remote-first, so the address isn't checked."
 
 [[site]]
@@ -460,6 +666,7 @@ confirmed = false
 company_names = ["OLG", "Ontario Lottery and Gaming Corporation", "PlayOLG"]
 logo_urls = ["https://www.olg.ca/content/dam/olg/web/product/resources/logos/olg.svg"]
 mcc_codes = ["7995", "7800"]
+phones = ["+18665312600"]
 notes = "A high-risk category, and a government lottery. Redirects to olg.ca. Address not checked: head office and corporate offices are in different cities."
 
 [[site]]
@@ -470,6 +677,13 @@ company_names = ["Canadian Red Cross"]
 logo_urls = ["https://www.redcross.ca/content/images/logos/crc-en.svg"]
 mcc_codes = ["8398"]
 address = { street = "170 Metcalfe Street", city = "Ottawa", country = "CA" }
+phones = ["+18004181111"]
+social_links = [
+    "https://facebook.com/canadianredcross",
+    "https://instagram.com/redcrosscanada",
+    "https://tiktok.com/@redcrosscanada",
+    "https://youtube.com/channel/UCrWdm3Wfqpb7BYx0N_zg1rA",
+]
 notes = "Name and logo from the page. Head office from general knowledge; confirm."
 
 [[site]]
@@ -480,6 +694,15 @@ company_names = ["University of Toronto"]
 logo_urls = ["https://www.utoronto.ca/themes/custom/bootstrap_uoft/logo.svg"]
 mcc_codes = ["8220"]
 address = { street = "27 King's College Circle", city = "Toronto", postal_code = "M5S 1A1", country = "CA" }
+phones = ["+14169782011"]
+social_links = [
+    "https://facebook.com/universitytoronto",
+    "https://instagram.com/uoft",
+    "https://linkedin.com/school/university-of-toronto",
+    "https://tiktok.com/@uoft",
+    "https://x.com/uoft",
+    "https://youtube.com/user/universitytoronto",
+]
 notes = "From the page."
 
 [[site]]
@@ -499,6 +722,13 @@ company_names = ["Reliance Home Comfort"]
 logo_urls = ["https://reliancehomecomfort.com/wp-content/uploads/2023/11/RHC-logo-4C.png"]
 mcc_codes = ["1711"]
 address = { street = "2 Lansing Square", city = "Toronto", postal_code = "M2J 4P8", country = "CA" }
+phones = ["+18888371451"]
+social_links = [
+    "https://facebook.com/reliancehomecomfort",
+    "https://instagram.com/reliance_comfort",
+    "https://twitter.com/RelianceCares",
+    "https://youtube.com/user/reliancehomecomfort",
+]
 notes = "From the page (the page says North York, which is part of Toronto)."
 
 [[site]]
@@ -507,6 +737,15 @@ category = "software"
 confirmed = false
 company_names = ["Shopify"]
 mcc_codes = ["7372", "5734"]
+social_links = [
+    "https://facebook.com/shopify",
+    "https://instagram.com/shopify",
+    "https://linkedin.com/company/shopify",
+    "https://pinterest.com/shopify",
+    "https://tiktok.com/@shopify",
+    "https://x.com/shopify",
+    "https://youtube.com/shopify",
+]
 notes = "Name from the page. Remote-first, so the address isn't checked."
 
 [[site]]
@@ -542,7 +781,7 @@ address = { street = "2401 Utah Avenue South", city = "Seattle", postal_code = "
 notes = "The page's own data names Pinterest; the business is Starbucks. Head office from general knowledge; confirm."
 
 [[site]]
-url = "https://www.instagram.com/bellwoodsbrewery/"
+url = "https://www.instagram.com/bellwoodsbeer/"
 category = "brewery"
 confirmed = false
 page_kind = "platform_profile"
@@ -550,4 +789,5 @@ platform = "instagram"
 company_names = ["Bellwoods Brewery"]
 mcc_codes = ["5813", "5921"]
 address = { street = "124 Ossington Avenue", city = "Toronto", postal_code = "M6J 2Z5", country = "CA" }
-notes = "Instagram shows a login wall to plain requests, so this tests the fallback to search."
+phones = ["+14165354586"]
+notes = "The account Bellwoods' own site links to. Instagram shows a login wall to plain requests, so this tests the fallback to search."
