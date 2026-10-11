@@ -182,6 +182,7 @@ Most contributions should mean adding files plus one registry line:
 | An LLM provider | An adapter implementing `LLMProvider` | `llm/providers/__init__.py` and `data/models.toml` |
 | A search or geocoding provider | An adapter implementing the port | `services/__init__.py` |
 | A country | Postcode, phone and search-locale entries | `data/countries.toml` |
+| A platform (Pinterest, Yelp and so on) | Its domains and profile URL patterns | `data/platforms.toml` |
 | An output format | A writer | `cli/output.py` |
 | An interactive command | A handler function | The command table in `cli/interactive/commands.py` |
 
@@ -275,6 +276,7 @@ Data files ship inside the package and are loaded with `importlib.resources`, so
 | `profiles.toml` | The `cheap`, `balanced` and `accurate` presets | Alongside eval runs |
 | `countries.toml` | Postcode patterns, phone codes and search locale per country | By hand |
 | `legal_suffixes.txt` | Inc., Ltd., LLC, GmbH, S.A. and so on | By hand |
+| `platforms.toml` | Platforms where businesses have pages (Pinterest, Instagram, Yelp, TripAdvisor…), with their profile URL patterns | By hand; adding a platform is one entry |
 
 Each file carries a version, and every result records the versions it was produced with.
 

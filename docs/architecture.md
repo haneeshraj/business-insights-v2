@@ -224,6 +224,17 @@ Investigator agent (fixed tool budget) ───── found ──────�
 needs_review
 ```
 
+## Platform pages
+
+The URL a user gives may not be the business's own website. It may be the business's page on another platform: a cafe's Pinterest, Instagram, Yelp, TripAdvisor, Uber Eats or Linktree page, or its account on any other site that hosts businesses, such as review and listing sites. The result must describe the business, never the platform.
+
+- **Detect them first.** `data/platforms.toml` lists known platforms and their profile URL patterns. For sites not on the list, the Decider answers whether the page is the business's own website or a profile on another platform.
+- **Ignore the platform's own branding.** Its logo, its name in `og:site_name`, its structured data about itself and its copyright line describe the platform, so they are left out of the evidence.
+- **Read the profile instead.** The name comes from the profile title, the logo from the profile picture, the business type from the bio or listing categories, and the address from the listing when it shows one.
+- **Follow the business's own website** when the profile links to one, and analyze it too. The profile then becomes supporting evidence.
+- **Record it.** Each result says whether the page was the business's own site or a platform profile, and which platform. A business with no website of its own is useful for risk teams to know.
+- **When a platform blocks us** (a login wall, or `robots.txt`), fall back to search.
+
 ## Resolvers
 
 ### Company name
