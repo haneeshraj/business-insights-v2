@@ -34,6 +34,9 @@ _GOLD_ATTRIBUTE: Final = {
 
 _HOUSE_NUMBER = re.compile(r"^\s*(\d+[A-Za-z]?)\b")
 _NOT_ALPHANUMERIC = re.compile(r"[^0-9A-Z]")
+_IMAGE_EXTENSION = re.compile(r"\.(png|jpe?g|gif|svg|webp|avif|ico)", re.IGNORECASE)
+# Size tags that image CDNs add to file names: logo_400x.png, logo_300x300.png, logo-300x100.png
+_SIZE_TAG = re.compile(r"(?:[_-](?:\d+x\d*|\{width\}x))+$", re.IGNORECASE)
 
 
 class Verdict(StrEnum):
@@ -95,10 +98,19 @@ def score_name(result: NameResult, expected: tuple[str, ...] | None) -> FieldSco
     )
 
 
-def _image_key(url: str) -> str:
-    # Image URLs often differ only in scheme, "www." or cache-busting query strings.
+def image_key(url: str) -> str:
+    """A key under which the same image matches however its URL is written.
+
+    Ignores the scheme, "www.", query strings, CDN size tags in the file name, and anything a
+    CDN appends after the file name (such as Wix's `/v1/fill/...`).
+    """
     parts = urlsplit(url)
-    return parts.netloc.casefold().removeprefix("www.") + parts.path.casefold()
+    path = parts.path
+    extension = _IMAGE_EXTENSION.search(path)
+    if extension:
+        stem = _SIZE_TAG.sub("", path[: extension.start()])
+        path = f"{stem}.{extension.group(1).lower()}"
+    return parts.netloc.casefold().removeprefix("www.") + path.casefold()
 
 
 def score_logo(
@@ -114,8 +126,8 @@ def score_logo(
         verdict = _verdict(absent_expected=True, answered=logo is not None, correct=False)
         shown = expected
     else:
-        accepted = {_image_key(url) for url in expected}
-        correct = logo is not None and logo.url is not None and _image_key(logo.url) in accepted
+        accepted = {image_key(url) for url in expected}
+        correct = logo is not None and logo.url is not None and image_key(logo.url) in accepted
         verdict = _verdict(absent_expected=False, answered=logo is not None, correct=correct)
         shown = " | ".join(expected)
     return FieldScore(

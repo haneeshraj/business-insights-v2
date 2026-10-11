@@ -4,7 +4,7 @@ from typing import Any
 
 from bi2.core.models import Address, PageKind
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
-from bi2.evaluation.scoring import Verdict, address_matches, score_site
+from bi2.evaluation.scoring import Verdict, address_matches, image_key, score_site
 from tests.factories import answered, site_result
 
 CAFE = GoldSite(
@@ -74,6 +74,18 @@ def test_a_platform_profile_must_be_recognized() -> None:
 def test_a_site_with_no_result_misses_everything_checked() -> None:
     scores = {score.field: score.verdict for score in score_site(CAFE, None)}
     assert set(scores.values()) == {Verdict.MISSED}
+
+
+def test_image_key_ignores_cdn_size_tags_and_transforms() -> None:
+    shop = "https://shop.example.ca/cdn/shop/files/logo2"
+    assert image_key(f"{shop}_150x.png?v=1") == image_key(f"{shop}_300x300.png")
+    assert image_key(f"{shop}_{{width}}x.png") == image_key(f"http://www.{shop[8:]}.PNG")
+    assert image_key("https://example.ca/wp-content/logo-300x100.png") == image_key(
+        "https://example.ca/wp-content/logo.png"
+    )
+    wix = "https://static.wixstatic.com/media/5ef73e_5d6c~mv2.png"
+    assert image_key(f"{wix}/v1/fill/w_240,h_63/logo.png") == image_key(wix)
+    assert image_key(f"{shop}.png") != image_key(f"{shop}-white.png")
 
 
 def test_address_needs_the_right_house_number() -> None:
