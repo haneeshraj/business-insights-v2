@@ -9,8 +9,10 @@ from typing import Annotated
 import typer
 
 from bi2 import __version__
+from bi2.cli.evaluate import eval_app
 
 app = typer.Typer(name="bi2", no_args_is_help=True, add_completion=False)
+app.add_typer(eval_app, name="eval")
 
 
 def _show_version(value: bool) -> None:
