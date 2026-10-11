@@ -24,7 +24,7 @@ from pydantic import (
 SCHEMA_VERSION: Final = "2.0"
 
 # The fields every SiteResult reports, in output order.
-FIELD_NAMES: Final = ("company_name", "logo", "mcc", "address")
+FIELD_NAMES: Final = ("company_name", "logo", "mcc", "address", "phone", "social_links")
 
 
 def _require_web_url(value: str) -> str:
@@ -171,11 +171,23 @@ class Address(_Frozen):
     multiple_locations: bool = False  # the business has more than one location
 
 
+class SocialProfile(_Frozen):
+    """One of the business's profiles on a social platform."""
+
+    platform: str = Field(min_length=1)  # for example "instagram"
+    url: WebUrl
+
+
+SocialLinks = Annotated[tuple[SocialProfile, ...], Field(min_length=1)]
+
+
 # Each field's result type, the same classes everywhere a result is built or read.
 NameResult = FieldResult[CompanyName]
 LogoResult = FieldResult[Logo]
 MccResult = FieldResult[Mcc]
 AddressResult = FieldResult[Address]
+PhoneResult = FieldResult[PhoneNumber]  # the main number, in E.164 format
+SocialResult = FieldResult[SocialLinks]
 
 
 # --- The page ----------------------------------------------------------------
@@ -315,6 +327,8 @@ class SiteResult(_Frozen):
     logo: LogoResult
     mcc: MccResult
     address: AddressResult
+    phone: PhoneResult
+    social_links: SocialResult
     error: str | None = None  # why the site couldn't be analyzed at all
     versions: Versions
 
@@ -332,7 +346,7 @@ class SiteResult(_Frozen):
 
     @property
     def field_results(self) -> dict[str, FieldResult[Any]]:
-        """The four fields by name, in output order."""
+        """Every output field by name, in output order."""
         return {name: getattr(self, name) for name in FIELD_NAMES}
 
     @property

@@ -23,6 +23,8 @@ def site_result(url: str = "https://example-cafe.ca/", **fields: Any) -> SiteRes
         "logo": NOT_FOUND,
         "mcc": NOT_FOUND,
         "address": NOT_FOUND,
+        "phone": NOT_FOUND,
+        "social_links": NOT_FOUND,
         "versions": {"pipeline": "test"},
     }
     data.update(fields)

@@ -18,6 +18,8 @@ company_names = ["Example Cafe"]     # any of these is correct
 logo_urls = ["https://www.example-cafe.ca/logo.png"]
 mcc_codes = ["5814", "5812"]         # any of these is correct; put the best one first
 address = { street = "12 Queen St W", city = "Toronto", postal_code = "M5H 2N2", country = "CA" }
+phones = ["+14165550123"]            # E.164 format; any of these is correct
+social_links = ["https://instagram.com/examplecafe"]  # all of these must be found
 notes = "Where the answers came from."
 ```
 
@@ -36,6 +38,8 @@ How answers are judged:
 | Logo | Its URL matches an accepted URL, ignoring the scheme, "www.", query strings and CDN size tags such as `_400x` |
 | MCC | The code is one of the accepted codes |
 | Address | The postal code matches (or the city, when no postal code is given) and so does the house number |
+| Phone | It's one of the accepted numbers, both written in E.164 format |
+| Social links | Every expected profile is found, ignoring "www.", "m." and twitter.com versus x.com. Extra profiles don't count against it. |
 | Page kind | The page is recognized as the business's own site, or as a profile on the right platform |
 
 ## Scoring results

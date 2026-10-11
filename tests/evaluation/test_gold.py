@@ -65,6 +65,11 @@ def test_platform_profiles_need_a_platform() -> None:
         )
 
 
+def test_gold_phones_must_be_e164() -> None:
+    with pytest.raises(ValidationError, match="should match pattern"):
+        GoldSite(url="https://example-bar.ca/", category="bar", phones=("416-555-0123",))
+
+
 def test_an_expected_address_needs_enough_to_compare() -> None:
     with pytest.raises(ValidationError, match="postal code, or a street and a city"):
         ExpectedAddress(street="12 Queen St W")

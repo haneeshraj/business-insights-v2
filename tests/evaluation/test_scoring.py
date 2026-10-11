@@ -4,7 +4,13 @@ from typing import Any
 
 from bi2.core.models import Address, PageKind
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
-from bi2.evaluation.scoring import Verdict, address_matches, image_key, score_site
+from bi2.evaluation.scoring import (
+    Verdict,
+    address_matches,
+    image_key,
+    score_site,
+    social_key,
+)
 from tests.factories import answered, site_result
 
 CAFE = GoldSite(
@@ -14,6 +20,8 @@ CAFE = GoldSite(
     logo_urls=("https://www.example-cafe.ca/images/logo.png",),
     mcc_codes=("5814", "5812"),
     address=ExpectedAddress(street="128a Sterling Rd", city="Toronto", postal_code="M6R 2B7"),
+    phones=("+14165550123",),
+    social_links=("https://instagram.com/examplecafe",),
 )
 
 
@@ -30,6 +38,10 @@ def test_correct_answers_in_different_spellings() -> None:
         logo=answered({"url": "http://example-cafe.ca/images/logo.png?v=17"}),
         mcc=answered({"code": "5812", "description": "Eating Places and Restaurants"}),
         address=answered({"text": "128A Sterling Road, Toronto, ON M6R2B7, Canada"}),
+        phone=answered("+14165550123"),
+        social_links=answered(
+            [{"platform": "instagram", "url": "https://www.instagram.com/ExampleCafe/"}]
+        ),
     )
     assert set(verdicts.values()) == {Verdict.CORRECT}
 
@@ -86,6 +98,43 @@ def test_image_key_ignores_cdn_size_tags_and_transforms() -> None:
     wix = "https://static.wixstatic.com/media/5ef73e_5d6c~mv2.png"
     assert image_key(f"{wix}/v1/fill/w_240,h_63/logo.png") == image_key(wix)
     assert image_key(f"{shop}.png") != image_key(f"{shop}-white.png")
+
+
+def test_phone_must_be_an_accepted_number() -> None:
+    bar = GoldSite(
+        url="https://example-bar.ca/", category="bar", phones=("+14165550123", "+16475550199")
+    )
+    assert _verdicts(bar, phone=answered("+16475550199"))["phone"] is Verdict.CORRECT
+    assert _verdicts(bar, phone=answered("+14165550000"))["phone"] is Verdict.WRONG
+
+
+def test_social_links_must_include_every_expected_profile() -> None:
+    bar = GoldSite(
+        url="https://example-bar.ca/",
+        category="bar",
+        social_links=("https://www.instagram.com/examplebar/", "https://twitter.com/ExampleBar"),
+    )
+    instagram = {"platform": "instagram", "url": "https://instagram.com/examplebar"}
+    x = {"platform": "x", "url": "https://x.com/examplebar"}
+    tiktok = {"platform": "tiktok", "url": "https://tiktok.com/@examplebar"}
+    everything = _verdicts(bar, social_links=answered([instagram, x, tiktok]))
+    assert everything["social_links"] is Verdict.CORRECT
+    assert _verdicts(bar, social_links=answered([instagram]))["social_links"] is Verdict.WRONG
+
+
+def test_social_key_names_the_profile() -> None:
+    assert social_key("https://m.facebook.com/BarVolo/posts/123") == social_key(
+        "https://facebook.com/barvolo"
+    )
+    assert (
+        social_key("https://www.linkedin.com/company/acme/mycompany") == "linkedin.com/company/acme"
+    )
+    assert social_key("https://pinterest.ca/roots") == social_key(
+        "https://www.pinterest.com/roots/"
+    )
+    assert social_key("https://facebook.com/profile.php?id=42") != social_key(
+        "https://facebook.com/profile.php?id=7"
+    )
 
 
 def test_address_needs_the_right_house_number() -> None:

@@ -27,7 +27,9 @@ from bi2.core.models import (
     NameResult,
     PageInfo,
     PageKind,
+    PhoneResult,
     SiteResult,
+    SocialResult,
     Status,
     StepOutcome,
     StepRecord,
@@ -90,6 +92,8 @@ def _failed_site(raw: dict[str, Any], message: str) -> SiteResult:
         logo=LogoResult.model_validate(failed),
         mcc=MccResult.model_validate(failed),
         address=AddressResult.model_validate(failed),
+        phone=PhoneResult.model_validate(failed),
+        social_links=SocialResult.model_validate(failed),
         error=message,
         versions=Versions(pipeline="v1"),
     )
@@ -188,6 +192,9 @@ def convert(
         logo=logo,
         mcc=mcc,
         address=address,
+        # v1 doesn't look for phone numbers or social links.
+        phone=PhoneResult(status=Status.NOT_FOUND),
+        social_links=SocialResult(status=Status.NOT_FOUND),
         versions=Versions(pipeline="v1"),
     )
 

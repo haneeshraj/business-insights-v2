@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from bi2.core.models import CountryCode, MccCode, PageKind, WebUrl
+from bi2.core.models import CountryCode, MccCode, PageKind, PhoneNumber, WebUrl
 
 
 class _Strict(BaseModel):
@@ -53,6 +53,10 @@ class GoldSite(_Strict):
     logo_urls: Annotated[tuple[WebUrl, ...], Field(min_length=1)] | Literal["none"] | None = None
     mcc_codes: Annotated[tuple[MccCode, ...], Field(min_length=1)] | None = None
     address: ExpectedAddress | Literal["none"] | None = None
+    # E.164 format, such as "+14165550123"; list every number that counts as correct.
+    phones: Annotated[tuple[PhoneNumber, ...], Field(min_length=1)] | Literal["none"] | None = None
+    # The business's own profiles; a result is correct when it finds all of them.
+    social_links: Annotated[tuple[WebUrl, ...], Field(min_length=1)] | Literal["none"] | None = None
     notes: str = ""
 
     @model_validator(mode="after")

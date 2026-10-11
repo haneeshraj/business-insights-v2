@@ -3,7 +3,7 @@
 import re
 from enum import StrEnum
 from typing import Final, Literal
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from pydantic import BaseModel, ConfigDict
 
@@ -15,7 +15,9 @@ from bi2.core.models import (
     MccResult,
     NameResult,
     PageKind,
+    PhoneResult,
     SiteResult,
+    SocialResult,
     Status,
 )
 from bi2.core.text import fold, names_match
@@ -30,7 +32,13 @@ _GOLD_ATTRIBUTE: Final = {
     "logo": "logo_urls",
     "mcc": "mcc_codes",
     "address": "address",
+    "phone": "phones",
+    "social_links": "social_links",
 }
+
+# Social profile URLs whose first two path parts name the profile, such as linkedin.com/company/x.
+_TWO_PART_PATHS: Final = {"company", "school", "showcase", "channel", "c", "user"}
+_SOCIAL_HOST_ALIASES: Final = {"twitter.com": "x.com", "fb.com": "facebook.com"}
 
 _HOUSE_NUMBER = re.compile(r"^\s*(\d+[A-Za-z]?)\b")
 _NOT_ALPHANUMERIC = re.compile(r"[^0-9A-Z]")
@@ -197,6 +205,71 @@ def score_address(
     )
 
 
+def score_phone(
+    result: PhoneResult, expected: tuple[str, ...] | Literal["none"] | None
+) -> FieldScore:
+    """Correct when the number is one of the accepted numbers. Both sides are E.164."""
+    if expected is None:
+        return FieldScore(field="phone", verdict=Verdict.NOT_SCORED)
+    value = result.value
+    if isinstance(expected, str):  # "none"
+        verdict = _verdict(absent_expected=True, answered=value is not None, correct=False)
+    else:
+        verdict = _verdict(
+            absent_expected=False, answered=value is not None, correct=value in expected
+        )
+    return FieldScore(
+        field="phone",
+        verdict=verdict,
+        needs_review=result.status is Status.NEEDS_REVIEW,
+        got=value or "",
+        expected=expected if isinstance(expected, str) else " | ".join(expected),
+    )
+
+
+def social_key(url: str) -> str:
+    """A key under which the same social profile matches however its URL is written.
+
+    Ignores the scheme, "www." and "m.", treats twitter.com as x.com and every pinterest.* as
+    pinterest.com, and keeps only the part of the path that names the profile.
+    """
+    parts = urlsplit(url)
+    host = parts.netloc.casefold().removeprefix("www.").removeprefix("m.")
+    host = (
+        "pinterest.com" if host.startswith("pinterest.") else _SOCIAL_HOST_ALIASES.get(host, host)
+    )
+    segments = [segment for segment in parts.path.split("/") if segment]
+    if not segments:
+        return host
+    keep = 2 if len(segments) > 1 and segments[0].casefold() in _TWO_PART_PATHS else 1
+    key = f"{host}/{'/'.join(segments[:keep])}"
+    if segments[0] == "profile.php":  # Facebook's numbered profiles keep the number in the query
+        key += "?id=" + parse_qs(parts.query).get("id", [""])[0]
+    return key.casefold()
+
+
+def score_social(
+    result: SocialResult, expected: tuple[str, ...] | Literal["none"] | None
+) -> FieldScore:
+    """Correct when every expected profile is found. Extra profiles don't count against it."""
+    if expected is None:
+        return FieldScore(field="social_links", verdict=Verdict.NOT_SCORED)
+    profiles = result.value or ()
+    found = {social_key(profile.url) for profile in profiles}
+    if isinstance(expected, str):  # "none"
+        verdict = _verdict(absent_expected=True, answered=bool(profiles), correct=False)
+    else:
+        complete = all(social_key(url) in found for url in expected)
+        verdict = _verdict(absent_expected=False, answered=bool(profiles), correct=complete)
+    return FieldScore(
+        field="social_links",
+        verdict=verdict,
+        needs_review=result.status is Status.NEEDS_REVIEW,
+        got=" | ".join(profile.url for profile in profiles),
+        expected=expected if isinstance(expected, str) else " | ".join(expected),
+    )
+
+
 def score_site(gold: GoldSite, result: SiteResult | None) -> tuple[FieldScore, ...]:
     """Score every field of one site, in SCORED_FIELDS order. A site with no result misses
     everything the gold set checks for it."""
@@ -216,4 +289,6 @@ def score_site(gold: GoldSite, result: SiteResult | None) -> tuple[FieldScore, .
         score_logo(result.logo, gold.logo_urls),
         score_mcc(result.mcc, gold.mcc_codes),
         score_address(result.address, gold.address),
+        score_phone(result.phone, gold.phones),
+        score_social(result.social_links, gold.social_links),
     )

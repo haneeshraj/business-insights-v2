@@ -4,7 +4,7 @@ Status: brainstorm draft, 2026-10-09. The product shape, tech stack and access m
 
 ## Goal
 
-Produce the same four fields as v1 (company name, logo, MCC, headquarters address), but cheaper, more accurate and faster. The users are bank teams: merchant onboarding and underwriting, KYB, merchant risk, and transaction enrichment. Banking-specific fields (legal name, website compliance checklist, product risk and so on) come after v2.0 and reuse the same design.
+Produce v1's four fields (company name, logo, MCC, headquarters address), plus the business's phone number and social media links, and do it cheaper, more accurate and faster. The users are bank teams: merchant onboarding and underwriting, KYB, merchant risk, and transaction enrichment. Banking-specific fields (legal name, website compliance checklist, product risk and so on) come after v2.0 and reuse the same design.
 
 ## Product shape
 
@@ -276,6 +276,18 @@ The URL a user gives may not be the business's own website. It may be the busine
 - Otherwise, search. Send only the knowledge-graph and local-result fields, and set the search locale from the country hints (Canada for most of the current test sites).
 - Keep the address as published. Geocode it separately, and flag it when the geocoded match disagrees on postcode or street.
 
+### Phone number
+
+- Free sources: `tel:` links, the structured-data `telephone`, and numbers in the footer and contact page. Every number is converted to E.164 format using the site's country hints.
+- If there is one number, the field is `ok`.
+- If there are several, such as one per location, the Decider picks the main one, preferring the number shown next to the headquarters address.
+
+### Social media links
+
+- Free sources: profile links in the page header and footer, and the structured-data `sameAs` list, kept only when they point at a profile on a known platform.
+- Share buttons, the platform's own accounts and people's personal profiles are left out.
+- No model call is needed unless the links point at more than one business, as on a restaurant group's shared site.
+
 ## Shared services
 
 | Service | Responsibility |
@@ -390,7 +402,7 @@ business-insights-v2/
 | Agent style | Proposed | A fixed workflow, with an investigator agent for escalations only |
 | Default model | Proposed | Gemini Flash for text and images, when the user has a Gemini key; a stronger model only on escalation |
 | Jev | Proposed | Build against the Decider interface now; turn Jev on for users with a Jev key, after testing it on the gold set |
-| v2.0 scope | Proposed | The four current fields, with statuses and sources; banking fields in v2.1 |
+| v2.0 scope | Decided | v1's four fields plus phone number and social media links, with statuses and sources; banking fields in v2.1 |
 
 ## Open questions
 

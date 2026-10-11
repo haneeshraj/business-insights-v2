@@ -17,6 +17,7 @@ from bi2.core.models import (
     Mcc,
     PageInfo,
     PageKind,
+    PhoneResult,
     SiteResult,
     Status,
     StepOutcome,
@@ -63,6 +64,13 @@ def _site_data(**overrides: Any) -> dict[str, Any]:
             ],
         },
         "address": {"status": "not_found"},
+        "phone": {"status": "not_found"},
+        "social_links": {
+            "value": [{"platform": "instagram", "url": "https://instagram.com/examplecafe"}],
+            "status": "ok",
+            "confidence": 0.9,
+            "source": "footer links",
+        },
         "versions": {"pipeline": "2.0.0.dev0"},
     }
     data.update(overrides)
@@ -144,6 +152,8 @@ def test_site_result_round_trips_through_json() -> None:
     assert restored == result
     assert restored.schema_version == "2.0"
     assert isinstance(restored.logo.value, Logo)
+    assert restored.social_links.value is not None
+    assert restored.social_links.value[0].platform == "instagram"
 
 
 def test_site_cost_adds_up_every_field() -> None:
@@ -176,6 +186,13 @@ def test_analyzed_at_must_include_a_timezone() -> None:
     naive = datetime(2026, 10, 11, 12, 0)  # noqa: DTZ001 - deliberately missing a timezone
     with pytest.raises(ValidationError, match="timezone"):
         SiteResult.model_validate(_site_data(analyzed_at=naive))
+
+
+def test_phone_numbers_are_stored_in_e164_format() -> None:
+    phone = PhoneResult(value="+14165550123", status=Status.OK, confidence=0.9, source="tel link")
+    assert phone.value == "+14165550123"
+    with pytest.raises(ValidationError, match="should match pattern"):
+        PhoneResult(value="416-555-0123", status=Status.OK, confidence=0.9, source="tel link")
 
 
 def test_field_names_cover_every_field_result() -> None:
