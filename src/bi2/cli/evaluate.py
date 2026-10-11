@@ -44,7 +44,8 @@ def _problems_table(report: Report) -> Table | None:
     table = Table(title="Answers that weren't correct")
     for column in ("Site", "Field", "Verdict", "Got", "Expected"):
         table.add_column(column, overflow="fold")
-    for site in report.sites:
+    # Sites with no result would list every field; the totals line already counts them.
+    for site in (site for site in report.sites if site.ran):
         for score in site.fields:
             if score.verdict in _PROBLEMS:
                 table.add_row(site.url, score.field, score.verdict, score.got, score.expected)
