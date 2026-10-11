@@ -1,0 +1,186 @@
+# Business Insights v2: the package definition, plus settings for every dev tool.
+# Design docs: docs/architecture.md (what and why) and docs/codebase.md (where and how).
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "business-insights"  # PyPI name still to be confirmed
+version = "2.0.0.dev0"
+description = "Find a business's name, logo, merchant category code (MCC) and headquarters address from its website."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Haneesh Raj B" }]
+requires-python = ">=3.12"
+keywords = ["merchant category code", "mcc", "kyb", "merchant onboarding", "business data", "llm"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
+    "Typing :: Typed",
+]
+
+# Every dependency needs a one-line reason in the table in docs/codebase.md.
+# Minimum versions stay within the major version in uv.lock (the minor version, below 1.0),
+# because that is what the code is written and tested against.
+dependencies = [
+    # Typed models and the layered config
+    "pydantic>=2.11",
+    "pydantic-settings>=2.9",
+    # Fetching: async HTTP, and a real browser for rendered pages and screenshots
+    "httpx>=0.28",
+    "playwright>=1.50",
+    # Model providers, all installed so any one key works out of the box
+    "google-genai>=2.0",
+    "openai>=3.0",
+    "anthropic>=1.0",
+    # Terminal app: commands, display, the interactive session's input line, key storage
+    "typer>=0.27",
+    "rich>=15.0",
+    "prompt-toolkit>=3.0.50",
+    "keyring>=25.6",
+    # Evidence extraction: images, phone numbers, registrable domains
+    "pillow>=12.0",
+    "phonenumbers>=9.0",
+    "tldextract>=5.1",
+    # MCC search: a local embedding model, with vectors searched in memory
+    "fastembed>=0.9",
+    "numpy>=2.0",
+    # Tracing hooks; exporting traces is optional
+    "opentelemetry-api>=1.27",
+]
+# Jev is called over its REST API with httpx, so it needs no package of its own.
+# The website's `server` extra is added in build phase 4.
+
+[project.scripts]
+bi2 = "bi2.cli.main:app"  # command name still to be confirmed
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17",
+    "mypy>=2.0",
+    "pytest>=9.0",
+    "pytest-asyncio>=1.0",
+    "import-linter>=2.1",
+    "pre-commit>=4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bi2"]
+
+# --- ruff: linting and formatting -------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # import order
+    "B",       # likely bugs
+    "UP",      # modern syntax for the minimum Python version
+    "SIM",     # simpler equivalents
+    "RUF",     # ruff's own checks
+    "T20",     # no print(): library code emits events instead
+    "BLE",     # no blind `except Exception`
+    "TID",     # the banned APIs below
+    "PT",      # pytest style
+    "ASYNC",   # blocking calls inside async code
+    "DTZ",     # timezone-aware datetimes only
+]
+ignore = ["E501"]  # line length is the formatter's job
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.getenv".msg = "Read settings through bi2.core.settings, the only module that reads the environment."
+"os.environ".msg = "Read settings through bi2.core.settings, the only module that reads the environment."
+"requests".msg = "Use httpx, which supports async."
+
+[tool.ruff.lint.per-file-ignores]
+"src/bi2/core/settings.py" = ["TID251"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# --- mypy: strict type checking ---------------------------------------------
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[[tool.mypy.overrides]]
+module = ["fastembed.*"]
+ignore_missing_imports = true
+
+# --- pytest ------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "-m", "not live"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "live: needs network access and API keys; skipped unless selected with -m live",
+]
+
+# --- import-linter: the layer rules from docs/codebase.md -------------------
+# CI fails if any of these is broken.
+
+[tool.importlinter]
+root_package = "bi2"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "core imports nothing else from bi2"
+type = "forbidden"
+source_modules = ["bi2.core"]
+forbidden_modules = [
+    "bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline",
+    "bi2.fetch", "bi2.llm", "bi2.decide", "bi2.retrieval", "bi2.services", "bi2.adapters",
+    "bi2.wiring", "bi2.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "Logic never imports infrastructure or entry points"
+type = "forbidden"
+source_modules = ["bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline"]
+forbidden_modules = [
+    "bi2.fetch", "bi2.llm", "bi2.decide", "bi2.retrieval", "bi2.services", "bi2.adapters",
+    "bi2.wiring", "bi2.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "Infrastructure never imports logic or entry points"
+type = "forbidden"
+source_modules = [
+    "bi2.fetch", "bi2.llm", "bi2.decide", "bi2.retrieval", "bi2.services", "bi2.adapters",
+]
+forbidden_modules = [
+    "bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline",
+    "bi2.wiring", "bi2.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "core and logic never import I/O libraries"
+type = "forbidden"
+source_modules = ["bi2.core", "bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline"]
+forbidden_modules = ["playwright", "httpx", "openai", "anthropic", "google", "fastembed", "keyring"]

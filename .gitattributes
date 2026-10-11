@@ -1,0 +1,5 @@
+# Same line endings for contributors on Windows, macOS and Linux
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.npy binary

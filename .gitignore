@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environments and tool caches
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+.coverage
+htmlcov/
+
+# Local results, and page snapshots kept for debugging.
+# Copies of third-party websites never go in the repository.
+bi2-results/
+eval/snapshots/
+
+# Keys belong in environment variables or the OS keychain, never in files
+.env
+.env.*
+
+# Editors and operating systems
+.idea/
+.DS_Store
+Thumbs.db
