@@ -156,7 +156,7 @@ source_modules = ["bi2.core"]
 forbidden_modules = [
     "bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline",
     "bi2.fetch", "bi2.llm", "bi2.decide", "bi2.retrieval", "bi2.services", "bi2.adapters",
-    "bi2.wiring", "bi2.cli",
+    "bi2.wiring", "bi2.cli", "bi2.evaluation",
 ]
 
 [[tool.importlinter.contracts]]
@@ -165,7 +165,7 @@ type = "forbidden"
 source_modules = ["bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline"]
 forbidden_modules = [
     "bi2.fetch", "bi2.llm", "bi2.decide", "bi2.retrieval", "bi2.services", "bi2.adapters",
-    "bi2.wiring", "bi2.cli",
+    "bi2.wiring", "bi2.cli", "bi2.evaluation",
 ]
 
 [[tool.importlinter.contracts]]
@@ -176,7 +176,7 @@ source_modules = [
 ]
 forbidden_modules = [
     "bi2.evidence", "bi2.resolvers", "bi2.agent", "bi2.pipeline",
-    "bi2.wiring", "bi2.cli",
+    "bi2.wiring", "bi2.cli", "bi2.evaluation",
 ]
 
 [[tool.importlinter.contracts]]

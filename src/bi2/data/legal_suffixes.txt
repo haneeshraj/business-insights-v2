@@ -1,0 +1,29 @@
+# Legal-entity suffixes dropped when comparing company names, one per line.
+# Dots and accents are ignored, so "Inc." matches "inc" and "Ltée" matches "ltee".
+inc
+incorporated
+ltd
+limited
+ltee
+limitee
+llc
+llp
+lp
+plc
+corp
+corporation
+co
+company
+ulc
+gmbh
+ag
+sa
+sas
+sarl
+srl
+bv
+nv
+ab
+oy
+pty
+pvt
