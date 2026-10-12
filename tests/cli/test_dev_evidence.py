@@ -34,6 +34,10 @@ def test_saved_pages_are_checked_against_the_gold_set(tmp_path: Path) -> None:
     assert "1 of 1" in outcome.output
     assert (out / "example-cafe.ca" / "evidence.json").exists()
     assert (out / "coverage.json").exists()
+    report = (out / "report.html").read_text(encoding="utf-8")
+    assert "What the evidence already holds" in report
+    assert "Example Cafe" in report
+    assert "Report:" in outcome.output
 
 
 @pytest.mark.browser

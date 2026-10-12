@@ -1,5 +1,5 @@
 """`bi2 dev evidence`: extract a page's evidence and show it, or check the evidence of saved
-pages against the gold set."""
+pages against the gold set. Either way it writes an HTML report to look through."""
 
 import asyncio
 import json
@@ -11,10 +11,11 @@ from rich.console import Console
 from rich.table import Table
 
 from bi2.cli.dev.options import AllowPrivate, Browser, Timeout
+from bi2.cli.dev.report import ReportSite, write_report
 from bi2.cli.dev.saved import load_snapshot, save_snapshot, saved_folders
 from bi2.core.errors import BrowserUnavailable, FetchError
 from bi2.core.models import Evidence, PageSnapshot
-from bi2.evaluation.coverage import FieldCoverage, evidence_coverage, summarize
+from bi2.evaluation.coverage import evidence_coverage, summarize
 from bi2.evaluation.gold import load_gold_set, site_key
 from bi2.evidence.build import build_evidence
 from bi2.fetch.browser import BrowserFetcher
@@ -76,66 +77,90 @@ def _save_evidence(ev: Evidence, folder: Path) -> None:
     (folder / "evidence.json").write_text(ev.model_dump_json(indent=2), encoding="utf-8")
 
 
+def _report_site(snapshot: PageSnapshot, ev: Evidence, folder: Path) -> ReportSite:
+    screenshot = folder / "screenshot.jpg"
+    return ReportSite(
+        ev, snapshot.status_code, snapshot.loaded_with, screenshot if screenshot.exists() else None
+    )
+
+
 async def _load(fetcher: BrowserFetcher, url: str) -> PageSnapshot:
     async with fetcher:
         return await fetcher.fetch(url)
 
 
-def _from_url(url: str, out: Path, fetcher: BrowserFetcher, console: Console) -> int:
+def _from_url(url: str, out: Path, fetcher: BrowserFetcher, console: Console) -> Path | None:
     try:
         snapshot = asyncio.run(_load(fetcher, url))
     except BrowserUnavailable:
         raise
     except FetchError as exc:
         typer.echo(f"Couldn't load {url}: {exc}", err=True)
-        return 1
+        return None
     folder = save_snapshot(snapshot, out)  # so the page can be tried again with --saved
     ev = build_evidence(snapshot)
     _save_evidence(ev, folder)
     console.print(_evidence_table(ev))
     console.print(f"Saved to {folder}", markup=False)
-    return 0
+    report = out / "report.html"
+    write_report(report, [_report_site(snapshot, ev, folder)], source=url)
+    return report
 
 
-def _report_coverage(
-    evidence: list[Evidence], gold_file: Path, out: Path, console: Console
-) -> None:
-    sites = {site_key(site.url): site for site in load_gold_set(gold_file).sites}
-    checked: list[tuple[str, tuple[FieldCoverage, ...]]] = []
-    for ev in evidence:
-        site = sites.get(site_key(ev.page.url))
-        if site is not None:
-            checked.append((ev.page.url, evidence_coverage(site, ev)))
+def _with_gold(sites: list[ReportSite], gold_file: Path) -> tuple[list[ReportSite], int]:
+    """The sites with their gold-set entries and checks, and how many gold-set sites have no
+    saved page."""
+    gold = {site_key(entry.url): entry for entry in load_gold_set(gold_file).sites}
+    checked = []
+    for site in sites:
+        entry = gold.get(site_key(site.evidence.page.url))
+        if entry is not None:
+            site = site._replace(gold=entry, checks=evidence_coverage(entry, site.evidence))
+        checked.append(site)
+    return checked, len(gold) - sum(1 for site in checked if site.gold is not None)
+
+
+def _print_coverage(
+    sites: list[ReportSite], missing: int, out: Path, console: Console
+) -> dict[str, tuple[int, int]]:
+    """Print how much of the gold set the evidence holds, and save each site's checks."""
+    checked = [site for site in sites if site.gold is not None]
+    summary = summarize(site.checks for site in checked)
     table = Table(title=f"What the evidence already holds, on {len(checked)} gold-set sites")
     for column in ("Check", "Found", "Share"):
         table.add_column(column, justify="left" if column == "Check" else "right")
-    for check, (found, total) in summarize(coverage for _, coverage in checked).items():
+    for check, (found, total) in summary.items():
         table.add_row(check, f"{found} of {total}", f"{found / total:.0%}")
     console.print(table)
-    missing = len(sites) - len(checked)
     if missing:
         console.print(f"{missing} gold-set sites have no saved page.", markup=False)
     details = [
-        {"url": url, "checks": [check.model_dump() for check in coverage]}
-        for url, coverage in checked
+        {"url": site.evidence.page.url, "checks": [check.model_dump() for check in site.checks]}
+        for site in checked
     ]
     (out / "coverage.json").write_text(json.dumps(details, indent=2), encoding="utf-8")
+    return summary
 
 
-def _from_saved(saved: Path, gold: Path | None, out: Path, console: Console) -> int:
+def _from_saved(saved: Path, gold: Path | None, out: Path, console: Console) -> Path | None:
     folders = saved_folders(saved)
     if not folders:
         typer.echo(f"error: no pages saved by `bi2 dev fetch` in {saved}", err=True)
-        return 1
-    evidence: list[Evidence] = []
+        return None
+    sites: list[ReportSite] = []
     for folder in folders:
-        ev = build_evidence(load_snapshot(folder))
+        snapshot = load_snapshot(folder)
+        ev = build_evidence(snapshot)
         _save_evidence(ev, out / folder.name)
-        evidence.append(ev)
-    console.print(f"Built evidence for {len(evidence)} saved pages, in {out}", markup=False)
+        sites.append(_report_site(snapshot, ev, folder))
+    console.print(f"Built evidence for {len(sites)} saved pages, in {out}", markup=False)
+    summary = None
     if gold is not None:
-        _report_coverage(evidence, gold, out, console)
-    return 0
+        sites, missing = _with_gold(sites, gold)
+        summary = _print_coverage(sites, missing, out, console)
+    report = out / "report.html"
+    write_report(report, sites, source=str(saved), summary=summary)
+    return report
 
 
 def evidence(
@@ -156,9 +181,12 @@ def evidence(
             dir_okay=False,
         ),
     ] = None,
-    out: Annotated[Path, typer.Option(help="Where to save the evidence (git ignores it).")] = Path(
-        "bi2-results/dev/evidence"
-    ),
+    out: Annotated[
+        Path, typer.Option(help="Where to save the evidence and the report (git ignores it).")
+    ] = Path("bi2-results/dev/evidence"),
+    open_report: Annotated[
+        bool, typer.Option("--open", help="Open the HTML report in your browser when it's done.")
+    ] = False,
     browser: Browser = "auto",
     timeout: Timeout = 20.0,
     allow_private: AllowPrivate = False,
@@ -172,12 +200,17 @@ def evidence(
         raise typer.Exit(code=2)
     console = Console()
     if saved is not None:
-        raise typer.Exit(code=_from_saved(saved, gold, out, console))
-    assert url is not None
-    fetcher = BrowserFetcher(timeout_s=timeout, browser=browser, allow_private=allow_private)
-    try:
-        code = _from_url(url, out, fetcher, console)
-    except BrowserUnavailable as exc:
-        typer.echo(f"error: {exc}", err=True)
-        raise typer.Exit(code=1) from exc
-    raise typer.Exit(code=code)
+        report = _from_saved(saved, gold, out, console)
+    else:
+        assert url is not None
+        fetcher = BrowserFetcher(timeout_s=timeout, browser=browser, allow_private=allow_private)
+        try:
+            report = _from_url(url, out, fetcher, console)
+        except BrowserUnavailable as exc:
+            typer.echo(f"error: {exc}", err=True)
+            raise typer.Exit(code=1) from exc
+    if report is None:
+        raise typer.Exit(code=1)
+    console.print(f"Report: {report.resolve()}", markup=False, highlight=False)
+    if open_report:
+        typer.launch(str(report.resolve()))
