@@ -315,6 +315,14 @@ The URL a user gives may not be the business's own website. It may be the busine
 - Few-shot examples are chosen from the gold set by similarity to the current site.
 - Prompts live in versioned files, and the eval runner scores every change.
 
+## Loading pages
+
+- Pages load in Playwright's Chromium shell, a stripped-down build made for headless use. It's about 40% faster than a full browser.
+- Bot detection spots the shell more easily. When a site refuses it, with an error status or a dropped connection, the page loads again in a full browser: Playwright's full Chromium, or else Chrome or Edge. On the gold set this took loaded sites from 51 to 54 of 56.
+- Bot checks that run in the page, like Cloudflare's "Just a moment...", answer with an error page and move on to the real page once they pass. An error page with scripts gets up to 10 seconds to move on. One with no scripts, like Akamai's "Access Denied", can't move on, so it isn't waited on.
+- A page's status is the status of the page that was read, not of the first response, which may have been a bot check.
+- Some sites refuse every browser, sometimes depending on how often they've seen us that day. Their fields go to search or to `needs_review`.
+
 ## Speed
 
 - Several sites at once, using browser contexts rather than separate Chrome processes, with the resolvers running in parallel within a site. On the website, more worker containers can be added if the demo gets busy.
@@ -392,7 +400,7 @@ business-insights-v2/
 | Website access | Decided | Users sign up and get 3 free analyses on the project's key, then use their own API keys |
 | Shared results | Decided | Website results are reused across users within a reuse window |
 | Dependencies | Decided | The list in docs/codebase.md |
-| Browser | Decided | Playwright |
+| Browser | Decided | Playwright: its fast Chromium shell first, and a full browser for pages a site refuses the shell (see "Loading pages") |
 | Terminal UI | Decided | Typer and Rich, plus prompt_toolkit for the interactive session |
 | Interactive mode | Decided | `bi2` with no command opens an interactive session in a terminal; the commands stay for scripts |
 | MCC retrieval | Decided | A local embedding model (fastembed), with vectors shipped in the package |
