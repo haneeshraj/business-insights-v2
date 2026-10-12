@@ -48,6 +48,10 @@ def _rows(ev: Evidence) -> list[tuple[str, str]]:
         ("Postcodes", ", ".join(ev.contacts.postcodes)),
         ("Copyright", ev.contacts.copyright_line or ""),
         ("Social links", " | ".join(profile.url for profile in ev.social_links)),
+        *(
+            (f"Logo {c.number}", f"{c.kind}: {c.url or c.alt or '(inline image)'}")
+            for c in ev.logo_candidates[:5]
+        ),
         ("Contact pages", " | ".join(ev.contact_pages)),
         ("Header text", ev.text.header),
         ("Main text", ev.text.main),

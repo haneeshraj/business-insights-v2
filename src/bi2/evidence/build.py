@@ -12,6 +12,7 @@ from bi2.evidence.countries import (
 )
 from bi2.evidence.document import parse_html
 from bi2.evidence.links import extract_contact_pages, extract_social_links
+from bi2.evidence.logos import extract_logo_candidates
 from bi2.evidence.meta import extract_meta
 from bi2.evidence.structured import extract_structured_data
 from bi2.evidence.text import extract_text_regions, shorten
@@ -49,14 +50,18 @@ def build_evidence(snapshot: PageSnapshot) -> Evidence:
         postcodes=(postcode for postcode, _ in postcodes),
     )
     countries = likely_countries(contacts.phones)
+    meta = extract_meta(doc, base)
     return Evidence(
         page=PageInfo(
             url=snapshot.url,
             final_url=snapshot.final_url,
             kind=PageKind.UNKNOWN if refused else PageKind.OWN_WEBSITE,
         ),
-        meta=extract_meta(doc, base),
+        meta=meta,
         structured=structured,
+        logo_candidates=extract_logo_candidates(
+            snapshot.images, doc, base, meta=meta, structured=structured
+        ),
         text=shorten(text),
         contacts=contacts,
         social_links=extract_social_links(doc, base, listed=structured.same_as),
