@@ -286,6 +286,8 @@ class LogoCandidate(_Frozen):
     box: Box | None = None  # None for images that aren't drawn on the page
     in_header: bool = False
     links_home: bool = False
+    declared: bool = False  # the page's structured data names it as the logo
+    points: int = 0  # how logo-like the ranking found it; candidates are numbered by it
 
 
 class PageMeta(_Frozen):

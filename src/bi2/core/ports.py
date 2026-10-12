@@ -17,9 +17,10 @@ class Fetcher(Protocol):
 class Downloader(Protocol):
     """Downloads a file, such as a logo, with the same safety checks as loading pages."""
 
-    async def download(self, url: str, *, max_bytes: int) -> bytes:
+    async def download(self, url: str, *, max_bytes: int, referer: str | None = None) -> bytes:
         """The file's content. Raises UnsafeUrl, or FetchError, including when the file is
-        larger than max_bytes."""
+        larger than max_bytes. The referer is the page the file is on, which some image hosts
+        ask for."""
         ...
 
 

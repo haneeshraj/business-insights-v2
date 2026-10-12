@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urljoin, urlsplit
 
 import tldextract
 
+_NOT_FOLDER_SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 _IMAGE_EXTENSION = re.compile(r"\.(png|jpe?g|gif|svg|webp|avif|ico)", re.IGNORECASE)
 # Size tags that image CDNs add to file names: logo_400x.png, logo_300x300.png, logo-300x100.png
 _SIZE_TAG = re.compile(r"(?:[_-](?:\d+x\d*|\{width\}x))+$", re.IGNORECASE)
@@ -50,6 +51,13 @@ def registrable_domain(url: str) -> str:
 def public_suffix(url: str) -> str:
     """The host's public suffix, such as "com", "ca" or "co.uk"; empty for IP addresses."""
     return _domains()(url).suffix
+
+
+def site_folder(url: str) -> str:
+    """A folder name for a page's files, such as `example-cafe.ca_menu`."""
+    parts = urlsplit(url)
+    name = (parts.netloc.removeprefix("www.") + parts.path).strip("/")
+    return _NOT_FOLDER_SAFE.sub("_", name) or "page"
 
 
 def same_site(a: str, b: str) -> bool:

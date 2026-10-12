@@ -25,7 +25,7 @@ class FakeDownloader:
         self.files = files or {}
         self.asked: list[str] = []
 
-    async def download(self, url: str, *, max_bytes: int) -> bytes:
+    async def download(self, url: str, *, max_bytes: int, referer: str | None = None) -> bytes:
         self.asked.append(url)
         if url not in self.files:
             raise FetchError(f"couldn't download {url}")

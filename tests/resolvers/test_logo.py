@@ -1,0 +1,101 @@
+"""Tests for choosing and checking the logo."""
+
+from typing import Any
+
+from bi2.core.models import Box, Evidence, LogoCandidate, LogoResult, PageInfo, PageKind, Status
+from bi2.resolvers.logo import resolve_logo
+from tests.fakes import MemoryFiles, fake_context
+from tests.resolvers.images import picture, screenshot_with_logo
+
+URL = "https://example-cafe.ca/"
+TOP_SPOT = Box(x=20, y=10, width=160, height=60)
+
+
+def _candidate(number: int, points: int, url: str | None = None, **fields: Any) -> LogoCandidate:
+    kind = fields.pop("kind", "img" if url else "svg")
+    return LogoCandidate(number=number, kind=kind, url=url, points=points, **fields)
+
+
+async def _resolve(
+    candidates: list[LogoCandidate],
+    downloads: dict[str, bytes] | None = None,
+    screenshot: bytes | None = None,
+) -> tuple[LogoResult, MemoryFiles]:
+    files = MemoryFiles()
+    if screenshot:
+        await files.save("example-cafe.ca/screenshot.jpg", screenshot)
+    ev = Evidence(
+        page=PageInfo(url=URL, final_url=URL, kind=PageKind.OWN_WEBSITE),
+        logo_candidates=tuple(candidates),
+        screenshot_file="example-cafe.ca/screenshot.jpg" if screenshot else None,
+    )
+    return await resolve_logo(ev, fake_context(downloads=downloads, files=files)), files
+
+
+async def test_a_clear_winner_is_downloaded_checked_and_saved() -> None:
+    result, files = await _resolve(
+        [
+            _candidate(1, 14, f"{URL}logo.png", in_header=True, links_home=True),
+            _candidate(2, 5, f"{URL}hero.jpg"),
+            _candidate(3, 1, f"{URL}apple-touch-icon.png", kind="icon"),
+        ],
+        downloads={f"{URL}logo.png": picture(120, 40)},
+    )
+    assert (result.status, result.confidence) == (Status.OK, 0.9)
+    assert result.value is not None
+    assert result.value.url == f"{URL}logo.png"
+    assert result.value.image_file == "example-cafe.ca/logo.png"
+    assert result.value.icon_url == f"{URL}apple-touch-icon.png"
+    assert result.source == "logo candidate 1 (links home, in the header)"
+    assert "example-cafe.ca/logo.png" in files.files
+
+
+async def test_a_tracker_is_skipped_for_the_next_candidate_with_less_confidence() -> None:
+    result, _ = await _resolve(
+        [_candidate(1, 14, f"{URL}pixel.gif"), _candidate(2, 6, f"{URL}logo.png")],
+        downloads={f"{URL}pixel.gif": picture(1, 1, "GIF"), f"{URL}logo.png": picture(120, 40)},
+    )
+    assert result.status is Status.NEEDS_REVIEW
+    assert result.value is not None
+    assert result.value.url == f"{URL}logo.png"
+    assert "candidate 1 is a one-pixel tracker or placeholder" in result.evidence
+
+
+async def test_an_inline_logo_is_cut_out_of_the_screenshot() -> None:
+    result, files = await _resolve(
+        [_candidate(1, 13, box=TOP_SPOT, in_header=True, links_home=True), _candidate(2, 4)],
+        screenshot=screenshot_with_logo(20, 10, 160, 60),
+    )
+    assert result.status is Status.OK
+    assert result.value is not None
+    assert (result.value.url, result.value.image_file) == (None, "example-cafe.ca/logo.png")
+    assert result.evidence[0] == "cut out of the screenshot"
+    assert "example-cafe.ca/logo.png" in files.files
+
+
+async def test_the_declared_logo_file_goes_before_an_inline_image() -> None:
+    declared = f"{URL}brand/logo.png"
+    result, _ = await _resolve(
+        [
+            _candidate(1, 13, box=TOP_SPOT, in_header=True, links_home=True),
+            _candidate(2, 6, declared, kind="structured_data", declared=True),
+        ],
+        downloads={declared: picture(300, 100)},
+    )
+    assert result.status is Status.OK
+    assert result.value is not None
+    assert result.value.url == declared
+
+
+async def test_a_close_call_needs_review() -> None:
+    result, _ = await _resolve(
+        [_candidate(1, 6, f"{URL}a.png"), _candidate(2, 5, f"{URL}b.png")],
+        downloads={f"{URL}a.png": picture(120, 40)},
+    )
+    assert result.status is Status.NEEDS_REVIEW
+
+
+async def test_when_nothing_checks_out_the_logo_is_not_found() -> None:
+    result, _ = await _resolve([_candidate(1, 14, f"{URL}gone.png"), _candidate(2, 3)])
+    assert result.status is Status.NOT_FOUND
+    assert "candidate 1 couldn't be downloaded" in (result.steps[0].detail or "")

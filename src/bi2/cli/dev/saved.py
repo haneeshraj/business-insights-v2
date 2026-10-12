@@ -2,23 +2,15 @@
 tried on them without loading the sites again."""
 
 import json
-import re
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from bi2.core.models import PageSnapshot
-
-
-def folder_name(url: str) -> str:
-    """A folder name for a page, such as `example-cafe.ca_menu`."""
-    parts = urlsplit(url)
-    name = (parts.netloc.removeprefix("www.") + parts.path).strip("/")
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", name) or "page"
+from bi2.core.urls import site_folder
 
 
 def save_snapshot(snapshot: PageSnapshot, out: Path) -> Path:
     """Save the screenshot, the HTML and everything else the browser captured."""
-    folder = out / folder_name(snapshot.url)
+    folder = out / site_folder(snapshot.url)
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "page.html").write_text(snapshot.html, encoding="utf-8")
     if snapshot.screenshot:

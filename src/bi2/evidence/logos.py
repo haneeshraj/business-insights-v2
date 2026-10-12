@@ -41,6 +41,7 @@ class _Scored(NamedTuple):
     box: Box | None
     in_header: bool
     links_home: bool
+    declared: bool = False  # named as the logo by the structured data
 
 
 def _words_of(names: Iterable[str]) -> set[str]:
@@ -125,9 +126,10 @@ def _combine(found: list[_Scored]) -> list[_Scored]:
     for copies in by_image.values():
         drawn = [copy for copy in copies if copy.kind not in ("structured_data", "icon")]
         best = max(drawn or copies, key=lambda copy: (copy.points, -copy.order))
-        bonus = _DECLARED * any(copy.kind == "structured_data" for copy in copies)
-        bonus += _SEEN_AGAIN * (len(drawn) > 1)
-        unique.append(best._replace(points=best.points + bonus, order=min(c.order for c in copies)))
+        declared = any(copy.declared for copy in copies)
+        bonus = _DECLARED * declared + _SEEN_AGAIN * (len(drawn) > 1)
+        first = min(copy.order for copy in copies)
+        unique.append(best._replace(points=best.points + bonus, order=first, declared=declared))
     return unique
 
 
@@ -152,7 +154,16 @@ def extract_logo_candidates(
     if structured.logo_url:
         found.append(
             _Scored(
-                _DECLARED, 0, "structured_data", structured.logo_url, "", "", None, False, False
+                _DECLARED,
+                0,
+                "structured_data",
+                structured.logo_url,
+                "",
+                "",
+                None,
+                False,
+                False,
+                declared=True,
             )
         )
     for order, image in enumerate(images, start=1):
@@ -194,6 +205,8 @@ def extract_logo_candidates(
             box=candidate.box,
             in_header=candidate.in_header,
             links_home=candidate.links_home,
+            declared=candidate.declared,
+            points=candidate.points,
         )
         for number, candidate in enumerate(ranked[:_KEEP], start=1)
     )
