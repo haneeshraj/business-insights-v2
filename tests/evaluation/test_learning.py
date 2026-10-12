@@ -6,7 +6,7 @@ from typing import Any
 
 from bi2.core.models import SiteResult, Status
 from bi2.evaluation.gold import GoldSite, site_key
-from bi2.evaluation.learning import Outcome, label_answers, learn_routing, tally
+from bi2.evaluation.learning import Outcome, Record, by_confidence, label_answers, tally
 from bi2.evaluation.verifications import (
     Verification,
     add_verification,
@@ -79,7 +79,7 @@ def test_labels_come_from_the_gold_set_and_your_checks_win() -> None:
     assert "mcc" not in labels  # not built yet, so it says nothing
 
 
-def test_the_four_groups_are_counted_and_the_decision_learned() -> None:
+def test_the_four_groups_and_the_record_by_confidence_are_counted() -> None:
     results = [
         site_result(f"https://cafe-{n}.ca/", company_name=answered(f"Cafe {n}", confidence=0.9))
         for n in range(6)
@@ -94,9 +94,5 @@ def test_the_four_groups_are_counted_and_the_decision_learned() -> None:
     }
     labels = label_answers(results, gold, {})
     assert tally(labels)["company_name"] == {Outcome.TRUE_POSITIVE: 4, Outcome.FALSE_POSITIVE: 2}
-    routing = learn_routing(labels)
-    group = routing.group("company_name", 0.9)
-    assert group is not None
-    assert (group.checked, group.right) == (6, 4)
-    assert routing.decide("company_name", 0.9, 0.85)[0] is False  # 4 of 6 isn't good enough
+    assert by_confidence(labels) == {"company_name": (Record(0.9, checked=6, right=4),)}
     assert results[0].company_name.status is Status.OK
