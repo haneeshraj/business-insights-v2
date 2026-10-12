@@ -9,7 +9,7 @@
 [[site]]
 url = "https://www.spotcoffee.com/"
 category = "cafe"
-confirmed = false
+confirmed = true
 company_names = ["SPoT Coffee"]
 logo_urls = [
     "https://www.spotcoffee.com/wp-content/uploads/spot_logo.png",
@@ -28,7 +28,7 @@ notes = "Name and logos from the page. Headquarters address from general knowled
 [[site]]
 url = "https://www.barvolo.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Bar Volo"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/6813c74dc205632c80511387/01f531f4-c80e-4bd7-a665-8cc6d9b51a36/Bar+Volo+-+Logo+%28Master%29-03.png"]
 mcc_codes = ["5813"]
@@ -44,7 +44,7 @@ notes = "From the page."
 [[site]]
 url = "https://birreriavolo.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Birreria Volo"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/67830d7a0d5c033da25f8833/fdae3119-55c8-4446-b8a1-f780934db252/Birreria+Volo+-+Illustration+%26+Name.png"]
 mcc_codes = ["5813"]
@@ -59,7 +59,7 @@ notes = "From the page."
 [[site]]
 url = "https://www.getwellbar.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Get Well"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/531752e6e4b05fcac6a76326/38ff5fb9-47f0-4cea-a561-c0252b1f138b/Get+Well+Logo+WEBISODE.png"]
 mcc_codes = ["5813"]
@@ -71,7 +71,7 @@ notes = "From the page, which gives no postal code."
 [[site]]
 url = "https://www.thegreatergoodbar.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["The Greater Good"]
 mcc_codes = ["5813"]
 address = { street = "229 Geary Avenue", city = "Toronto", postal_code = "M6H 2C1", country = "CA" }
@@ -81,7 +81,7 @@ notes = "From the page. Logo not checked: the header image looks like a temporar
 [[site]]
 url = "https://imperialpub.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Imperial Pub"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/596ce5a120099ea7637ef05a/1500349906905-37R6K0H4FVCV9F54MRWE/logo+copy.jpg"]
 mcc_codes = ["5813"]
@@ -92,7 +92,7 @@ notes = "Name and logo from the page. Address from general knowledge; confirm."
 [[site]]
 url = "https://sweatybettysbar.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Sweaty Betty's Bar", "Sweaty Betty's"]
 logo_urls = ["https://sweatybettysbar.com/cdn/shop/files/sb_logo.png"]
 mcc_codes = ["5813"]
@@ -106,7 +106,7 @@ notes = "Name and logo from the page. Address from general knowledge; confirm."
 [[site]]
 url = "https://www.themonarchtavern.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["The Monarch Tavern"]
 mcc_codes = ["5813"]
 address = { street = "12 Clinton Street", city = "Toronto", country = "CA" }
@@ -115,7 +115,7 @@ notes = "Name from the page title. Address from general knowledge; confirm. Logo
 [[site]]
 url = "https://graceomalleyspub.com/"
 category = "online gambling"
-confirmed = false
+confirmed = true
 company_names = ["VIP788"]
 mcc_codes = ["7995"]
 address = "none"
@@ -124,7 +124,7 @@ notes = "The pub's domain lapsed and now redirects to an online gambling site. v
 [[site]]
 url = "https://tedscollision.com/"
 category = "auto body shop"
-confirmed = false
+confirmed = true
 company_names = ["Ted's Collision Center"]
 logo_urls = ["https://tedscollision.com/wp-content/uploads/sites/12/2023/03/Teds_Collision_Center_Logo_Color.svg"]
 mcc_codes = ["7531", "7538"]
@@ -135,7 +135,7 @@ notes = "Now an auto body shop in Kentucky, not a Toronto bar. Its page data nam
 [[site]]
 url = "https://www.theonlycafe.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["The Only Cafe", "The Only Café"]
 mcc_codes = ["5813"]
 address = { street = "972 Danforth Avenue", city = "Toronto", country = "CA" }
@@ -145,7 +145,7 @@ notes = "A Google Sites page titled only 'Home'. Address from general knowledge;
 [[site]]
 url = "https://www.collectiveartsbrewing.com/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Collective Arts Brewing", "Collective Arts"]
 logo_urls = ["https://collectiveartscreativity.com/cdn/shop/files/Artboard_1_2x_45564ef7-ad67-4ef6-9f21-cc7742b2c366.png"]
 mcc_codes = ["5921", "5813"]
@@ -163,7 +163,7 @@ notes = "Redirects to collectiveartscreativity.com. Address from general knowled
 [[site]]
 url = "https://www.rainhardbrewing.com/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Rainhard Brewing Co.", "Rainhard Brewing"]
 logo_urls = ["https://rainhardbrewing.com/wp-content/uploads/2021/10/Rainhard-Logo-White-1-e1635533281251.png"]
 mcc_codes = ["5921", "5813"]
@@ -178,7 +178,7 @@ notes = "Name and logo from the page. Address from general knowledge; confirm."
 [[site]]
 url = "https://oldflamebrewingco.ca/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Old Flame Brewing Co."]
 logo_urls = ["https://oldflamebrewingco.ca/cdn/shop/files/old-flame-logo.svg"]
 mcc_codes = ["5921", "5813"]
@@ -198,7 +198,7 @@ notes = "From the page, which also lists a Newmarket location; Port Perry is the
 [[site]]
 url = "https://bellwoodsbrewery.com/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Bellwoods Brewery"]
 logo_urls = ["https://bellwoodsbrewery.com/cdn/shop/files/bellwoods_logo.png"]
 mcc_codes = ["5813", "5921"]
@@ -216,7 +216,7 @@ notes = "From the page's structured data. The bottle shop is next door at 126."
 [[site]]
 url = "https://www.leftfieldbrewery.ca/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Left Field Brewery"]
 logo_urls = ["https://www.leftfieldbrewery.ca/wp-content/themes/wptheme-lfb-0.2/dist/images/logo-bg.svg"]
 mcc_codes = ["5813", "5921"]
@@ -235,7 +235,7 @@ notes = "From the page, which also lists a Liberty Village location."
 [[site]]
 url = "https://www.blacklab.beer/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Black Lab Brewing"]
 logo_urls = ["https://www.blacklab.beer/cdn/shop/files/logo2.png"]
 mcc_codes = ["5921", "5813"]
@@ -252,7 +252,7 @@ notes = "Name and logo from the page. Address from general knowledge; confirm."
 [[site]]
 url = "https://burdockbrewery.com/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Burdock Brewery", "Burdock"]
 logo_urls = ["https://burdockbrewery.com/cdn/shop/files/BURDOCK_9385d0a5-7689-4aff-809b-b8632c97cf95.png"]
 mcc_codes = ["5813", "5921", "5812"]
@@ -262,7 +262,7 @@ notes = "Name and logo from the page. Address from general knowledge; confirm."
 [[site]]
 url = "https://www.saintjohnstavern.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Saint John's Tavern"]
 logo_urls = ["https://images.squarespace-cdn.com/content/v1/624efc4154ddfc26d1944a72/0f74ef53-a579-4e5d-95a8-398cbd85145c/SJT-INVS-BLK.png"]
 mcc_codes = ["5813", "5812"]
@@ -275,7 +275,7 @@ notes = "Name and logo from the page. Address not checked yet; add it during rev
 [[site]]
 url = "https://mcveighspub.com/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["McVeigh's Irish Pub", "McVeighs Irish Pub"]
 logo_urls = ["https://mcveighspub.com/wp-content/uploads/2026/01/Image20260123065148.png"]
 mcc_codes = ["5813"]
@@ -290,7 +290,7 @@ notes = "From the page. Its header images are lazy-loaded placeholders, a good l
 [[site]]
 url = "https://dukesrefresher.ca/"
 category = "bar"
-confirmed = false
+confirmed = true
 company_names = ["Duke's Refresher", "Duke's Refresher + Bar"]
 logo_urls = ["https://dukesrefresher.ca/wp-content/uploads/2019/08/dukes-logo.png"]
 mcc_codes = ["5813", "5812"]
@@ -303,7 +303,7 @@ notes = "Redirects to one location's page; the business has several. Address not
 [[site]]
 url = "https://comedybar.ca/"
 category = "comedy club"
-confirmed = false
+confirmed = true
 company_names = ["Comedy Bar"]
 logo_urls = ["https://comedybar.ca/Content/images/logo.png"]
 mcc_codes = ["7922", "5813"]
@@ -319,7 +319,7 @@ notes = "From the page, which also lists a Danforth location. MCC is genuinely a
 [[site]]
 url = "https://shophendersonbrewing.com/"
 category = "brewery"
-confirmed = false
+confirmed = true
 company_names = ["Henderson Brewing Company", "Henderson Brewing Co."]
 logo_urls = ["https://shophendersonbrewing.com/cdn/shop/files/Henderson_-_Logo_-_White.png"]
 mcc_codes = ["5921", "5813"]
@@ -335,7 +335,7 @@ notes = "From the page. The site whose logo v1 missed in its bulk run."
 [[site]]
 url = "https://www.n15salon.com/"
 category = "salon"
-confirmed = false
+confirmed = true
 company_names = ["N15 Salon", "N15 Hair Salon"]
 logo_urls = [
     "https://static.wixstatic.com/media/5ef73e_5d6c5ffac3f347d5bb1c1750fced6440~mv2.png",
@@ -361,7 +361,7 @@ notes = "From the page. Several locations, so the address isn't checked."
 [[site]]
 url = "https://www.indigo.ca/"
 category = "bookstore"
-confirmed = false
+confirmed = true
 company_names = ["Indigo", "Indigo Books & Music", "Chapters Indigo"]
 logo_urls = ["https://www.indigo.ca/cdn/shop/files/global_header_logo.svg"]
 mcc_codes = ["5942"]
@@ -376,7 +376,7 @@ notes = "Name and logo from the page. Head office address from general knowledge
 [[site]]
 url = "https://www.mec.ca/"
 category = "sporting goods"
-confirmed = false
+confirmed = true
 company_names = ["MEC", "Mountain Equipment Company", "Mountain Equipment Co-op"]
 mcc_codes = ["5941"]
 address = { street = "1077 Great Northern Way", city = "Vancouver", country = "CA" }
@@ -385,7 +385,7 @@ notes = "Blocks plain requests. Answers from general knowledge; confirm."
 [[site]]
 url = "https://www.homehardware.ca/"
 category = "hardware store"
-confirmed = false
+confirmed = true
 company_names = ["Home Hardware", "Home Hardware Stores Limited"]
 mcc_codes = ["5251"]
 address = { street = "34 Henry Street West", city = "St. Jacobs", country = "CA" }
@@ -400,7 +400,7 @@ notes = "Name from the page. Head office address from general knowledge; confirm
 [[site]]
 url = "https://www.bestbuy.ca/"
 category = "electronics store"
-confirmed = false
+confirmed = true
 company_names = ["Best Buy Canada", "Best Buy"]
 mcc_codes = ["5732"]
 address = { street = "8800 Glenlyon Parkway", city = "Burnaby", country = "CA" }
@@ -409,7 +409,7 @@ notes = "Blocks plain requests. Answers from general knowledge; confirm."
 [[site]]
 url = "https://www.eq3.com/"
 category = "furniture store"
-confirmed = false
+confirmed = true
 company_names = ["EQ3"]
 mcc_codes = ["5712"]
 address = { street = "170 Furniture Park", city = "Winnipeg", country = "CA" }
@@ -419,7 +419,7 @@ notes = "Name from the page. Address from general knowledge; confirm."
 [[site]]
 url = "https://www.roots.com/"
 category = "clothing store"
-confirmed = false
+confirmed = true
 company_names = ["Roots", "Roots Canada", "Roots Corporation"]
 logo_urls = ["https://www.roots.com/on/demandware.static/Sites-RootsCA-Site/-/default/dw7fb061c0/images/roots_logo.svg"]
 mcc_codes = ["5651", "5691"]
@@ -435,7 +435,7 @@ notes = "From the page footer."
 [[site]]
 url = "https://mejuri.com/"
 category = "jewelry store"
-confirmed = false
+confirmed = true
 company_names = ["Mejuri", "Mejuri Inc"]
 logo_urls = ["https://mejuri.com/logo.jpg"]
 mcc_codes = ["5944"]
@@ -450,7 +450,7 @@ notes = "From the page's structured data."
 [[site]]
 url = "https://www.shoppersdrugmart.ca/"
 category = "pharmacy"
-confirmed = false
+confirmed = true
 company_names = ["Shoppers Drug Mart"]
 mcc_codes = ["5912"]
 address = { street = "243 Consumers Road", postal_code = "M2J 4W8", country = "CA" }
@@ -459,7 +459,7 @@ notes = "Blocks plain requests. Answers from general knowledge; confirm."
 [[site]]
 url = "https://www.loblaws.ca/"
 category = "grocery store"
-confirmed = false
+confirmed = true
 company_names = ["Loblaws", "Loblaw", "Loblaw Companies"]
 mcc_codes = ["5411"]
 address = { street = "1 President's Choice Circle", city = "Brampton", postal_code = "L6Y 5S5", country = "CA" }
@@ -468,7 +468,7 @@ notes = "Blocks plain requests. Answers from general knowledge; confirm."
 [[site]]
 url = "https://www.petro-canada.ca/"
 category = "gas station"
-confirmed = false
+confirmed = true
 company_names = ["Petro-Canada"]
 mcc_codes = ["5541", "5542"]
 address = { street = "150 6 Avenue SW", city = "Calgary", country = "CA" }
@@ -477,7 +477,7 @@ notes = "Blocks plain requests. Owned by Suncor; head office from general knowle
 [[site]]
 url = "https://www.goodlifefitness.com/"
 category = "gym"
-confirmed = false
+confirmed = true
 company_names = ["GoodLife Fitness"]
 mcc_codes = ["7997"]
 address = { street = "710 Proudfoot Lane", city = "London", country = "CA" }
@@ -491,7 +491,7 @@ notes = "Name from the page. Head office from general knowledge; confirm."
 [[site]]
 url = "https://www.warbyparker.com/"
 category = "optician"
-confirmed = false
+confirmed = true
 company_names = ["Warby Parker"]
 logo_urls = ["https://img.warbyparker.com/v2/warby-logo-f043b63a4b054f018dbe99454ee56fc9.svg"]
 mcc_codes = ["8043"]
@@ -509,7 +509,7 @@ notes = "Name and logo from the page. Head office from general knowledge; confir
 [[site]]
 url = "https://globalpetfoods.com/"
 category = "pet store"
-confirmed = false
+confirmed = true
 company_names = ["Global Pet Foods"]
 logo_urls = [
     "https://globalpetfoods.com/cdn/shop/files/MRK_50_year_logo.png",
@@ -528,7 +528,7 @@ notes = "From the page. A franchise; head office not checked yet."
 [[site]]
 url = "https://www.thedrake.ca/"
 category = "hotel"
-confirmed = false
+confirmed = true
 company_names = ["The Drake Hotel", "The Drake"]
 mcc_codes = ["7011"]
 address = { street = "1150 Queen Street West", city = "Toronto", postal_code = "M6J 1J3", country = "CA" }
@@ -548,7 +548,7 @@ notes = "From the page. An independent hotel: the right code is the generic 7011
 [[site]]
 url = "https://www.enterprise.ca/"
 category = "car rental"
-confirmed = false
+confirmed = true
 company_names = ["Enterprise Rent-A-Car", "Enterprise"]
 mcc_codes = ["3405"]
 address = { street = "600 Corporate Park Drive", city = "St. Louis", country = "US" }
@@ -557,7 +557,7 @@ notes = "Blocks plain requests. Card networks give Enterprise its own code, 3405
 [[site]]
 url = "https://www.aircanada.com/"
 category = "airline"
-confirmed = false
+confirmed = true
 company_names = ["Air Canada"]
 mcc_codes = ["3009"]
 address = { street = "7373 Côte-Vertu Boulevard West", city = "Saint-Laurent", country = "CA" }
@@ -566,7 +566,7 @@ notes = "Air Canada has its own code, 3009. Head office from general knowledge; 
 [[site]]
 url = "https://www.flyporter.com/"
 category = "airline"
-confirmed = false
+confirmed = true
 company_names = ["Porter Airlines", "Porter"]
 mcc_codes = ["4511"]
 notes = "Blocks plain requests. Porter has no airline-specific code, so the generic 4511 is right."
@@ -574,7 +574,7 @@ notes = "Blocks plain requests. Porter has no airline-specific code, so the gene
 [[site]]
 url = "https://www.flightcentre.ca/"
 category = "travel agency"
-confirmed = false
+confirmed = true
 company_names = ["Flight Centre"]
 logo_urls = ["https://cloudinary.fclmedia.com/fctg/image/upload/websites/fc-global/logo_white.svg"]
 mcc_codes = ["4722"]
@@ -592,7 +592,7 @@ notes = "From the page. Address not checked yet."
 [[site]]
 url = "https://www.rogers.com/"
 category = "telecom"
-confirmed = false
+confirmed = true
 company_names = ["Rogers", "Rogers Communications"]
 logo_urls = ["https://www.rogers.com/app/prod/assets/i/logo.png"]
 mcc_codes = ["4814"]
@@ -609,7 +609,7 @@ notes = "Name and logo from the page. Head office from general knowledge; confir
 [[site]]
 url = "https://www.torontohydro.com/"
 category = "utility"
-confirmed = false
+confirmed = true
 company_names = ["Toronto Hydro"]
 mcc_codes = ["4900"]
 address = { street = "14 Carlton Street", city = "Toronto", country = "CA" }
@@ -625,7 +625,7 @@ notes = "Name from the page. Head office from general knowledge; confirm."
 [[site]]
 url = "https://www.intact.ca/"
 category = "insurance"
-confirmed = false
+confirmed = true
 company_names = ["Intact Insurance", "Intact Financial Corporation"]
 logo_urls = ["https://www.intact.ca/static/images/intactinsurance.svg"]
 mcc_codes = ["6300"]
@@ -647,7 +647,7 @@ notes = "From the page's structured data."
 [[site]]
 url = "https://www.coinbase.com/"
 category = "crypto exchange"
-confirmed = false
+confirmed = true
 company_names = ["Coinbase"]
 mcc_codes = ["6051"]
 phones = ["+18889087930"]
@@ -662,7 +662,7 @@ notes = "A high-risk category. Coinbase is remote-first, so the address isn't ch
 [[site]]
 url = "https://www.playolg.ca/"
 category = "online gambling"
-confirmed = false
+confirmed = true
 company_names = ["OLG", "Ontario Lottery and Gaming Corporation", "PlayOLG"]
 logo_urls = ["https://www.olg.ca/content/dam/olg/web/product/resources/logos/olg.svg"]
 mcc_codes = ["7995", "7800"]
@@ -672,7 +672,7 @@ notes = "A high-risk category, and a government lottery. Redirects to olg.ca. Ad
 [[site]]
 url = "https://www.redcross.ca/"
 category = "charity"
-confirmed = false
+confirmed = true
 company_names = ["Canadian Red Cross"]
 logo_urls = ["https://www.redcross.ca/content/images/logos/crc-en.svg"]
 mcc_codes = ["8398"]
@@ -689,7 +689,7 @@ notes = "Name and logo from the page. Head office from general knowledge; confir
 [[site]]
 url = "https://www.utoronto.ca/"
 category = "university"
-confirmed = false
+confirmed = true
 company_names = ["University of Toronto"]
 logo_urls = ["https://www.utoronto.ca/themes/custom/bootstrap_uoft/logo.svg"]
 mcc_codes = ["8220"]
@@ -708,7 +708,7 @@ notes = "From the page."
 [[site]]
 url = "https://www.uber.com/ca/en/"
 category = "ride hailing"
-confirmed = false
+confirmed = true
 company_names = ["Uber"]
 mcc_codes = ["4121"]
 address = { street = "1725 3rd Street", city = "San Francisco", postal_code = "94158", country = "US" }
@@ -717,7 +717,7 @@ notes = "Blocks plain requests. Head office from general knowledge; confirm."
 [[site]]
 url = "https://www.reliancehomecomfort.com/"
 category = "hvac and plumbing"
-confirmed = false
+confirmed = true
 company_names = ["Reliance Home Comfort"]
 logo_urls = ["https://reliancehomecomfort.com/wp-content/uploads/2023/11/RHC-logo-4C.png"]
 mcc_codes = ["1711"]
@@ -734,7 +734,7 @@ notes = "From the page (the page says North York, which is part of Toronto)."
 [[site]]
 url = "https://www.shopify.com/"
 category = "software"
-confirmed = false
+confirmed = true
 company_names = ["Shopify"]
 mcc_codes = ["7372", "5734"]
 social_links = [
@@ -751,7 +751,7 @@ notes = "Name from the page. Remote-first, so the address isn't checked."
 [[site]]
 url = "https://www.tokyosmoke.com/"
 category = "cannabis store"
-confirmed = false
+confirmed = true
 company_names = ["Tokyo Smoke"]
 logo_urls = ["https://ca.tokyosmoke.com/cdn/shop/files/TS_Logo_horizontal.png"]
 mcc_codes = ["5993", "5999", "5912"]
@@ -761,7 +761,7 @@ notes = "A high-risk category, and its MCC varies by acquirer; confirm. Address 
 [[site]]
 url = "https://www.waterstones.com/"
 category = "bookstore"
-confirmed = false
+confirmed = true
 company_names = ["Waterstones"]
 mcc_codes = ["5942"]
 address = { street = "203-206 Piccadilly", city = "London", postal_code = "W1J 9HD", country = "GB" }
@@ -772,7 +772,7 @@ notes = "A UK site, for UK postcodes. Blocks plain requests. Answers from genera
 [[site]]
 url = "https://www.pinterest.com/starbucks/"
 category = "cafe"
-confirmed = false
+confirmed = true
 page_kind = "platform_profile"
 platform = "pinterest"
 company_names = ["Starbucks"]
@@ -783,7 +783,7 @@ notes = "The page's own data names Pinterest; the business is Starbucks. Head of
 [[site]]
 url = "https://www.instagram.com/bellwoodsbeer/"
 category = "brewery"
-confirmed = false
+confirmed = true
 page_kind = "platform_profile"
 platform = "instagram"
 company_names = ["Bellwoods Brewery"]
