@@ -315,6 +315,9 @@ class Contacts(_Frozen):
     structured data."""
 
     phones: tuple[PhoneNumber, ...] = ()
+    # Where each number was found: "structured data", "call link", "footer", "header" or
+    # "main text".
+    phone_places: dict[PhoneNumber, tuple[str, ...]] = Field(default_factory=dict)
     emails: tuple[str, ...] = ()
     postcodes: tuple[str, ...] = ()
     copyright_line: str | None = None  # often names the legal entity

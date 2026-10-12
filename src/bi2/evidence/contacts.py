@@ -47,18 +47,26 @@ def _parse(raw: str, region: str) -> phonenumbers.PhoneNumber | None:
 
 def find_phones(
     doc: Document, text: TextRegions, *, structured: str | None, region: str | None
-) -> list[str]:
-    """Valid phone numbers on the page in E.164 format, most telling first: the structured
-    data's, then call links, then numbers in the footer, the header and the main text.
-    Numbers written without a country code are read as the region's (the US by default)."""
+) -> dict[str, list[str]]:
+    """Valid phone numbers on the page in E.164 format, each with the places it was found,
+    most telling first: the structured data, call links, then the footer, the header and the
+    main text. Numbers written without a country code are read as the region's (the US by
+    default)."""
     region = region or "US"
-    numbers = [_parse(structured, region)] if structured else []
+    found: list[tuple[phonenumbers.PhoneNumber | None, str]] = []
+    if structured:
+        found.append((_parse(structured, region), "structured data"))
     for link in doc.css('a[href^="tel:" i]'):
-        numbers.append(_parse(unquote(attribute(link, "href")[4:]), region))
-    for part in (text.footer, text.header, text.main):
-        numbers += [match.number for match in phonenumbers.PhoneNumberMatcher(part, region)]
-    found = (phonenumbers.format_number(n, PhoneNumberFormat.E164) for n in numbers if n)
-    return list(dict.fromkeys(found))[:_KEEP]
+        found.append((_parse(unquote(attribute(link, "href")[4:]), region), "call link"))
+    for place, part in (("footer", text.footer), ("header", text.header), ("main text", text.main)):
+        found += [(match.number, place) for match in phonenumbers.PhoneNumberMatcher(part, region)]
+    places: dict[str, list[str]] = {}
+    for number, place in found:
+        if number is not None:
+            seen = places.setdefault(phonenumbers.format_number(number, PhoneNumberFormat.E164), [])
+            if place not in seen:
+                seen.append(place)
+    return dict(list(places.items())[:_KEEP])
 
 
 def phone_countries(phones: Iterable[str]) -> list[str]:
@@ -127,8 +135,10 @@ def extract_contacts(
     postcodes: Iterable[str],
 ) -> Contacts:
     """Every contact detail on the page."""
+    phones = find_phones(doc, text, structured=structured_phone, region=region)
     return Contacts(
-        phones=tuple(find_phones(doc, text, structured=structured_phone, region=region)),
+        phones=tuple(phones),
+        phone_places={phone: tuple(places) for phone, places in phones.items()},
         emails=tuple(find_emails(doc, text)),
         postcodes=tuple(list(dict.fromkeys(postcodes))[:_KEEP]),
         copyright_line=find_copyright_line(text),

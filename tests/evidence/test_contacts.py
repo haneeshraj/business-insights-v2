@@ -26,7 +26,11 @@ TEXT = TextRegions(
 
 def test_phones_come_out_in_e164_most_telling_first() -> None:
     phones = find_phones(LINKS, TEXT, structured="416.555.0123", region="CA")
-    assert phones == ["+14165550123", "+14165550199", "+18005550100"]
+    assert phones == {
+        "+14165550123": ["structured data", "header"],
+        "+14165550199": ["call link"],
+        "+18005550100": ["main text"],
+    }
 
 
 def test_phone_countries_skip_toll_free_numbers() -> None:
@@ -35,8 +39,10 @@ def test_phone_countries_skip_toll_free_numbers() -> None:
 
 def test_numbers_without_a_country_code_are_read_as_the_regions() -> None:
     london = TextRegions(footer="Ring us on 020 7946 0018")
-    assert find_phones(parse_html(""), london, structured=None, region="GB") == ["+442079460018"]
-    assert find_phones(parse_html(""), london, structured=None, region=None) == []
+    assert list(find_phones(parse_html(""), london, structured=None, region="GB")) == [
+        "+442079460018"
+    ]
+    assert find_phones(parse_html(""), london, structured=None, region=None) == {}
 
 
 def test_emails_come_from_links_and_text_without_image_names() -> None:
