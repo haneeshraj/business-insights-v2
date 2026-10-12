@@ -16,3 +16,7 @@ class UnsafeUrl(FetchError):
 
 class PageTimeout(FetchError):
     """A page didn't load in time."""
+
+
+class BrowserUnavailable(Bi2Error):
+    """No browser could be started."""

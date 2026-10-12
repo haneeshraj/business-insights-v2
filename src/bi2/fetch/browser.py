@@ -3,7 +3,7 @@
 import contextlib
 from datetime import UTC, datetime
 from types import TracebackType
-from typing import Self
+from typing import Literal, Self
 from urllib.parse import urlsplit
 
 from playwright.async_api import Browser, Playwright, Route, ViewportSize, async_playwright
@@ -12,9 +12,13 @@ from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import ValidationError
 
 from bi2 import __version__
-from bi2.core.errors import FetchError, PageTimeout, UnsafeUrl
+from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import PageSnapshot, RenderedImage
 from bi2.fetch.safety import Resolver, ensure_public_url, host_is_public, system_resolver
+
+# "chromium" is Playwright's own browser; "chrome" is Google Chrome installed on this machine.
+BrowserName = Literal["chromium", "chrome"]
+BrowserChoice = Literal["auto", "chromium", "chrome"]
 
 # Runs in the page. Lists every image-like element with where it was drawn, whether it sits in
 # the header, and whether it links to the home page. Lazy-loaded images report their real URL
@@ -42,6 +46,7 @@ _IMAGES_SCRIPT = """
   const found = [];
   for (const img of document.images) {
     let url = img.currentSrc || img.src || "";
+    if (url === location.href) url = "";  // an empty src makes the browser report the page itself
     if (!url || url.startsWith("data:")) {
       const lazy = img.dataset.src || img.dataset.lazySrc || img.getAttribute("data-original");
       if (lazy) url = absolute(lazy);
@@ -76,27 +81,43 @@ class BrowserFetcher:
         *,
         timeout_s: float = 20.0,
         viewport: tuple[int, int] = (1280, 800),
-        channel: str | None = None,  # "chrome" uses the installed Google Chrome
+        browser: BrowserChoice = "auto",  # "auto" tries Chromium, then Chrome
         allow_private: bool = False,  # only for tests that serve pages from this machine
         resolver: Resolver = system_resolver,
     ) -> None:
         self._timeout_ms = timeout_s * 1000
         self._viewport: ViewportSize = {"width": viewport[0], "height": viewport[1]}
-        self._channel = channel
+        self._choice = browser
         self._allow_private = allow_private
         self._resolver = resolver
         self._public_hosts: dict[str, bool] = {}
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
+        self.browser_name: BrowserName | None = None  # which browser started
 
     async def __aenter__(self) -> Self:
+        names: tuple[BrowserName, ...]
+        if self._choice == "chromium":
+            names = ("chromium",)
+        elif self._choice == "chrome":
+            names = ("chrome",)
+        else:
+            names = ("chromium", "chrome")
         self._playwright = await async_playwright().start()
-        try:
-            self._browser = await self._playwright.chromium.launch(channel=self._channel)
-        except PlaywrightError:
-            await self._playwright.stop()
-            raise
-        return self
+        for name in names:
+            try:
+                self._browser = await self._playwright.chromium.launch(
+                    channel="chrome" if name == "chrome" else None
+                )
+            except PlaywrightError:
+                continue
+            self.browser_name = name
+            return self
+        await self._playwright.stop()
+        raise BrowserUnavailable(
+            "no browser could start. Run `uv run playwright install chromium`, "
+            "or install Google Chrome."
+        )
 
     async def __aexit__(
         self,

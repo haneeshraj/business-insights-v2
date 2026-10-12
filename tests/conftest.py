@@ -1,4 +1,4 @@
-"""Shared setup for the fetch tests: a tiny local website, and a browser to load it with."""
+"""Setup shared by all tests: a tiny local website, and a browser to load it with."""
 
 import asyncio
 import base64
@@ -8,9 +8,9 @@ from collections.abc import AsyncIterator, Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
-from playwright.async_api import Error as PlaywrightError
 
-from bi2.fetch.browser import BrowserFetcher
+from bi2.core.errors import BrowserUnavailable
+from bi2.fetch.browser import BrowserFetcher, BrowserName
 
 # A fake cafe homepage with the cases page loading has to handle: a header logo that links
 # home, a lazy-loaded image showing a blank placeholder, and an inline SVG logo with no URL.
@@ -26,6 +26,8 @@ CAFE_PAGE = b"""<!doctype html>
     <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
          data-src="/images/hero.png" alt="Our cafe" width="600" height="300">
     <svg width="120" height="40" aria-label="Example Cafe wordmark"><rect width="120" height="40"/></svg>
+    <img src="" data-src="/images/late.png" alt="Late image" width="80" height="80">
+    <img src="" alt="Image with no source" width="80" height="80">
   </main>
   <footer>Example Cafe, 12 Queen St W, Toronto</footer>
 </body>
@@ -75,25 +77,24 @@ def site() -> Iterator[str]:
     server.shutdown()
 
 
-async def _launches(channel: str | None) -> None:
-    async with BrowserFetcher(channel=channel):
-        pass
+async def _browser_that_starts() -> BrowserName | None:
+    async with BrowserFetcher() as fetcher:
+        return fetcher.browser_name
 
 
 @pytest.fixture(scope="session")
-def browser_channel() -> str | None:
-    """The first browser that starts: Playwright's own Chromium, then an installed Chrome."""
-    for channel in (None, "chrome"):
-        try:
-            asyncio.run(_launches(channel))
-        except PlaywrightError:
-            continue
-        return channel
-    pytest.skip("no browser available; run `uv run playwright install chromium`")
+def browser() -> BrowserName:
+    """The browser the tests use: Playwright's own Chromium if installed, otherwise Chrome."""
+    try:
+        name = asyncio.run(_browser_that_starts())
+    except BrowserUnavailable:
+        pytest.skip("no browser available; run `uv run playwright install chromium`")
+    assert name is not None
+    return name
 
 
 @pytest.fixture
-async def fetcher(browser_channel: str | None) -> AsyncIterator[BrowserFetcher]:
+async def fetcher(browser: BrowserName) -> AsyncIterator[BrowserFetcher]:
     """A fetcher allowed to load the local test website, which is on a private address."""
-    async with BrowserFetcher(timeout_s=10, channel=browser_channel, allow_private=True) as fetcher:
+    async with BrowserFetcher(timeout_s=10, browser=browser, allow_private=True) as fetcher:
         yield fetcher

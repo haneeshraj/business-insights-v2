@@ -4,7 +4,7 @@ import pytest
 
 from bi2.core.errors import PageTimeout, UnsafeUrl
 from bi2.core.models import RenderedImage
-from bi2.fetch.browser import BrowserFetcher
+from bi2.fetch.browser import BrowserFetcher, BrowserName
 
 pytestmark = pytest.mark.browser
 
@@ -38,6 +38,14 @@ async def test_lazy_images_report_their_real_url(fetcher: BrowserFetcher, site: 
     assert not hero.in_header
 
 
+async def test_images_with_an_empty_source_dont_report_the_page_address(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    images = (await fetcher.fetch(f"{site}/cafe")).images
+    assert _image(images, "Late image").url == f"{site}/images/late.png"
+    assert _image(images, "Image with no source").url == ""
+
+
 async def test_inline_svg_logos_are_captured(fetcher: BrowserFetcher, site: str) -> None:
     wordmark = _image((await fetcher.fetch(f"{site}/cafe")).images, "Example Cafe wordmark")
     assert wordmark.kind == "svg"
@@ -50,15 +58,13 @@ async def test_redirects_are_followed(fetcher: BrowserFetcher, site: str) -> Non
     assert snapshot.final_url == f"{site}/cafe"
 
 
-async def test_slow_pages_time_out(browser_channel: str | None, site: str) -> None:
-    async with BrowserFetcher(timeout_s=1, channel=browser_channel, allow_private=True) as fetcher:
+async def test_slow_pages_time_out(browser: BrowserName, site: str) -> None:
+    async with BrowserFetcher(timeout_s=1, browser=browser, allow_private=True) as fetcher:
         with pytest.raises(PageTimeout, match="didn't load within 1 seconds"):
             await fetcher.fetch(f"{site}/slow")
 
 
-async def test_private_addresses_are_refused_by_default(
-    browser_channel: str | None, site: str
-) -> None:
-    async with BrowserFetcher(channel=browser_channel) as fetcher:
+async def test_private_addresses_are_refused_by_default(browser: BrowserName, site: str) -> None:
+    async with BrowserFetcher(browser=browser) as fetcher:
         with pytest.raises(UnsafeUrl, match="isn't on the public internet"):
             await fetcher.fetch(f"{site}/cafe")
