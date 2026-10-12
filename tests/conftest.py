@@ -54,6 +54,13 @@ LAZY_FOOTER_PAGE = b"""<!doctype html>
 </script>
 </body></html>"""
 
+# Bot checks like Akamai's that say "200 OK": one moves on to the real page, one never does.
+PASSING_CHECK_PAGE = b"""<!doctype html>
+<html><body><div id="sec-if-cpt-container">Checking your browser</div>
+<script>setTimeout(() => location.replace("/cafe"), 1000)</script></body></html>"""
+STUCK_CHECK_PAGE = b"""<!doctype html>
+<html><body><div id="sec-if-cpt-container">Press and hold</div></body></html>"""
+
 # A block like Akamai's: an error page with no scripts, so nothing will move it on.
 DENIED_PAGE = b"<html><head><title>Access Denied</title></head><body>Access Denied</body></html>"
 
@@ -94,6 +101,10 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, "text/html", LAZY_FOOTER_PAGE)
         elif path == "/check":
             self._send(403, "text/html", CHECK_PAGE)
+        elif path == "/check-ok":
+            self._send(200, "text/html", PASSING_CHECK_PAGE)
+        elif path == "/check-stuck":
+            self._send(200, "text/html", STUCK_CHECK_PAGE)
         elif path == "/denied":
             self._send(403, "text/html", DENIED_PAGE)
         elif path.startswith("/images/"):

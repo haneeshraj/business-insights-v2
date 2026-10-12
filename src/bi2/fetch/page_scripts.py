@@ -1,15 +1,25 @@
 """JavaScript that the browser runs inside loaded pages."""
 
-# Bot checks that run in the page, like Cloudflare's "Just a moment...", answer with an error
-# page whose scripts move on to the real page once the check has passed. This is true when
-# there's no such check to wait for: the page isn't an error page, or it has no scripts to run.
+import json
+
+# Elements found only on the pages of bot-check services: Akamai, Cloudflare, HUMAN
+# (PerimeterX), DataDome and Imperva. Some of these pages say "200 OK".
+_CHALLENGE = (
+    "#sec-if-cpt-container, #challenge-running, #challenge-form, #cf-challenge-running, "
+    "[id^='px-captcha'], iframe[src*='captcha-delivery.com'], iframe[src*='_Incapsula_Resource']"
+)
+
+# Bot checks that run in the page, like Cloudflare's "Just a moment...", show a page whose
+# scripts move on to the real page once the check has passed. This is true when there's no such
+# check to wait for: the page isn't a bot check's, and it isn't an error page with scripts to run.
 NO_BOT_CHECK_RUNNING = """
 () => {
+  if (document.querySelector(CHALLENGE)) return false;
   const status = performance.getEntriesByType("navigation")[0]?.responseStatus ?? 0;
   const runs = (s) => !s.type || s.type === "module" || s.type.includes("javascript");
   return status < 400 || ![...document.scripts].some(runs);
 }
-"""
+""".replace("CHALLENGE", json.dumps(_CHALLENGE))
 
 # The visible text of the header, the main content and the footer, as an expression. innerText
 # leaves out text that CSS hides, such as a closed menu.
@@ -94,8 +104,9 @@ READ = """
     html: doctype + (document.documentElement ? document.documentElement.outerHTML : ""),
     images: found.slice(0, 200),
     text: REGION_TEXT,
+    challenge: !!document.querySelector(CHALLENGE),  // still a bot check's page
   };
 }
-""".replace("REGION_TEXT", _REGION_TEXT)
+""".replace("REGION_TEXT", _REGION_TEXT).replace("CHALLENGE", json.dumps(_CHALLENGE))
 
 PAGE_ID = "() => performance.timeOrigin"

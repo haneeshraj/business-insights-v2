@@ -6,7 +6,7 @@ from typing import get_args
 
 import pytest
 
-from bi2.core.errors import BrowserUnavailable, PageTimeout, UnsafeUrl
+from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import RenderedImage
 from bi2.fetch.browser import BrowserFetcher, BrowserName
 
@@ -92,6 +92,21 @@ async def test_bot_checks_are_given_time_to_pass(fetcher: BrowserFetcher, site: 
     assert snapshot.status_code == 200  # the real page's status, not the check's
     assert snapshot.final_url == f"{site}/cafe"
     assert "12 Queen St W" in snapshot.html
+
+
+async def test_bot_checks_that_say_ok_are_still_waited_on(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    snapshot = await fetcher.fetch(f"{site}/check-ok")
+    assert snapshot.final_url == f"{site}/cafe"
+
+
+async def test_a_bot_check_that_never_lets_us_through_is_a_refusal(
+    browser: BrowserName, site: str
+) -> None:
+    async with BrowserFetcher(browser=browser, allow_private=True, bot_check_wait_s=1) as fetcher:
+        with pytest.raises(FetchError, match="behind a bot check"):
+            await fetcher.fetch(f"{site}/check-stuck")
 
 
 async def test_error_pages_with_no_scripts_are_not_waited_on(

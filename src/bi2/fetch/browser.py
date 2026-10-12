@@ -39,9 +39,6 @@ _CHANNELS: dict[BrowserName, str | None] = {
 _FULL_BROWSERS: tuple[BrowserName, ...] = ("chromium", "chrome", "edge")
 _AUTO_ORDER: tuple[BrowserName, ...] = ("chromium-shell", *_FULL_BROWSERS)
 
-# How long a bot check that runs in the page gets to pass (see page_scripts.NO_BOT_CHECK_RUNNING).
-_BOT_CHECK_WAIT_MS = 10_000
-
 # How many times to try reading a page that keeps moving on to other pages while it's read.
 _READ_ATTEMPTS = 3
 
@@ -63,13 +60,13 @@ async def _start_first(playwright: Playwright, names: tuple[BrowserName, ...]) -
     return None
 
 
-async def _wait_for_bot_check(page: Page) -> None:
+async def _wait_for_bot_check(page: Page, wait_ms: float) -> None:
     """If a bot check is running in the page, give it time to pass and let the real page load."""
     with contextlib.suppress(PlaywrightError):  # if it can't be told, read the page as it is
         if await page.evaluate(page_scripts.NO_BOT_CHECK_RUNNING):
             return
         await page.wait_for_function(
-            page_scripts.NO_BOT_CHECK_RUNNING, polling=250, timeout=_BOT_CHECK_WAIT_MS
+            page_scripts.NO_BOT_CHECK_RUNNING, polling=250, timeout=wait_ms
         )
         await page.wait_for_load_state("load", timeout=5_000)
 
@@ -130,8 +127,10 @@ class BrowserFetcher:
         browser: BrowserChoice = "auto",
         allow_private: bool = False,  # only for tests that serve pages from this machine
         resolver: Resolver = system_resolver,
+        bot_check_wait_s: float = 10.0,  # how long a bot check in the page gets to pass
     ) -> None:
         self._timeout_ms = timeout_s * 1000
+        self._bot_check_wait_ms = bot_check_wait_s * 1000
         self._viewport: ViewportSize = {"width": viewport[0], "height": viewport[1]}
         self._choice = browser
         self._allow_private = allow_private
@@ -257,9 +256,11 @@ class BrowserFetcher:
                 await page.wait_for_load_state("load", timeout=5_000)
             with contextlib.suppress(PlaywrightTimeoutError):
                 await page.wait_for_load_state("networkidle", timeout=2_000)
-            await _wait_for_bot_check(page)
+            await _wait_for_bot_check(page, self._bot_check_wait_ms)
             at_bottom = await _scroll_through(page)
             read, screenshot = await _read(page, url)
+            if read["challenge"]:
+                raise FetchError(f"{url} is behind a bot check that didn't let the browser through")
             text = TextRegions.model_validate(read["text"])
             if at_bottom and at_bottom["page"] == read["page"]:  # the same page, both times
                 text = _longer(text, TextRegions.model_validate(at_bottom["text"]))
