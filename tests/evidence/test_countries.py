@@ -4,6 +4,7 @@ from bi2.evidence.countries import (
     countries,
     country_code,
     find_postcodes,
+    find_region_countries,
     guess_countries,
     page_languages,
 )
@@ -37,6 +38,13 @@ def test_a_zip_code_needs_its_state() -> None:
     assert find_postcodes("Order #14202 ships in 5 days") == []
 
 
+def test_provinces_and_states_after_a_place_name_count() -> None:
+    assert find_region_countries("Visit us: 1 Main St, Toronto, ON M5V 2T6") == ["CA"]
+    assert find_region_countries("Montréal, QC and St. Catharines, Ontario") == ["CA"]
+    assert find_region_countries("225 Delaware Ave, Buffalo, NY. Also Buffalo, New York.") == ["US"]
+    assert find_region_countries("FREE SHIPPING, ON ORDERS OVER $50") == []
+
+
 def test_reads_the_page_languages() -> None:
     doc = parse_html(
         '<html lang="en-CA"><head><meta property="og:locale" content="en_CA"></head></html>'
@@ -57,3 +65,5 @@ def test_clues_add_up_to_the_most_likely_country() -> None:
     )
     assert canadian == ("CA", "US")
     assert guess_countries("https://example.com/", address_country="IE")[0] == "IE"
+    toronto = guess_countries("https://example.com/", languages=["en-US"], regions=["CA"])
+    assert toronto == ("CA", "US")

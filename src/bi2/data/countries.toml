@@ -1,6 +1,7 @@
 # Countries v2 knows about, keyed by ISO 3166-1 code: the names pages use for them, their
-# internet domains, and their postcode format when it's distinctive enough to tell apart from
-# other numbers. A pattern with a "postcode" group needs the text around it, such as a US state
+# internet domains, their postcode format when it's distinctive enough to tell apart from other
+# numbers, and their provinces or states as addresses write them after the city ("Toronto, ON").
+# A postcode pattern with a "postcode" group needs the text around it, such as a US state
 # before a ZIP code. Adding a country is one entry. Read by bi2/evidence/countries.py.
 
 version = "2026-10-12"
@@ -9,11 +10,30 @@ version = "2026-10-12"
 names = ["Canada"]
 domains = ["ca"]
 postcode = '\b[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ -]?\d[ABCEGHJ-NPRSTV-Z]\d\b'
+regions = [
+    "AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT",
+    "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
+    "Nova Scotia", "Northwest Territories", "Nunavut", "Ontario", "Prince Edward Island",
+    "Quebec", "Québec", "Saskatchewan", "Yukon",
+]
 
 [US]
 names = ["United States", "United States of America", "USA", "U.S.A.", "U.S."]
 domains = ["us"]
 postcode = '\b(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\.?,? +(?P<postcode>\d{5}(?:-\d{4})?)\b'
+regions = [
+    "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL",
+    "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE",
+    "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT",
+    "VA", "VT", "WA", "WI", "WV", "WY",
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+    "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",
+    "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+    "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
+    "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
+    "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+]
 
 [GB]
 names = ["United Kingdom", "UK", "U.K.", "Great Britain", "Britain", "England", "Scotland", "Wales", "Northern Ireland"]

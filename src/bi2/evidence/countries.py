@@ -17,7 +17,11 @@ from bi2.core.urls import public_suffix
 from bi2.evidence.document import Document, attribute
 
 # How much each clue counts toward a country.
-_POINTS: Final = {"address": 4, "domain": 3, "postcode": 2, "phone": 2, "language": 1}
+_POINTS: Final = {"address": 4, "domain": 3, "postcode": 2, "region": 2, "phone": 2, "language": 1}
+
+# A place name as addresses write it before the province or state: "Toronto", "St. Catharines",
+# "Montréal". Its second letter is lowercase, so all-caps text like "SHIPPING, ON" doesn't count.
+_PLACE: Final = r"[A-Z](?:[a-z]|[^\x00-\x7F])[\w.'\-]*(?: [A-Z][\w.'\-]*)*"
 
 
 class Country(BaseModel):
@@ -28,6 +32,7 @@ class Country(BaseModel):
     names: tuple[str, ...] = Field(min_length=1)
     domains: tuple[str, ...] = ()  # the last part of the country's web addresses, like "ca"
     postcode: str | None = None  # a regular expression, for distinctive postcode formats only
+    regions: tuple[str, ...] = ()  # provinces or states, as written after a city
 
 
 @cache
@@ -55,6 +60,17 @@ def _postcode_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
     )
 
 
+@cache
+def _region_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
+    patterns = []
+    for code, country in countries().items():
+        if country.regions:
+            longest_first = sorted(country.regions, key=len, reverse=True)
+            names = "|".join(re.escape(name) for name in longest_first)
+            patterns.append((code, re.compile(rf"\b{_PLACE},\s+(?:{names})\b")))
+    return tuple(patterns)
+
+
 def country_code(text: str) -> CountryCode | None:
     """The ISO code for a country written as a code or a name: "CA", "Canada" and "UK" all
     work. Codes for countries not in the data file are accepted as they are."""
@@ -76,6 +92,13 @@ def find_postcodes(text: str) -> list[tuple[str, CountryCode]]:
             group = "postcode" if "postcode" in pattern.groupindex else 0
             found.append((match.start(group), clean_space(match.group(group)), code))
     return list(dict.fromkeys((postcode, code) for _, postcode, code in sorted(found)))
+
+
+def find_region_countries(text: str) -> list[CountryCode]:
+    """Countries whose provinces or states the text names after a place, the way addresses do:
+    "Toronto, ON" or "Buffalo, New York". The most mentioned first."""
+    mentions = Counter(code for code, pattern in _region_patterns() for _ in pattern.finditer(text))
+    return [code for code, _ in mentions.most_common()]
 
 
 def page_languages(doc: Document) -> list[str]:
@@ -101,6 +124,7 @@ def guess_countries(
     address_country: str | None = None,
     languages: Iterable[str] = (),
     postcodes: Iterable[tuple[str, str]] = (),
+    regions: Iterable[str] = (),
     phone_countries: Iterable[str] = (),
 ) -> tuple[CountryCode, ...]:
     """The countries the business is most likely in, most likely first, from the clues on its
@@ -114,11 +138,13 @@ def guess_countries(
         points[address_country] += _POINTS["address"]
     # Each clue counts once per country, however often it appears. dict.fromkeys keeps the
     # order the clues were found in, which settles ties.
-    regions = (region for language in languages if (region := _language_region(language)))
-    for code in dict.fromkeys(regions):
+    spoken = (region for language in languages if (region := _language_region(language)))
+    for code in dict.fromkeys(spoken):
         points[code] += _POINTS["language"]
     for code in dict.fromkeys(code for _, code in postcodes):
         points[code] += _POINTS["postcode"]
+    for code in dict.fromkeys(regions):
+        points[code] += _POINTS["region"]
     for code in dict.fromkeys(phone_countries):
         points[code] += _POINTS["phone"]
     return tuple(code for code, _ in points.most_common())
