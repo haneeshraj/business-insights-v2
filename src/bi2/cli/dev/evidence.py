@@ -27,6 +27,7 @@ def _short(text: str, limit: int = 200) -> str:
 
 def _rows(ev: Evidence) -> list[tuple[str, str]]:
     page = ev.page.kind.value + (f" ({ev.page.platform})" if ev.page.platform else "")
+    data = ev.structured
     return [
         ("Page", page),
         ("Title", ev.meta.title),
@@ -34,6 +35,13 @@ def _rows(ev: Evidence) -> list[tuple[str, str]]:
         ("og:title", ev.meta.og_title),
         ("Description", ev.meta.description),
         ("og:image", ev.meta.og_image or ""),
+        ("Schema types", ", ".join(data.types)),
+        ("Schema name", data.name or ""),
+        ("Legal name", data.legal_name or ""),
+        ("Schema phone", data.telephone or ""),
+        ("Schema address", data.address.text if data.address else ""),
+        ("Schema logo", data.logo_url or ""),
+        ("sameAs", " | ".join(data.same_as)),
     ]
 
 

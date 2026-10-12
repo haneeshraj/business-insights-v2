@@ -3,6 +3,7 @@
 from bi2.core.models import Evidence, PageInfo, PageKind, PageSnapshot
 from bi2.evidence.document import parse_html
 from bi2.evidence.meta import extract_meta
+from bi2.evidence.structured import extract_structured_data
 
 
 def build_evidence(snapshot: PageSnapshot) -> Evidence:
@@ -17,4 +18,5 @@ def build_evidence(snapshot: PageSnapshot) -> Evidence:
             kind=PageKind.UNKNOWN if refused else PageKind.OWN_WEBSITE,
         ),
         meta=extract_meta(doc, base),
+        structured=extract_structured_data(doc, base),
     )

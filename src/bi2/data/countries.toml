@@ -1,0 +1,84 @@
+# Countries v2 knows about, keyed by ISO 3166-1 code: the names pages use for them, and their
+# internet domains. Adding a country is one entry. Read by bi2/evidence/countries.py.
+
+version = "2026-10-12"
+
+[CA]
+names = ["Canada"]
+domains = ["ca"]
+
+[US]
+names = ["United States", "United States of America", "USA", "U.S.A.", "U.S."]
+domains = ["us"]
+
+[GB]
+names = ["United Kingdom", "UK", "U.K.", "Great Britain", "Britain", "England", "Scotland", "Wales", "Northern Ireland"]
+domains = ["uk"]
+
+[IE]
+names = ["Ireland", "Republic of Ireland", "Éire"]
+domains = ["ie"]
+
+[AU]
+names = ["Australia"]
+domains = ["au"]
+
+[NZ]
+names = ["New Zealand", "Aotearoa"]
+domains = ["nz"]
+
+[FR]
+names = ["France"]
+domains = ["fr"]
+
+[DE]
+names = ["Germany", "Deutschland"]
+domains = ["de"]
+
+[ES]
+names = ["Spain", "España"]
+domains = ["es"]
+
+[IT]
+names = ["Italy", "Italia"]
+domains = ["it"]
+
+[NL]
+names = ["Netherlands", "The Netherlands", "Holland", "Nederland"]
+domains = ["nl"]
+
+[BE]
+names = ["Belgium", "België", "Belgique"]
+domains = ["be"]
+
+[CH]
+names = ["Switzerland", "Schweiz", "Suisse", "Svizzera"]
+domains = ["ch"]
+
+[AT]
+names = ["Austria", "Österreich"]
+domains = ["at"]
+
+[SE]
+names = ["Sweden", "Sverige"]
+domains = ["se"]
+
+[NO]
+names = ["Norway", "Norge"]
+domains = ["no"]
+
+[DK]
+names = ["Denmark", "Danmark"]
+domains = ["dk"]
+
+[MX]
+names = ["Mexico", "México"]
+domains = ["mx"]
+
+[IN]
+names = ["India"]
+domains = ["in"]
+
+[SG]
+names = ["Singapore"]
+domains = ["sg"]
