@@ -11,8 +11,8 @@ from pydantic import BaseModel, ConfigDict
 from rich.console import Console
 from rich.table import Table
 
-from bi2.cli.dev.options import AllowPrivate, Browser, Timeout
 from bi2.cli.dev.saved import save_snapshot
+from bi2.cli.options import AllowPrivate, Browser, Timeout
 from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import PageSnapshot, RenderedImage
 from bi2.evaluation.gold import load_gold_set

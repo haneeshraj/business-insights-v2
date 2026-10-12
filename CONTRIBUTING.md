@@ -44,6 +44,19 @@ The last one rebuilds the evidence of saved pages without loading them again, an
 
 `bi2 dev evidence` also writes `report.html` next to the evidence: one page per run with every site's screenshot, its evidence, its logo candidates as pictures, and its gold-set checks. Add `--open` to open it in your browser.
 
+## Analyzing sites
+
+`bi2 analyze` runs the whole pipeline and writes one result per site:
+
+```
+uv run bi2 analyze https://example.com                    # one or more sites, loaded live
+uv run bi2 analyze --gold eval/gold.toml                  # every gold-set site, checked against it
+uv run bi2 analyze --saved bi2-results/dev/fetch --gold eval/gold.toml   # saved pages, offline
+uv run bi2 eval score eval/gold.toml bi2-results/analyze/results.jsonl   # accuracy by field
+```
+
+Results go to `bi2-results/analyze/`: `results.jsonl` with every site, a folder per site with its result, evidence, screenshot and logo, and `report.html` with the answers next to the evidence.
+
 ## The rules that matter most
 
 - **Respect the layers** described in docs/codebase.md. import-linter enforces them.

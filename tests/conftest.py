@@ -3,12 +3,14 @@
 import asyncio
 import base64
 import contextlib
+import io
 import threading
 import time
 from collections.abc import AsyncIterator, Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
+from PIL import Image
 
 from bi2.core.errors import BrowserUnavailable
 from bi2.fetch.browser import BrowserFetcher, BrowserName
@@ -81,6 +83,16 @@ PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 )
 
+
+def _logo_png() -> bytes:
+    out = io.BytesIO()
+    Image.new("RGB", (160, 60), "blue").save(out, format="PNG")
+    return out.getvalue()
+
+
+# A logo-sized PNG, for tests that check a downloaded logo.
+LOGO_PNG = _logo_png()
+
 _visited: set[str] = set()
 _visited_lock = threading.Lock()
 
@@ -121,6 +133,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, "text/html", STUCK_CHECK_PAGE)
         elif path == "/denied":
             self._send(403, "text/html", DENIED_PAGE)
+        elif path == "/images/brand.png":
+            self._send(200, "image/png", LOGO_PNG)
         elif path.startswith("/images/"):
             self._send(200, "image/png", PNG)
         else:

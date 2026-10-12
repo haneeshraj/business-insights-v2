@@ -78,7 +78,7 @@ async def _logo_file(
             return None, "has no file of its own and isn't on the screenshot"
         data = cut
     info = inspect_image(data)
-    problem = logo_problem(info)
+    problem = logo_problem(info, declared=candidate.declared)
     if problem or info is None:
         return None, problem or "isn't an image"
     return await ctx.files.save(f"{folder}/logo.{info.extension}", data), ""

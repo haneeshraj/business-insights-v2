@@ -46,8 +46,9 @@ def inspect_image(data: bytes) -> ImageInfo | None:
     return ImageInfo(extension, width, height) if extension else None
 
 
-def logo_problem(info: ImageInfo | None) -> str | None:
-    """Why an image can't be a logo, or None when it can."""
+def logo_problem(info: ImageInfo | None, *, declared: bool = False) -> str | None:
+    """Why an image can't be a logo, or None when it can. A file the business itself names
+    as its logo isn't ruled out for being as big as a photo."""
     if info is None:
         return "isn't an image"
     if info.extension == "svg":
@@ -59,7 +60,7 @@ def logo_problem(info: ImageInfo | None) -> str | None:
         return f"is too small ({width}x{height})"
     if max(width, height) / min(width, height) > 12:
         return f"is a strip ({width}x{height}), not a logo"
-    if info.extension == "jpg" and width * height > 1_500_000:
+    if info.extension == "jpg" and width * height > 1_500_000 and not declared:
         return f"looks like a photo ({width}x{height})"
     return None
 

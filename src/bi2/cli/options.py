@@ -1,4 +1,4 @@
-"""Options that several `bi2 dev` commands share."""
+"""Options that several commands share."""
 
 from typing import Annotated
 

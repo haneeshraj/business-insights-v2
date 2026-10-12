@@ -10,9 +10,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from bi2.cli.dev.options import AllowPrivate, Browser, Timeout
-from bi2.cli.dev.report import ReportSite, write_report
 from bi2.cli.dev.saved import load_snapshot, save_snapshot, saved_folders
+from bi2.cli.options import AllowPrivate, Browser, Timeout
+from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable, FetchError
 from bi2.core.models import Evidence, PageSnapshot
 from bi2.evaluation.coverage import evidence_coverage, summarize
@@ -113,8 +113,8 @@ def _with_gold(sites: list[ReportSite], gold_file: Path) -> tuple[list[ReportSit
     gold = {site_key(entry.url): entry for entry in load_gold_set(gold_file).sites}
     checked = []
     for site in sites:
-        entry = gold.get(site_key(site.evidence.page.url))
-        if entry is not None:
+        entry = gold.get(site_key(site.url))
+        if entry is not None and site.evidence is not None:
             site = site._replace(gold=entry, checks=evidence_coverage(entry, site.evidence))
         checked.append(site)
     return checked, len(gold) - sum(1 for site in checked if site.gold is not None)
@@ -135,7 +135,7 @@ def _print_coverage(
     if missing:
         console.print(f"{missing} gold-set sites have no saved page.", markup=False)
     details = [
-        {"url": site.evidence.page.url, "checks": [check.model_dump() for check in site.checks]}
+        {"url": site.url, "checks": [check.model_dump() for check in site.checks]}
         for site in checked
     ]
     (out / "coverage.json").write_text(json.dumps(details, indent=2), encoding="utf-8")

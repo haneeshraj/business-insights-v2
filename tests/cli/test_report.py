@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from bi2.cli.dev.report import ReportSite, write_report
+from bi2.cli.report import ReportSite, write_report
 from bi2.core.models import Box, Evidence, LogoCandidate, PageInfo, PageKind, PageMeta
 from bi2.evaluation.coverage import evidence_coverage, summarize
 from bi2.evaluation.gold import GoldSite

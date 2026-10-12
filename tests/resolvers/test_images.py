@@ -31,6 +31,10 @@ def test_what_rules_an_image_out_as_a_logo(info: ImageInfo | None, problem: str 
     assert logo_problem(info) == problem
 
 
+def test_a_logo_the_business_names_can_be_as_big_as_a_photo() -> None:
+    assert logo_problem(ImageInfo("jpg", 1314, 1314), declared=True) is None
+
+
 def test_an_element_is_cut_out_of_the_screenshot() -> None:
     screenshot = screenshot_with_logo(20, 10, 160, 60)
     cut = crop(screenshot, Box(x=20, y=10, width=160, height=60))
