@@ -69,3 +69,5 @@ def test_gold_checks_and_the_summary_are_shown(tmp_path: Path) -> None:
     assert "What the evidence already holds" in html
     assert 'data-misses="1"' in html  # the phone isn't in this evidence
     assert "+14165550123" in html
+    assert '<td class="check"' not in html  # checks are only on the review page
+    assert "X-Review-Token" not in html

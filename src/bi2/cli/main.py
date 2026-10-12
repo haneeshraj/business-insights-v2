@@ -12,9 +12,11 @@ from bi2 import __version__
 from bi2.cli.analyze import analyze
 from bi2.cli.dev import dev_app
 from bi2.cli.evaluate import eval_app
+from bi2.cli.review import review
 
 app = typer.Typer(name="bi2", no_args_is_help=True, add_completion=False)
 app.command()(analyze)
+app.command()(review)
 app.add_typer(eval_app, name="eval")
 app.add_typer(dev_app, name="dev")
 

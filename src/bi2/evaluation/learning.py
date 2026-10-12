@@ -36,6 +36,11 @@ class Outcome(StrEnum):
     FALSE_NEGATIVE = "sent on, right"
     TRUE_NEGATIVE = "sent on, wrong"
 
+    @property
+    def term(self) -> str:
+        """The group's usual name, like "false positive"."""
+        return self.name.lower().replace("_", " ")
+
 
 class Label(NamedTuple):
     """Whether one answer was right, who said so, and what v2 had done with it."""

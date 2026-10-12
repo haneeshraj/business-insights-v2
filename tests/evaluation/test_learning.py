@@ -11,6 +11,7 @@ from bi2.evaluation.verifications import (
     Verification,
     add_verification,
     answer_key,
+    answer_text,
     load_verifications,
 )
 from bi2.resolvers.cascade import not_built_yet
@@ -51,6 +52,7 @@ def _check(field: str, answer: str, verdict: str, note: str = "") -> Verificatio
 def test_answers_match_however_they_are_written() -> None:
     result = _result(company_name=answered("EXAMPLE CAFE LTD."))
     assert answer_key("company_name", result.company_name) == "example cafe"
+    assert answer_text("company_name", result.company_name) == "EXAMPLE CAFE LTD."
     assert answer_key("phone", result.phone) == ""  # nothing found
 
 

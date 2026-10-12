@@ -37,6 +37,22 @@ def answer_key(field: str, answer: FieldResult[Any]) -> str:
     return str(value)
 
 
+def answer_text(field: str, answer: FieldResult[Any]) -> str:
+    """An answer as the review page shows it, so the checks file can be read on its own."""
+    value = answer.value
+    if value is None:
+        return ""
+    if field == "logo":
+        return str(value.url or value.image_file)
+    if field == "social_links":
+        return " ".join(profile.url for profile in value)
+    if field == "mcc":
+        return f"{value.code} {value.description}"
+    if field == "address":
+        return str(value.text)
+    return str(value)
+
+
 class Verification(BaseModel):
     """One answer a person checked."""
 

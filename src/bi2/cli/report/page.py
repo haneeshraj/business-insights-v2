@@ -1,4 +1,5 @@
-"""The report's HTML page: its layout, styles and the filter script."""
+"""The report's HTML page: its layout, styles and the filter script, and the script that
+saves your checks on the review page."""
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -72,6 +73,26 @@ pre { white-space: pre-wrap; font: 12px/1.4 ui-monospace, Consolas, monospace; m
 .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 16px 0 0; }
 input[type=search] { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px;
                      background: var(--card); color: var(--text); width: min(320px, 100%); }
+.check { min-width: 240px; }
+.check button { font: inherit; font-size: 12px; padding: 2px 10px; margin: 0 4px 4px 0;
+                border: 1px solid var(--line); border-radius: 6px; background: var(--card);
+                color: var(--text); cursor: pointer; }
+.check button[data-verdict=right][aria-pressed=true] { background: var(--good);
+                                                       border-color: var(--good); color: var(--card); }
+.check button[data-verdict=wrong][aria-pressed=true] { background: var(--bad);
+                                                       border-color: var(--bad); color: var(--card); }
+.check .note { display: block; width: 100%; padding: 3px 6px; border: 1px solid var(--line);
+               border-radius: 6px; background: var(--card); color: var(--text); font: inherit;
+               font-size: 12px; }
+.check.saving { opacity: 0.5; }
+.check .label { margin-top: 4px; font-size: 12px; }
+.group { padding: 0 6px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.group.tp { color: var(--good); }
+.group.fp { color: var(--bad); }
+.group.fn { color: var(--warn); }
+.group.tn { color: var(--muted); }
+#learned table { margin-bottom: 8px; }
+.groups td, .records td { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -82,22 +103,98 @@ input[type=search] { padding: 6px 10px; border: 1px solid var(--line); border-ra
 <div class="controls">
   <input type="search" id="search" placeholder="Filter by address" aria-label="Filter by address">
   <label><input type="checkbox" id="misses"> Only sites that miss a gold answer</label>
+  {controls}
 </div>
 {sites}
 </main>
-<script>
+<script nonce="{nonce}">
 const search = document.getElementById("search");
 const missesOnly = document.getElementById("misses");
+const uncheckedOnly = document.getElementById("unchecked");  // only on the review page
 function filter() {
   const words = search.value.trim().toLowerCase();
   for (const site of document.querySelectorAll(".site")) {
     site.hidden = !site.dataset.url.includes(words)
-      || (missesOnly.checked && site.dataset.misses === "0");
+      || (missesOnly.checked && site.dataset.misses === "0")
+      || (uncheckedOnly !== null && uncheckedOnly.checked && site.dataset.unchecked === "0");
   }
 }
 search.addEventListener("input", filter);
 missesOnly.addEventListener("change", filter);
+uncheckedOnly?.addEventListener("change", filter);
 </script>
+{review}
 </body>
 </html>
 """
+
+UNCHECKED_FILTER = '<label><input type="checkbox" id="unchecked"> Only sites with answers no one has checked</label>'
+
+# Saves a check when you press Right or Wrong, or change the note of an answer you've marked,
+# then shows what the server sends back: every answer's label, and the summary rebuilt.
+REVIEW_SCRIPT = """<script nonce="{nonce}" data-token="{token}">
+(() => {
+  const token = document.currentScript.dataset.token;
+  const key = (site, field) => JSON.stringify([site, field]);
+  const cells = new Map();
+  for (const cell of document.querySelectorAll("td.check")) {
+    cells.set(key(cell.dataset.site, cell.dataset.field), cell);
+  }
+
+  function show(answers) {
+    const unchecked = new Map();
+    for (const answer of answers) {
+      const cell = cells.get(key(answer.site, answer.field));
+      if (cell === undefined) continue;
+      for (const button of cell.querySelectorAll("button")) {
+        button.setAttribute("aria-pressed", String(button.dataset.verdict === answer.verdict));
+      }
+      cell.querySelector(".label").innerHTML = answer.label;  // built and escaped by the server
+      const site = cell.closest(".site");
+      unchecked.set(site, (unchecked.get(site) ?? 0) + (answer.by === "" ? 1 : 0));
+    }
+    for (const [site, count] of unchecked) site.dataset.unchecked = String(count);
+  }
+
+  async function save(cell, verdict) {
+    const label = cell.querySelector(".label");
+    cell.classList.add("saving");
+    try {
+      const response = await fetch("/checks", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-Review-Token": token},
+        body: JSON.stringify({
+          site: cell.dataset.site,
+          field: cell.dataset.field,
+          verdict,
+          note: cell.querySelector(".note").value,
+        }),
+      }).catch(() => { throw new Error("is bi2 review still running?"); });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      show(data.answers);
+      document.getElementById("learned").outerHTML = data.summary;
+      filter();
+    } catch (error) {
+      label.textContent = "Not saved: " + error.message;
+    } finally {
+      cell.classList.remove("saving");
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("td.check button");
+    if (button !== null) save(button.closest("td.check"), button.dataset.verdict);
+  });
+  document.addEventListener("change", (event) => {
+    if (!event.target.matches("td.check .note")) return;
+    const cell = event.target.closest("td.check");
+    const marked = cell.querySelector("button[aria-pressed=true]");
+    if (marked !== null) save(cell, marked.dataset.verdict);
+    else cell.querySelector(".label").textContent = "Press Right or Wrong to save the note.";
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.target.matches("td.check .note")) event.target.blur();
+  });
+})();
+</script>"""

@@ -1,5 +1,5 @@
 """One site's card in the report: its answers, its evidence, its logo candidates as pictures,
-and its gold-set checks."""
+its gold-set checks and, on the review page, your checks."""
 
 from pathlib import Path
 from typing import Final, NamedTuple
@@ -11,6 +11,7 @@ from bi2.core.text import names_match
 from bi2.core.urls import image_key, social_key
 from bi2.evaluation.coverage import FieldCoverage
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
+from bi2.evaluation.learning import Label
 from bi2.evaluation.scoring import FieldScore, Verdict
 from bi2.evidence.names import name_candidates
 
@@ -32,6 +33,7 @@ class ReportSite(NamedTuple):
     checks: tuple[FieldCoverage, ...] = ()  # what the evidence holds of the gold answers
     result: SiteResult | None = None
     scores: tuple[FieldScore, ...] = ()  # how the result compares with the gold answers
+    labels: dict[str, Label | None] | None = None  # on the review page, by field (see answers.py)
 
     @property
     def url(self) -> str:
@@ -184,8 +186,14 @@ def site_card(site: ReportSite, page: Path, root: Path | None = None) -> str:
     if site.checks or site.scores:
         badges_html += f'<span class="badge {"bad" if misses else "good"}">{misses} missed</span>'
     answers = (
-        f"<h3>Answers</h3>{answers_table(result, site.scores, page, root or page.parent)}"
+        f"<h3>Answers</h3>"
+        f"{answers_table(result, site.scores, page, root or page.parent, site.labels)}"
         if result is not None
+        else ""
+    )
+    unchecked = (
+        f' data-unchecked="{sum(label is None for label in site.labels.values())}"'
+        if site.labels is not None
         else ""
     )
     if ev is not None:
@@ -195,7 +203,7 @@ def site_card(site: ReportSite, page: Path, root: Path | None = None) -> str:
             f'<p class="miss">{e(result.error if result and result.error else "no evidence")}</p>'
         )
     return f"""
-<section class="card site" data-url="{e(site.url.lower())}" data-misses="{misses}">
+<section class="card site" data-url="{e(site.url.lower())}" data-misses="{misses}"{unchecked}>
   <div class="site-head"><h2>{link(site.url)}</h2>{badges_html}</div>
   {answers}
   {details}
