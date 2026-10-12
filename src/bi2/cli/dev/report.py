@@ -14,8 +14,9 @@ from typing import NamedTuple
 from bi2.core.models import Box, Evidence, LogoCandidate
 from bi2.core.text import names_match
 from bi2.core.urls import image_key, social_key
-from bi2.evaluation.coverage import FieldCoverage, names_in
+from bi2.evaluation.coverage import FieldCoverage
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
+from bi2.evidence.names import name_candidates
 
 # The screenshot is the first screen at this size; boxes inside it can be cropped out of it.
 _SCREEN_WIDTH, _SCREEN_HEIGHT = 1280, 800
@@ -136,7 +137,7 @@ def _facts(ev: Evidence, gold: GoldSite | None) -> str:
     gold_names = (gold.company_names or ()) if gold else ()
     gold_social = gold.social_links if gold and isinstance(gold.social_links, tuple) else ()
     first_place: dict[str, str] = {}  # each name once, with the first place it was found
-    for where, name in names_in(ev):
+    for where, name in name_candidates(ev):
         first_place.setdefault(name, where)
     names = [
         f"{_e(name)} <span class=muted>({_e(where)})</span>"

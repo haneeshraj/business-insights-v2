@@ -4,18 +4,17 @@ That's the most the free sources can get right. A field whose answer isn't anywh
 evidence needs search or a model, so this shows where the cost will go.
 """
 
-import re
 from collections.abc import Iterable
 from typing import Final
 
 from pydantic import BaseModel, ConfigDict
 
 from bi2.core.models import Address, Evidence
-from bi2.core.text import clean_space, fold, names_match
+from bi2.core.text import fold, names_match
 from bi2.core.urls import image_key, social_key
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
 from bi2.evaluation.scoring import address_matches
-from bi2.evidence.contacts import copyright_holder
+from bi2.evidence.names import name_candidates
 
 # Each check, in report order.
 CHECKS: Final = (
@@ -30,9 +29,6 @@ CHECKS: Final = (
     "social_links",
 )
 
-# Where page titles split into parts, as in "Menu | Example Cafe - Toronto".
-_TITLE_PARTS = re.compile(r"\s+[|\-:\N{EN DASH}\N{EM DASH}\N{MIDDLE DOT}\N{BULLET}]\s+")
-
 
 class FieldCoverage(BaseModel):
     """Whether one of a site's gold answers is somewhere in its evidence, and where."""
@@ -42,24 +38,6 @@ class FieldCoverage(BaseModel):
     check: str
     found: bool
     where: str = ""  # the part of the evidence that holds the answer
-
-
-def names_in(ev: Evidence) -> list[tuple[str, str]]:
-    """Every name in the evidence that could be the business's, with where it was found."""
-    found = [
-        ("profile name", ev.page.profile_name or ""),
-        ("structured data", ev.structured.name or ""),
-        ("structured data legal name", ev.structured.legal_name or ""),
-        ("site name", ev.meta.site_name),
-        ("og:title", ev.meta.og_title),
-        ("title", ev.meta.title),
-    ]
-    for where, title in (("title", ev.meta.title), ("og:title", ev.meta.og_title)):
-        found += [(f"part of the {where}", part) for part in _TITLE_PARTS.split(title)]
-    found += [("logo alt text", candidate.alt) for candidate in ev.logo_candidates]
-    if ev.contacts.copyright_line:
-        found.append(("copyright line", copyright_holder(ev.contacts.copyright_line)))
-    return [(where, clean_space(name)) for where, name in found if name.strip()]
 
 
 def _first(checks: Iterable[tuple[str, bool]]) -> tuple[bool, str]:
@@ -72,7 +50,7 @@ def _first(checks: Iterable[tuple[str, bool]]) -> tuple[bool, str]:
 def _name(names: tuple[str, ...], ev: Evidence) -> FieldCoverage:
     found, where = _first(
         (where, any(names_match(candidate, name) for name in names))
-        for where, candidate in names_in(ev)
+        for where, candidate in name_candidates(ev)
     )
     return FieldCoverage(check="company_name", found=found, where=where)
 
