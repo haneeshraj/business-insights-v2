@@ -1,0 +1,80 @@
+# Platforms where businesses have pages of their own. A business's profile on a social platform
+# is one of its social media links, and a URL on any of these platforms is the business's page
+# there, not its own website. Adding a platform is one entry. Read by bi2/evidence/platforms.py.
+#
+# name:        how the platform is shown
+# social:      whether a profile here counts as one of the business's social media links
+# domains:     the platform's web addresses; "pinterest.*" means pinterest.com, pinterest.ca...
+# profiles:    regular expressions for the path of a profile page, without a trailing slash;
+#              the part that names the profile is in a "handle" group
+# not_handles: handles that are really the platform's own pages, like instagram.com/explore
+
+version = "2026-10-12"
+
+[instagram]
+name = "Instagram"
+social = true
+domains = ["instagram.com"]
+profiles = ['^/(?P<handle>[A-Za-z0-9_.]+)$']
+not_handles = ["about", "accounts", "developer", "direct", "explore", "legal", "p", "privacy", "reel", "reels", "stories", "terms", "tv", "web"]
+
+[facebook]
+name = "Facebook"
+social = true
+domains = ["facebook.com", "fb.com"]
+profiles = [
+    '^/(?:pg/)?(?P<handle>[A-Za-z0-9.\-]+)(?:/(?:about|posts|photos|reviews|menu|events))?$',
+    '^/(?P<handle>pages/[^/]+/\d+)$',
+    '^/(?P<handle>profile\.php)$',
+]
+not_handles = ["ads", "business", "dialog", "events", "gaming", "groups", "hashtag", "help", "home.php", "l.php", "legal", "login", "marketplace", "permalink.php", "photo.php", "plugins", "policies", "privacy", "settings", "share", "share.php", "sharer", "sharer.php", "story.php", "tr", "watch"]
+
+[x]
+name = "X"
+social = true
+domains = ["x.com", "twitter.com"]
+profiles = ['^/(?P<handle>[A-Za-z0-9_]{1,15})$']
+not_handles = ["explore", "hashtag", "home", "i", "intent", "login", "messages", "notifications", "privacy", "search", "settings", "share", "signup", "tos"]
+
+[linkedin]
+name = "LinkedIn"
+social = true
+domains = ["linkedin.com"]
+profiles = ['^/(?P<handle>(?:company|school|showcase)/[^/]+)(?:/.*)?$']
+
+[youtube]
+name = "YouTube"
+social = true
+domains = ["youtube.com"]
+profiles = [
+    '^/(?P<handle>@[^/]+)(?:/.*)?$',
+    '^/(?P<handle>(?:c|channel|user)/[^/]+)(?:/.*)?$',
+    '^/(?P<handle>[A-Za-z0-9_-]+)$',
+]
+not_handles = ["about", "account", "embed", "feed", "gaming", "howyoutubeworks", "live", "playlist", "premium", "results", "shorts", "t", "watch"]
+
+[tiktok]
+name = "TikTok"
+social = true
+domains = ["tiktok.com"]
+profiles = ['^/(?P<handle>@[^/]+)(?:/.*)?$']
+
+[pinterest]
+name = "Pinterest"
+social = true
+domains = ["pinterest.*"]
+profiles = ['^/(?P<handle>[A-Za-z0-9_]+)$']
+not_handles = ["_", "about", "business", "categories", "explore", "ideas", "login", "news_hub", "pin", "search", "settings", "today", "topics", "videos"]
+
+[threads]
+name = "Threads"
+social = true
+domains = ["threads.net", "threads.com"]
+profiles = ['^/(?P<handle>@[^/]+)$']
+
+[untappd]
+name = "Untappd"
+social = true
+domains = ["untappd.com"]
+profiles = ['^/(?P<handle>[A-Za-z0-9_-]+)$', '^/(?P<handle>brewery/\d+)$', '^/(?P<handle>v/[^/]+/\d+)$']
+not_handles = ["account", "b", "beer", "brewery", "create", "home", "login", "search", "signup", "thepub", "user", "v", "w"]

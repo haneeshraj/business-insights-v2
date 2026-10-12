@@ -15,6 +15,7 @@ from bi2.core.text import clean_space, fold, names_match
 from bi2.core.urls import image_key, social_key
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
 from bi2.evaluation.scoring import address_matches
+from bi2.evidence.contacts import copyright_holder
 
 # Each check, in report order.
 CHECKS: Final = (
@@ -55,6 +56,8 @@ def names_in(ev: Evidence) -> list[tuple[str, str]]:
     for where, title in (("title", ev.meta.title), ("og:title", ev.meta.og_title)):
         found += [(f"part of the {where}", part) for part in _TITLE_PARTS.split(title)]
     found += [("logo alt text", candidate.alt) for candidate in ev.logo_candidates]
+    if ev.contacts.copyright_line:
+        found.append(("copyright line", copyright_holder(ev.contacts.copyright_line)))
     return [(where, clean_space(name)) for where, name in found if name.strip()]
 
 
@@ -111,8 +114,14 @@ def _phone(phones: tuple[str, ...], ev: Evidence) -> FieldCoverage:
 
 
 def _social(links: tuple[str, ...], ev: Evidence) -> FieldCoverage:
-    keys = {social_key(url) for url in ev.structured.same_as}
-    return FieldCoverage(check="social_links", found=all(social_key(url) in keys for url in links))
+    found = [*ev.structured.same_as, *(profile.url for profile in ev.social_links)]
+    keys = {social_key(url) for url in found}
+    missing = [url for url in links if social_key(url) not in keys]
+    return FieldCoverage(
+        check="social_links",
+        found=not missing,
+        where=f"missing {', '.join(missing)}" if missing else "",
+    )
 
 
 def evidence_coverage(gold: GoldSite, ev: Evidence) -> tuple[FieldCoverage, ...]:

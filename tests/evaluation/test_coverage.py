@@ -38,7 +38,8 @@ def test_a_name_can_be_found_in_part_of_the_title() -> None:
 
 def test_social_links_need_every_expected_profile() -> None:
     one = StructuredData(same_as=("https://www.instagram.com/examplecafe/",))
-    assert _checks(_evidence(structured=one))["social_links"] == (False, "")
+    missing = (False, "missing https://facebook.com/examplecafe")
+    assert _checks(_evidence(structured=one))["social_links"] == missing
     both = StructuredData(
         same_as=("https://www.instagram.com/examplecafe/", "https://m.facebook.com/ExampleCafe")
     )

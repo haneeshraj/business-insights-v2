@@ -307,7 +307,8 @@ class StructuredData(_Frozen):
 
 
 class Contacts(_Frozen):
-    """Contact details found in the page text."""
+    """Contact details found on the page: in its text, its call and email links, and its
+    structured data."""
 
     phones: tuple[PhoneNumber, ...] = ()
     emails: tuple[str, ...] = ()
@@ -324,8 +325,10 @@ class Evidence(_Frozen):
     logo_candidates: tuple[LogoCandidate, ...] = ()
     text: TextRegions = Field(default_factory=TextRegions)
     contacts: Contacts = Field(default_factory=Contacts)
+    social_links: tuple[SocialProfile, ...] = ()  # profiles the page links to or lists
     countries: tuple[CountryCode, ...] = ()  # likely countries, most likely first
     screenshot_file: str | None = None
+    contact_pages: tuple[WebUrl, ...] = ()  # the site's own pages likely to hold contact details
     extra_pages: tuple[WebUrl, ...] = ()  # contact and about pages that were also read
 
     @model_validator(mode="after")
