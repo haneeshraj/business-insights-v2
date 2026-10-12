@@ -208,6 +208,7 @@ class PageInfo(_Frozen):
     final_url: WebUrl | None = None  # after redirects; None when the page didn't load
     kind: PageKind = PageKind.UNKNOWN
     platform: str | None = None  # the platform's name, for platform profiles
+    profile_name: str | None = None  # the business's name as its profile shows it
     own_website: WebUrl | None = None  # the business's own site, when its profile links to one
 
     @model_validator(mode="after")
@@ -215,8 +216,11 @@ class PageInfo(_Frozen):
         is_profile = self.kind is PageKind.PLATFORM_PROFILE
         if is_profile and not self.platform:
             raise ValueError("a platform profile needs the platform's name")
-        if not is_profile and (self.platform is not None or self.own_website is not None):
-            raise ValueError("only platform profiles have a platform or a linked own website")
+        profile_only = (self.platform, self.profile_name, self.own_website)
+        if not is_profile and any(value is not None for value in profile_only):
+            raise ValueError(
+                "only platform profiles have a platform, a profile name or a linked own website"
+            )
         return self
 
 

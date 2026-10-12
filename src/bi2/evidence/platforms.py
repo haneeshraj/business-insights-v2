@@ -6,10 +6,11 @@ import tomllib
 from functools import cache
 from importlib.resources import files
 from typing import NamedTuple
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from bi2.core.text import clean_space, fold
 from bi2.core.urls import host, registrable_domain
 
 
@@ -23,6 +24,7 @@ class Platform(BaseModel):
     domains: tuple[str, ...] = Field(min_length=1)
     profiles: tuple[str, ...] = ()  # patterns for a profile page's path
     not_handles: tuple[str, ...] = ()  # handles that are the platform's own pages
+    link_wrappers: tuple[str, ...] = ()  # hosts the platform sends outside links through
 
 
 class Profile(NamedTuple):
@@ -80,4 +82,38 @@ def find_profile(url: str) -> Profile | None:
         match = pattern.match(path)
         if match and match.group("handle").casefold() not in _not_handles(key):
             return Profile(key, match.group("handle"))
+    return None
+
+
+def page_profile(url: str, final_url: str) -> Profile | None:
+    """The profile a loaded page is: where the page ended up or, failing that, the URL asked
+    for, since platforms often send visitors who aren't signed in to a login page."""
+    return find_profile(final_url) or find_profile(url)
+
+
+# Where a profile page's title stops naming the business: at " (@handle)", " | Facebook",
+# " - Profile | Pinterest", " / X", or a bullet or middle dot before the platform's name.
+_TITLE_END = re.compile(r"\s+[(|\-/\N{BULLET}\N{MIDDLE DOT}]")
+
+
+def profile_name(title: str, platform: str) -> str | None:
+    """The business's name in a profile page's title: "Starbucks" from "Starbucks (starbucks)
+    - Profile | Pinterest". None when the title names only the platform, as login pages'
+    titles do."""
+    name = clean_space(_TITLE_END.split(title, maxsplit=1)[0])
+    if not name or fold(name) == fold(platforms()[platform].name):
+        return None
+    return name
+
+
+def unwrap_link(url: str, platform: str) -> str | None:
+    """The outside address in a link the platform sends through one of its link wrappers, such
+    as l.instagram.com/?u=..., or None for any other link."""
+    if host(url) not in platforms()[platform].link_wrappers:
+        return None
+    query = parse_qs(urlsplit(url).query)
+    for key in ("u", "url", "q"):
+        for target in query.get(key, []):
+            if target.startswith(("http://", "https://")):
+                return target
     return None

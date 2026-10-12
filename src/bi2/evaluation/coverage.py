@@ -47,6 +47,7 @@ class FieldCoverage(BaseModel):
 def names_in(ev: Evidence) -> list[tuple[str, str]]:
     """Every name in the evidence that could be the business's, with where it was found."""
     found = [
+        ("profile name", ev.page.profile_name or ""),
         ("structured data", ev.structured.name or ""),
         ("structured data legal name", ev.structured.legal_name or ""),
         ("site name", ev.meta.site_name),

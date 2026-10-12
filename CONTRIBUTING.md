@@ -8,8 +8,9 @@ Thanks for helping. This guide covers setup and the checks. [docs/codebase.md](d
 2. Clone the repository, then run these in its folder:
 
    ```
-   uv sync                      # creates .venv with the package and the dev tools
-   uv run pre-commit install    # runs the checks before each commit
+   uv sync                              # creates .venv with the package and the dev tools
+   uv run pre-commit install            # runs the checks before each commit
+   uv run playwright install chromium   # the browser that loads pages; its tests need it
    ```
 
 Development uses Python 3.12, the oldest version v2 supports (see `.python-version`). uv installs it if you don't have it.
@@ -27,6 +28,19 @@ uv run pytest            # tests
 ```
 
 Tests that need network access and API keys are marked `live` and are skipped unless you run `uv run pytest -m live`.
+
+## Trying one part on real sites
+
+`bi2 dev` runs one part of the pipeline on real websites, so a change can be checked on its own. What it saves goes in `bi2-results/`, which git ignores.
+
+```
+uv run bi2 dev fetch https://example.com        # load a page, show what the browser captured
+uv run bi2 dev fetch --gold eval/gold.toml      # load every gold-set site and save the pages
+uv run bi2 dev evidence https://example.com     # show the evidence taken from a page
+uv run bi2 dev evidence --saved bi2-results/dev/fetch --gold eval/gold.toml
+```
+
+The last one rebuilds the evidence of saved pages without loading them again, and counts how many of the gold set's answers the evidence already holds. Run it before and after changing an extractor.
 
 ## The rules that matter most
 

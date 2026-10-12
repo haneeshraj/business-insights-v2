@@ -4,7 +4,7 @@
 # A postcode pattern with a "postcode" group needs the text around it, such as a US state
 # before a ZIP code. Adding a country is one entry. Read by bi2/evidence/countries.py.
 
-version = "2026-10-12"
+version = "2026-10-11"
 
 [CA]
 names = ["Canada"]

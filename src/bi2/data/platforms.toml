@@ -8,15 +8,18 @@
 # profiles:    regular expressions for the path of a profile page, without a trailing slash;
 #              the part that names the profile is in a "handle" group
 # not_handles: handles that are really the platform's own pages, like instagram.com/explore
+# link_wrappers: hosts the platform sends outside links through, with the real address in a
+#              "u", "url" or "q" parameter, like l.instagram.com/?u=https://example-cafe.ca
 
-version = "2026-10-12"
+version = "2026-10-11"
 
 [instagram]
 name = "Instagram"
 social = true
 domains = ["instagram.com"]
 profiles = ['^/(?P<handle>[A-Za-z0-9_.]+)$']
-not_handles = ["about", "accounts", "developer", "direct", "explore", "legal", "p", "privacy", "reel", "reels", "stories", "terms", "tv", "web"]
+not_handles = ["about", "accounts", "developer", "direct", "directory", "explore", "legal", "p", "popular", "privacy", "reel", "reels", "stories", "terms", "topics", "tv", "web"]
+link_wrappers = ["l.instagram.com"]
 
 [facebook]
 name = "Facebook"
@@ -28,6 +31,7 @@ profiles = [
     '^/(?P<handle>profile\.php)$',
 ]
 not_handles = ["ads", "business", "dialog", "events", "gaming", "groups", "hashtag", "help", "home.php", "l.php", "legal", "login", "marketplace", "permalink.php", "photo.php", "plugins", "policies", "privacy", "settings", "share", "share.php", "sharer", "sharer.php", "story.php", "tr", "watch"]
+link_wrappers = ["l.facebook.com", "lm.facebook.com"]
 
 [x]
 name = "X"
@@ -78,3 +82,45 @@ social = true
 domains = ["untappd.com"]
 profiles = ['^/(?P<handle>[A-Za-z0-9_-]+)$', '^/(?P<handle>brewery/\d+)$', '^/(?P<handle>v/[^/]+/\d+)$']
 not_handles = ["account", "b", "beer", "brewery", "create", "home", "login", "search", "signup", "thepub", "user", "v", "w"]
+
+# --- Not social media: review sites, maps, ordering and shop platforms --------
+
+[yelp]
+name = "Yelp"
+domains = ["yelp.*"]
+profiles = ['^/biz/(?P<handle>[^/]+)$']
+
+[tripadvisor]
+name = "Tripadvisor"
+domains = ["tripadvisor.*"]
+profiles = ['^/(?P<handle>(?:Restaurant|Hotel|Attraction)_Review-[^/]+\.html)$']
+
+[google_maps]
+name = "Google Maps"
+domains = ["google.*"]
+profiles = ['^/maps/place/(?P<handle>[^/]+)(?:/.*)?$']
+
+[ubereats]
+name = "Uber Eats"
+domains = ["ubereats.com"]
+profiles = ['^/(?:[a-z]{2}(?:-[a-z]{2})?/)?store/(?P<handle>[^/]+)(?:/[^/]+)?$']
+
+[doordash]
+name = "DoorDash"
+domains = ["doordash.com"]
+profiles = ['^/store/(?P<handle>[^/]+)$']
+
+[opentable]
+name = "OpenTable"
+domains = ["opentable.*"]
+profiles = ['^/r/(?P<handle>[^/]+)$']
+
+[etsy]
+name = "Etsy"
+domains = ["etsy.com"]
+profiles = ['^/shop/(?P<handle>[^/]+)$']
+
+[linktree]
+name = "Linktree"
+domains = ["linktr.ee"]
+profiles = ['^/(?P<handle>[A-Za-z0-9_.]+)$']

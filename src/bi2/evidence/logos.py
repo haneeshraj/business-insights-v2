@@ -13,6 +13,7 @@ from bi2.core.models import Box, LogoCandidate, PageMeta, RenderedImage, Structu
 from bi2.core.text import fold, normalize_company_name
 from bi2.core.urls import absolute_url, image_key, registrable_domain
 from bi2.evidence.document import Document, attribute
+from bi2.evidence.platforms import Profile, platforms
 
 _KEEP: Final = 8
 
@@ -27,6 +28,7 @@ _NOT_LOGO: Final = re.compile(
 # Points for each sign that an image is the logo, or isn't.
 _LINKS_HOME, _IN_HEADER, _SAYS_LOGO, _SAYS_NAME = 4, 3, 3, 2
 _DECLARED, _SEEN_AGAIN = 3, 1  # named as the logo by structured data; drawn more than once
+_PROFILE_PICTURE = 3  # on a platform's page, the business's profile picture is its logo
 
 
 class _Scored(NamedTuple):
@@ -41,38 +43,64 @@ class _Scored(NamedTuple):
     links_home: bool
 
 
-def _brand_words(meta: PageMeta, structured: StructuredData, page_url: str) -> set[str]:
-    """Words of the business's name, to spot in an image's label or file name."""
-    names = (structured.name or "", meta.site_name, registrable_domain(page_url).split(".")[0])
+def _words_of(names: Iterable[str]) -> set[str]:
     return {
         word for name in names for word in normalize_company_name(name).split() if len(word) >= 4
     }
+
+
+def _brand_words(meta: PageMeta, structured: StructuredData, page_url: str) -> set[str]:
+    """Words of the business's name, to spot in an image's label or file name."""
+    return _words_of(
+        (structured.name or "", meta.site_name, registrable_domain(page_url).split(".")[0])
+    )
 
 
 def _file_name(url: str) -> str:
     return unquote(urlsplit(url).path.rsplit("/", 1)[-1])
 
 
+def _words(image: RenderedImage) -> str:
+    return fold(f"{image.alt} {image.css_class} {image.element_id} {_file_name(image.url)}")
+
+
+def _size_points(box: Box | None) -> int:
+    """Points for where an image was drawn and how big it was."""
+    if box is None:
+        return 0
+    if box.width == 0 or box.height == 0:
+        return -1  # not shown, often the logo for another screen size
+    if box.width < 16 or box.height < 10:
+        return -3  # an icon
+    if box.width > 900 or box.height > 500:
+        return -3  # a photo
+    return (box.y < 300) + (40 <= box.width <= 600 and 16 <= box.height <= 300)
+
+
 def _points(image: RenderedImage, brand: set[str]) -> int:
-    """How much an image drawn on the page looks like the logo."""
-    words = fold(f"{image.alt} {image.css_class} {image.element_id} {_file_name(image.url)}")
+    """How much an image drawn on the business's own site looks like its logo."""
+    words = _words(image)
     # A header's logo sits at the top. Images far down in a "header" are in a drop-down menu.
     near_top = image.box is None or image.box.y < 400
     points = _LINKS_HOME * image.links_home + _IN_HEADER * (image.in_header and near_top)
     points += _SAYS_LOGO * ("logo" in words) + _SAYS_NAME * any(word in words for word in brand)
     if _NOT_LOGO.search(words):
         points -= 4
-    box = image.box
-    if box is not None:
-        if box.width == 0 or box.height == 0:
-            points -= 1  # not shown, often the logo for another screen size
-        elif box.width < 16 or box.height < 10:
-            points -= 3  # an icon
-        elif box.width > 900 or box.height > 500:
-            points -= 3  # a photo
-        else:
-            points += (box.y < 300) + (40 <= box.width <= 600 and 16 <= box.height <= 300)
-    return points
+    return points + _size_points(image.box)
+
+
+def _platforms_own(image: RenderedImage, platform_name: str) -> bool:
+    """Whether an image on a platform's page is the platform's, like its logo in the header."""
+    return image.links_home or fold(platform_name) in fold(image.alt)
+
+
+def _profile_points(image: RenderedImage, brand: set[str]) -> int:
+    """How much an image on a platform's page looks like the business's logo, which there is
+    its profile picture."""
+    words = _words(image)
+    points = _SAYS_NAME * any(word in words for word in brand)
+    points += _PROFILE_PICTURE * ("profile" in words)
+    return points + _size_points(image.box)
 
 
 def _icons(doc: Document, base_url: str) -> Iterable[tuple[str, int]]:
@@ -110,10 +138,16 @@ def extract_logo_candidates(
     *,
     meta: PageMeta,
     structured: StructuredData,
+    profile: Profile | None = None,
+    profile_name: str | None = None,
 ) -> tuple[LogoCandidate, ...]:
     """The images most likely to be the logo, best first and numbered from 1: images drawn on
-    the page, the logo the structured data names, and the site's icons."""
-    brand = _brand_words(meta, structured, base_url)
+    the page, the logo the structured data names, and the site's icons. On a platform's page,
+    given its profile, the business's profile picture counts instead of the platform's logo."""
+    if profile is None:
+        brand = _brand_words(meta, structured, base_url)
+    else:
+        brand = _words_of((profile_name or "", profile.handle.lstrip("@")))
     found: list[_Scored] = []
     if structured.logo_url:
         found.append(
@@ -125,9 +159,15 @@ def extract_logo_candidates(
         url = image.url if image.url.startswith(("http://", "https://")) else None
         if url is None and image.kind != "svg":
             continue  # a placeholder or an inline data image, with no address to use
+        if profile is None:
+            points = _points(image, brand)
+        elif _platforms_own(image, platforms()[profile.platform].name):
+            continue
+        else:
+            points = _profile_points(image, brand)
         found.append(
             _Scored(
-                _points(image, brand),
+                points,
                 order,
                 image.kind,
                 url,
@@ -138,10 +178,11 @@ def extract_logo_candidates(
                 image.links_home,
             )
         )
-    found += [
-        _Scored(points, 10_000 + n, "icon", url, "", "", None, False, False)
-        for n, (url, points) in enumerate(_icons(doc, base_url))
-    ]
+    if profile is None:  # a platform's icons are its own
+        found += [
+            _Scored(points, 10_000 + n, "icon", url, "", "", None, False, False)
+            for n, (url, points) in enumerate(_icons(doc, base_url))
+        ]
     ranked = sorted(_combine(found), key=lambda candidate: (-candidate.points, candidate.order))
     return tuple(
         LogoCandidate(

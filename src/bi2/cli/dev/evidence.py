@@ -30,6 +30,8 @@ def _rows(ev: Evidence) -> list[tuple[str, str]]:
     data = ev.structured
     return [
         ("Page", page),
+        ("Profile name", ev.page.profile_name or ""),
+        ("Own website", ev.page.own_website or ""),
         ("Title", ev.meta.title),
         ("Site name", ev.meta.site_name),
         ("og:title", ev.meta.og_title),

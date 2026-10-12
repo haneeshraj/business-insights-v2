@@ -3,6 +3,7 @@
 from selectolax.lexbor import LexborHTMLParser, LexborNode
 
 from bi2.core.text import clean_space
+from bi2.core.urls import absolute_url
 
 Document = LexborHTMLParser
 Node = LexborNode
@@ -28,6 +29,16 @@ def parse_html(html: str) -> Document:
 def attribute(node: Node, name: str) -> str:
     """An attribute's value with whitespace trimmed, or "" when it's missing."""
     return (node.attributes.get(name) or "").strip()
+
+
+def links(doc: Document, base_url: str) -> list[tuple[str, str]]:
+    """Every web link on the page, as (URL, link text), in page order."""
+    found = []
+    for anchor in doc.css("a[href]"):
+        url = absolute_url(base_url, attribute(anchor, "href"))
+        if url:
+            found.append((url, anchor.text()))
+    return found
 
 
 def visible_text(node: Node) -> str:

@@ -360,6 +360,16 @@ The URL a user gives may not be the business's own website. It may be the busine
 - Gold set: v1's 24 sites with confirmed answers, plus about 30 non-food sites (retail, services, e-commerce, some high-risk) so the food bias shows up. A first draft of the answers can come from v1's outputs and the live sites, for a person to confirm.
 - Eval runner: accuracy per field, cost per site across all calls, time per site, and the share of fields left as `needs_review`.
 - Run v1 on the same set to get a baseline, then judge every change against it.
+- Evidence coverage: `bi2 dev evidence --saved <pages> --gold eval/gold.toml` counts how many gold answers the evidence already holds, before any model runs. Fields it can't cover need search or a model, so it shows where the cost will go. On 2026-10-11, of the 56 gold sites:
+
+  | Answer | In the evidence |
+  |---|---|
+  | Company name | 95% |
+  | Logo, among the candidates / as the top candidate | 94% / 85% |
+  | Social links | 100% |
+  | Phone | 83% |
+  | Country, as the top guess | 74% |
+  | Address, in the page text / in structured data | 33% / 22% |
 
 ## Build order
 
