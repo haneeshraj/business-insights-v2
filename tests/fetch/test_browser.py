@@ -61,6 +61,20 @@ async def test_header_logo_knows_where_it_sits(fetcher: BrowserFetcher, site: st
     assert (logo.box.width, logo.box.height) == (160, 60)
 
 
+async def test_pages_that_scroll_smoothly_are_read_from_the_top(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    logo = _image((await fetcher.fetch(f"{site}/smooth")).images, "Fixed logo")
+    assert logo.box is not None
+    assert logo.box.y < 50  # read with the page back at the top, not part of the way down
+    assert logo.links_home  # /en/home.html is a home page too
+
+
+async def test_a_languages_home_page_counts_as_home(fetcher: BrowserFetcher, site: str) -> None:
+    footer_logo = _image((await fetcher.fetch(f"{site}/cafe")).images, "Footer logo")
+    assert footer_logo.links_home  # it links to /en/
+
+
 async def test_lazy_images_report_their_real_url(fetcher: BrowserFetcher, site: str) -> None:
     hero = _image((await fetcher.fetch(f"{site}/cafe")).images, "Our cafe")
     assert hero.url == f"{site}/images/hero.png"

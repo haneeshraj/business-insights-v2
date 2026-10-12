@@ -44,10 +44,12 @@ async () => {
   const height = document.documentElement.scrollHeight;
   if (height <= window.innerHeight) return null;
   const pause = (ms) => new Promise((done) => setTimeout(done, ms));
-  window.scrollTo(0, height);
+  // "instant", because pages that scroll smoothly would still be on their way back up when
+  // the screenshot is taken.
+  window.scrollTo({ top: height, behavior: "instant" });
   await pause(600);
   const seen = { page: performance.timeOrigin, text: REGION_TEXT };
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, behavior: "instant" });
   await pause(300);
   return seen;
 }
@@ -59,12 +61,15 @@ async () => {
 READ = """
 () => {
   const absolute = (value) => { try { return new URL(value, location.href).href; } catch { return ""; } };
+  // Home pages live at "/", at a language's home such as "/en", "/en-ca" or "/ca/en", or at a
+  // home or index page under either: "/home", "/en/home.html", "/ca/en/homepage".
+  const homePath = /^\\/(?:[a-z]{2}(?:[-_][a-z]{2})?(?:\\/[a-z]{2})?\\/?)?(?:(?:home(?:page)?|index)(?:\\.[a-z]{3,4})?\\/?)?$/i;
   const linksHome = (el) => {
     const link = el.closest("a[href]");
     if (!link) return false;
     try {
       const target = new URL(link.href, location.href);
-      return target.origin === location.origin && (target.pathname === "/" || target.pathname === "");
+      return target.origin === location.origin && homePath.test(target.pathname);
     } catch { return false; }
   };
   const inHeader = (el) => !!el.closest("header, nav, [role=banner], [class*=header i], [id*=header i]");

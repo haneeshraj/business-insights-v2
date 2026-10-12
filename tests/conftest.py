@@ -32,7 +32,9 @@ CAFE_PAGE = b"""<!doctype html>
     <img src="" data-src="/images/late.png" alt="Late image" width="80" height="80">
     <img src="" alt="Image with no source" width="80" height="80">
   </main>
-  <footer>Example Cafe, 12 Queen St W, Toronto</footer>
+  <footer>Example Cafe, 12 Queen St W, Toronto
+    <a href="/en/"><img src="/images/footer-logo.png" alt="Footer logo" width="80" height="30"></a>
+  </footer>
 </body>
 </html>"""
 
@@ -52,6 +54,16 @@ LAZY_FOOTER_PAGE = b"""<!doctype html>
     footer.textContent = seen[0].isIntersecting ? "12 Queen St W, Toronto" : "";
   }).observe(footer);
 </script>
+</body></html>"""
+
+# A long page that scrolls smoothly, with its logo in a header fixed to the top of the screen.
+SMOOTH_PAGE = b"""<!doctype html>
+<html style="scroll-behavior: smooth"><body style="margin: 0">
+<header style="position: fixed; top: 0; width: 100%">
+  <a href="/en/home.html"><img src="/images/logo.png" alt="Fixed logo" width="100" height="40"></a>
+</header>
+<main style="height: 4000px; padding-top: 60px">A long page</main>
+<footer>Bottom</footer>
 </body></html>"""
 
 # Bot checks like Akamai's that say "200 OK": one moves on to the real page, one never does.
@@ -99,6 +111,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, "text/html", CAFE_PAGE)
         elif path == "/lazy-footer":
             self._send(200, "text/html", LAZY_FOOTER_PAGE)
+        elif path == "/smooth":
+            self._send(200, "text/html", SMOOTH_PAGE)
         elif path == "/check":
             self._send(403, "text/html", CHECK_PAGE)
         elif path == "/check-ok":
