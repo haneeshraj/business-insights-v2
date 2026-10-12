@@ -42,6 +42,8 @@ uv run bi2 dev evidence --saved bi2-results/dev/fetch --gold eval/gold.toml
 
 The last one rebuilds the evidence of saved pages without loading them again, and counts how many of the gold set's answers the evidence already holds. Run it before and after changing an extractor.
 
+`bi2 dev evidence` also writes `report.html` next to the evidence: one page per run with every site's screenshot, its evidence, its logo candidates as pictures, and its gold-set checks. Add `--open` to open it in your browser.
+
 ## The rules that matter most
 
 - **Respect the layers** described in docs/codebase.md. import-linter enforces them.
