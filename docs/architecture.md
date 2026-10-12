@@ -63,6 +63,7 @@ Considered and not used, because v2 doesn't need them at its size: Java and Spri
   - `bi2 init`: create the config file and add keys.
   - `bi2 doctor`: check the keys, the browser install and network access.
   - `bi2 eval`: run the gold set (for contributors).
+  - `bi2 review`: check a run's answers in the browser, right or wrong with a note, and see how often v2 is right (for contributors).
 - **Output:** a readable table by default, and `--json`, `--jsonl` or `--csv` for scripts and spreadsheets. Results, evidence and images are saved to a local folder.
 - **Scripting:** exit codes report failures, and `--fail-on needs_review` lets a script treat unsure fields as failures.
 - **Cost:** every run ends with the tokens and money spent on the user's keys.
@@ -360,6 +361,7 @@ The URL a user gives may not be the business's own website. It may be the busine
 - Gold set: v1's 24 sites with confirmed answers, plus about 30 non-food sites (retail, services, e-commerce, some high-risk) so the food bias shows up. A first draft of the answers can come from v1's outputs and the live sites, for a person to confirm.
 - Eval runner: accuracy per field, cost per site across all calls, time per site, and the share of fields left as `needs_review`.
 - Run v1 on the same set to get a baseline, then judge every change against it.
+- Checked answers: `bi2 review` shows a run's answers with Right and Wrong buttons and a note box, and keeps each check in `eval/verifications.jsonl`. With the gold set's answers, the checks put every answer in one of four groups: kept and right (true positive), kept but wrong (false positive), sent on but right (false negative), sent on and wrong (true negative). They also show how often each field was right at each confidence. That record is what the decision of which answers go to an AI step will be learned from; the decision itself is still to be designed.
 - Evidence coverage: `bi2 dev evidence --saved <pages> --gold eval/gold.toml` counts how many gold answers the evidence already holds, before any model runs. Fields it can't cover need search or a model, so it shows where the cost will go. On 2026-10-11, of the 56 gold sites:
 
   | Answer | In the evidence |

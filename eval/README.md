@@ -3,6 +3,7 @@
 This folder holds what v2 is measured against. The code that does the measuring is in `src/bi2/evaluation`.
 
 - `gold.toml`: the gold set, sites with known answers.
+- `verifications.jsonl`: answers a person checked on the review page, with their notes.
 - `baselines/`: tools for measuring other systems on the same sites, starting with v1.
 
 ## The gold file
@@ -51,6 +52,19 @@ uv run bi2 eval score eval/gold.toml results.jsonl
 ```
 
 Add `--confirmed-only` to score only sites a person has checked, and `--json report.json` to save the full report.
+
+## Checked answers
+
+`bi2 review` saves each check to `verifications.jsonl`, one per line, newest last:
+
+```json
+{"site": "https://www.example-cafe.ca/", "field": "logo", "answer": "example-cafe.ca/logo-dark.png", "shown": "https://www.example-cafe.ca/logo-dark.png", "verdict": "right", "note": "the dark copy of the logo", "status": "ok", "confidence": 0.9, "checked_at": "2026-10-12T23:42:50Z"}
+```
+
+- `answer` is the answer written the forgiving way it's compared, so a check still applies when a later run gives the same answer. When a run gives a different answer, the old check doesn't apply to it.
+- `shown` is the answer as the page showed it, `status` and `confidence` are how v2 had marked it, and `note` is what the person saw.
+- A newer check of the same answer replaces an older one. The older lines stay, as history.
+- A person's check counts over the gold set's, since the gold set can be wrong: it lists one file for a logo that has several.
 
 ## Reviewing the gold set
 
