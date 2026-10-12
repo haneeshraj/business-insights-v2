@@ -232,6 +232,35 @@ class Box(_Frozen):
     height: float = Field(ge=0)
 
 
+class RenderedImage(_Frozen):
+    """An image-like element as the browser drew it, before any judgment about what it is."""
+
+    kind: Literal["img", "svg", "background"]
+    url: str = ""  # the resolved URL; may be a data: placeholder; empty for inline SVG
+    alt: str = ""  # for SVG, its aria-label or <title>
+    css_class: str = ""
+    element_id: str = ""
+    box: Box | None = None
+    in_header: bool = False
+    links_home: bool = False  # sits inside a link to the site's home page
+
+
+class PageSnapshot(_Frozen):
+    """What loading a page captured. Evidence is built from this; nothing here is judged yet."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", ser_json_bytes="base64", val_json_bytes="base64"
+    )
+
+    url: WebUrl  # the URL that was asked for
+    final_url: WebUrl  # after redirects
+    status_code: int | None = None
+    html: str  # the page after its scripts ran
+    images: tuple[RenderedImage, ...] = ()
+    screenshot: bytes | None = None  # JPEG of the first screen
+    fetched_at: AwareDatetime
+
+
 class LogoCandidate(_Frozen):
     """An image on the page that might be the logo."""
 
