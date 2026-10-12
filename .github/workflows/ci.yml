@@ -35,4 +35,5 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: uv sync --locked
+      - run: uv run playwright install --with-deps chromium  # for the browser tests
       - run: uv run pytest
