@@ -1,5 +1,7 @@
 """Tests for BrowserFetcher, against the local test website."""
 
+import time
+from collections.abc import AsyncIterator
 from typing import get_args
 
 import pytest
@@ -9,6 +11,17 @@ from bi2.core.models import RenderedImage
 from bi2.fetch.browser import BrowserFetcher, BrowserName
 
 pytestmark = pytest.mark.browser
+
+FULL_BROWSERS = ("chromium", "chrome", "edge")
+
+
+@pytest.fixture
+async def auto_fetcher() -> AsyncIterator[BrowserFetcher]:
+    """A fetcher left to pick its browsers, so it falls back on a full one."""
+    async with BrowserFetcher(timeout_s=10, allow_private=True) as fetcher:
+        if fetcher.browser_name != "chromium-shell":
+            pytest.skip("needs Playwright's Chromium shell, the browser that falls back")
+        yield fetcher
 
 
 def _image(images: tuple[RenderedImage, ...], alt: str) -> RenderedImage:
@@ -60,6 +73,51 @@ async def test_redirects_are_followed(fetcher: BrowserFetcher, site: str) -> Non
     assert snapshot.final_url == f"{site}/cafe"
 
 
+async def test_bot_checks_are_given_time_to_pass(fetcher: BrowserFetcher, site: str) -> None:
+    snapshot = await fetcher.fetch(f"{site}/check")
+    assert snapshot.status_code == 200  # the real page's status, not the check's
+    assert snapshot.final_url == f"{site}/cafe"
+    assert "12 Queen St W" in snapshot.html
+
+
+async def test_error_pages_with_no_scripts_are_not_waited_on(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    started = time.monotonic()
+    snapshot = await fetcher.fetch(f"{site}/denied")
+    assert snapshot.status_code == 403
+    assert time.monotonic() - started < 8  # waiting for a bot check would take 10 s
+
+
+async def test_pages_that_load_stay_in_the_shell(auto_fetcher: BrowserFetcher, site: str) -> None:
+    snapshot = await auto_fetcher.fetch(f"{site}/cafe")
+    assert snapshot.loaded_with == "chromium-shell"
+
+
+async def test_refused_pages_load_again_in_a_full_browser(
+    auto_fetcher: BrowserFetcher, site: str
+) -> None:
+    snapshot = await auto_fetcher.fetch(f"{site}/refused-once/auto")
+    assert snapshot.status_code == 200
+    assert snapshot.loaded_with in FULL_BROWSERS
+
+
+async def test_dropped_connections_load_again_in_a_full_browser(
+    auto_fetcher: BrowserFetcher, site: str
+) -> None:
+    snapshot = await auto_fetcher.fetch(f"{site}/dropped-once/auto")
+    assert snapshot.status_code == 200
+    assert snapshot.loaded_with in FULL_BROWSERS
+
+
+async def test_a_chosen_browser_is_never_swapped(
+    fetcher: BrowserFetcher, browser: BrowserName, site: str
+) -> None:
+    snapshot = await fetcher.fetch(f"{site}/refused-once/chosen")
+    assert snapshot.status_code == 403
+    assert snapshot.loaded_with == browser
+
+
 async def test_slow_pages_time_out(browser: BrowserName, site: str) -> None:
     async with BrowserFetcher(timeout_s=1, browser=browser, allow_private=True) as fetcher:
         with pytest.raises(PageTimeout, match="didn't load within 1 seconds"):
@@ -79,5 +137,5 @@ async def test_each_browser_can_load_pages(name: BrowserName, site: str) -> None
             snapshot = await fetcher.fetch(f"{site}/cafe")
     except BrowserUnavailable:
         pytest.skip(f"{name} isn't installed on this machine")
-    assert fetcher.browser_name == name
+    assert fetcher.browser_name == snapshot.loaded_with == name
     assert "12 Queen St W" in snapshot.html

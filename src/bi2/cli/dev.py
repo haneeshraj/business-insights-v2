@@ -38,6 +38,7 @@ class FetchCheck(BaseModel):
     seconds: float
     images: int = 0
     final_url: str = ""
+    browser: str = ""  # the browser that loaded it
     detail: str = ""
 
 
@@ -86,11 +87,16 @@ def _logo_table(images: tuple[RenderedImage, ...]) -> Table:
     return table
 
 
-def _summary_table(snapshot: PageSnapshot, seconds: float, browser: str, folder: Path) -> Table:
+def _summary_table(
+    snapshot: PageSnapshot, seconds: float, first_browser: str, folder: Path
+) -> Table:
     table = Table(show_header=False, title=f"Loaded {snapshot.url}")
     table.add_column(style="bold")
     table.add_column(overflow="fold")
-    table.add_row("Browser", f"{browser} (headless)")
+    browser = f"{snapshot.loaded_with} (headless)"
+    if snapshot.loaded_with != first_browser:
+        browser += f", after {first_browser} was refused"
+    table.add_row("Browser", browser)
     table.add_row("Final URL", snapshot.final_url)
     table.add_row("Status", str(snapshot.status_code or "unknown"))
     table.add_row("Time", f"{seconds:.1f} s")
@@ -125,6 +131,7 @@ async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
         seconds=time.monotonic() - started,
         images=len(snapshot.images),
         final_url=snapshot.final_url if snapshot.final_url != url else "",
+        browser=snapshot.loaded_with,
     )
 
 
@@ -158,16 +165,19 @@ async def _fetch_gold(
             result = await done
             checks.append(result)
             status = f" ({result.status_code})" if result.status_code else ""
+            again = ""
+            if result.browser and result.browser != fetcher.browser_name:
+                again = f"  (loaded again in {result.browser})"
             console.print(
                 f"[{len(checks)}/{len(urls)}] {result.outcome}{status}  {result.url}  "
-                f"{result.seconds:.1f} s",
+                f"{result.seconds:.1f} s{again}",
                 markup=False,
                 highlight=False,
             )
     return checks
 
 
-def _report_gold(checks: list[FetchCheck], out: Path, console: Console) -> None:
+def _report_gold(checks: list[FetchCheck], out: Path, first_browser: str, console: Console) -> None:
     """Save every site's outcome to summary.json and print the totals."""
     out.mkdir(parents=True, exist_ok=True)
     summary = "[\n" + ",\n".join(c.model_dump_json(indent=2) for c in checks) + "\n]\n"
@@ -177,6 +187,12 @@ def _report_gold(checks: list[FetchCheck], out: Path, console: Console) -> None:
     average = sum(loaded_times) / len(loaded_times) if loaded_times else 0.0
     totals = ", ".join(f"{count} {outcome}" for outcome, count in counts.most_common())
     console.print(f"\n{totals}. Loaded pages took {average:.1f} s on average.", markup=False)
+    again = sum(1 for check in checks if check.browser and check.browser != first_browser)
+    if again:
+        console.print(
+            f"Loaded again in a full browser after {first_browser} was refused: {again}.",
+            markup=False,
+        )
     console.print(f"Details for each site are in {out}", markup=False)
 
 
@@ -194,7 +210,10 @@ def fetch(
     ] = Path("bi2-results/dev/fetch"),
     browser: Annotated[
         BrowserChoice,
-        typer.Option(help="Which browser to use. auto tries chromium, then chrome, then edge."),
+        typer.Option(
+            help="Which browser to use. auto loads pages in chromium-shell, and loads pages it's "
+            "refused again in a full browser."
+        ),
     ] = "auto",
     timeout: Annotated[float, typer.Option(help="Seconds to wait for each page.")] = 20.0,
     concurrency: Annotated[int, typer.Option(help="Pages loaded at once with --gold.")] = 4,
@@ -210,7 +229,7 @@ def fetch(
         if gold is not None:
             urls = [site.url for site in load_gold_set(gold).sites]
             checks = asyncio.run(_fetch_gold(fetcher, urls, out, concurrency, console))
-            _report_gold(checks, out, console)
+            _report_gold(checks, out, fetcher.browser_name or "", console)
             code = 0
         else:
             assert url is not None

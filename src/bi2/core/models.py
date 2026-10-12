@@ -259,6 +259,7 @@ class PageSnapshot(_Frozen):
     images: tuple[RenderedImage, ...] = ()
     screenshot: bytes | None = None  # JPEG of the first screen
     fetched_at: AwareDatetime
+    loaded_with: str  # the browser that loaded it, like "chromium-shell" or "edge"
 
 
 class LogoCandidate(_Frozen):

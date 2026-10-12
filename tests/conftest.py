@@ -33,24 +33,52 @@ CAFE_PAGE = b"""<!doctype html>
 </body>
 </html>"""
 
+# A bot check like Cloudflare's: an error page whose script moves on to the real page.
+CHECK_PAGE = b"""<!doctype html>
+<html><head><title>Just a moment...</title></head>
+<body><script>setTimeout(() => location.replace("/cafe"), 1000)</script></body></html>"""
+
+# A block like Akamai's: an error page with no scripts, so nothing will move it on.
+DENIED_PAGE = b"<html><head><title>Access Denied</title></head><body>Access Denied</body></html>"
+
 # A 1x1 transparent PNG.
 PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 )
 
+_visited: set[str] = set()
+_visited_lock = threading.Lock()
+
+
+def _first_visit(path: str) -> bool:
+    """True the first time a page is asked for, for the pages that only misbehave once."""
+    with _visited_lock:
+        first = path not in _visited
+        _visited.add(path)
+    return first
+
 
 class _Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
-        if self.path == "/redirect":
+        path = self.path
+        if path.startswith("/dropped-once/") and _first_visit(path):
+            return  # hang up without answering, like some sites do to bots
+        if path.startswith("/refused-once/") and _first_visit(path):
+            path = "/denied"
+        if path == "/redirect":
             self.send_response(302)
             self.send_header("Location", "/cafe")
             self.end_headers()
             return
-        if self.path == "/slow":
+        if path == "/slow":
             time.sleep(3)
-        if self.path in ("/cafe", "/slow"):
+        if path in ("/cafe", "/slow") or path.startswith(("/refused-once/", "/dropped-once/")):
             self._send(200, "text/html", CAFE_PAGE)
-        elif self.path.startswith("/images/"):
+        elif path == "/check":
+            self._send(403, "text/html", CHECK_PAGE)
+        elif path == "/denied":
+            self._send(403, "text/html", DENIED_PAGE)
+        elif path.startswith("/images/"):
             self._send(200, "image/png", PNG)
         else:
             self._send(404, "text/plain", b"not found")
@@ -84,7 +112,8 @@ async def _browser_that_starts() -> BrowserName | None:
 
 @pytest.fixture(scope="session")
 def browser() -> BrowserName:
-    """The browser the tests use: the first of Chromium, Chrome and Edge that starts."""
+    """The browser the tests use: the first of Playwright's Chromium (the shell, then the full
+    build), Chrome and Edge that starts."""
     try:
         name = asyncio.run(_browser_that_starts())
     except BrowserUnavailable:
