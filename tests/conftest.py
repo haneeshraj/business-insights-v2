@@ -24,6 +24,8 @@ CAFE_PAGE = b"""<!doctype html>
     <nav><a href="/menu">Menu</a></nav>
   </header>
   <main>
+    <p>Fresh coffee daily</p>
+    <p style="display: none">Staff only</p>
     <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
          data-src="/images/hero.png" alt="Our cafe" width="600" height="300">
     <svg width="120" height="40" aria-label="Example Cafe wordmark"><rect width="120" height="40"/></svg>
@@ -38,6 +40,19 @@ CAFE_PAGE = b"""<!doctype html>
 CHECK_PAGE = b"""<!doctype html>
 <html><head><title>Just a moment...</title></head>
 <body><script>setTimeout(() => location.replace("/cafe"), 1000)</script></body></html>"""
+
+# A tall page that shows its footer's text only while the footer is in view.
+LAZY_FOOTER_PAGE = b"""<!doctype html>
+<html><body>
+<main style="height: 3000px">A tall page</main>
+<footer id="footer" style="min-height: 50px"></footer>
+<script>
+  const footer = document.getElementById("footer");
+  new IntersectionObserver((seen) => {
+    footer.textContent = seen[0].isIntersecting ? "12 Queen St W, Toronto" : "";
+  }).observe(footer);
+</script>
+</body></html>"""
 
 # A block like Akamai's: an error page with no scripts, so nothing will move it on.
 DENIED_PAGE = b"<html><head><title>Access Denied</title></head><body>Access Denied</body></html>"
@@ -75,6 +90,8 @@ class _Handler(BaseHTTPRequestHandler):
             time.sleep(3)
         if path in ("/cafe", "/slow") or path.startswith(("/refused-once/", "/dropped-once/")):
             self._send(200, "text/html", CAFE_PAGE)
+        elif path == "/lazy-footer":
+            self._send(200, "text/html", LAZY_FOOTER_PAGE)
         elif path == "/check":
             self._send(403, "text/html", CHECK_PAGE)
         elif path == "/denied":

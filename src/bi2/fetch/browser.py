@@ -14,7 +14,8 @@ from pydantic import ValidationError
 
 from bi2 import __version__
 from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
-from bi2.core.models import PageSnapshot, RenderedImage
+from bi2.core.models import PageSnapshot, RenderedImage, TextRegions
+from bi2.fetch import page_scripts
 from bi2.fetch.safety import Resolver, ensure_public_url, host_is_public, system_resolver
 
 # Playwright's Chromium comes in two builds: "chromium-shell", stripped down for headless use,
@@ -38,75 +39,11 @@ _CHANNELS: dict[BrowserName, str | None] = {
 _FULL_BROWSERS: tuple[BrowserName, ...] = ("chromium", "chrome", "edge")
 _AUTO_ORDER: tuple[BrowserName, ...] = ("chromium-shell", *_FULL_BROWSERS)
 
-# Bot checks that run in the page, like Cloudflare's "Just a moment...", answer with an error
-# page whose scripts move on to the real page once the check has passed. This is true when
-# there's no such check to wait for: the page isn't an error page, or it has no scripts to run.
-_NO_BOT_CHECK_RUNNING = """
-() => {
-  const status = performance.getEntriesByType("navigation")[0]?.responseStatus ?? 0;
-  const runs = (s) => !s.type || s.type === "module" || s.type.includes("javascript");
-  return status < 400 || ![...document.scripts].some(runs);
-}
-"""
+# How long a bot check that runs in the page gets to pass (see page_scripts.NO_BOT_CHECK_RUNNING).
 _BOT_CHECK_WAIT_MS = 10_000
 
 # How many times to try reading a page that keeps moving on to other pages while it's read.
 _READ_ATTEMPTS = 3
-
-# Runs in the page and reads it in one go, so everything comes from the same page. Lists every
-# image-like element with where it was drawn, whether it sits in the header, and whether it links
-# to the home page. Lazy-loaded images report their real URL instead of the placeholder.
-_READ_SCRIPT = """
-() => {
-  const absolute = (value) => { try { return new URL(value, location.href).href; } catch { return ""; } };
-  const linksHome = (el) => {
-    const link = el.closest("a[href]");
-    if (!link) return false;
-    try {
-      const target = new URL(link.href, location.href);
-      return target.origin === location.origin && (target.pathname === "/" || target.pathname === "");
-    } catch { return false; }
-  };
-  const inHeader = (el) => !!el.closest("header, nav, [role=banner], [class*=header i], [id*=header i]");
-  const box = (el) => {
-    const r = el.getBoundingClientRect();
-    return { x: r.x + window.scrollX, y: r.y + window.scrollY, width: r.width, height: r.height };
-  };
-  const describe = (el, kind, url, alt) => ({
-    kind, url, alt: alt || "", css_class: String(el.getAttribute("class") || ""),
-    element_id: el.id || "", box: box(el), in_header: inHeader(el), links_home: linksHome(el),
-  });
-  const found = [];
-  for (const img of document.images) {
-    let url = img.currentSrc || img.src || "";
-    if (url === location.href) url = "";  // an empty src makes the browser report the page itself
-    if (!url || url.startsWith("data:")) {
-      const lazy = img.dataset.src || img.dataset.lazySrc || img.getAttribute("data-original");
-      if (lazy) url = absolute(lazy);
-    }
-    found.push(describe(img, "img", url, img.alt));
-  }
-  for (const svg of document.querySelectorAll("svg")) {
-    const r = svg.getBoundingClientRect();
-    if (r.width < 24 || r.height < 12) continue;  // icons, not logos
-    const title = svg.querySelector("title");
-    found.push(describe(svg, "svg", "", svg.getAttribute("aria-label") || (title ? title.textContent : "")));
-  }
-  for (const el of document.querySelectorAll("header *, nav *, [class*=logo i]")) {
-    const match = getComputedStyle(el).backgroundImage.match(/url\\(["']?(.*?)["']?\\)/);
-    if (match) found.push(describe(el, "background", absolute(match[1]), el.getAttribute("aria-label")));
-  }
-  const doctype = document.doctype ? new XMLSerializer().serializeToString(document.doctype) : "";
-  return {
-    page: performance.timeOrigin,  // different for every page the tab shows
-    url: location.href,
-    status: performance.getEntriesByType("navigation")[0]?.responseStatus ?? 0,
-    html: doctype + (document.documentElement ? document.documentElement.outerHTML : ""),
-    images: found.slice(0, 200),
-  };
-}
-"""
-_PAGE_ID_SCRIPT = "() => performance.timeOrigin"
 
 
 class _Started(NamedTuple):
@@ -129,10 +66,30 @@ async def _start_first(playwright: Playwright, names: tuple[BrowserName, ...]) -
 async def _wait_for_bot_check(page: Page) -> None:
     """If a bot check is running in the page, give it time to pass and let the real page load."""
     with contextlib.suppress(PlaywrightError):  # if it can't be told, read the page as it is
-        if await page.evaluate(_NO_BOT_CHECK_RUNNING):
+        if await page.evaluate(page_scripts.NO_BOT_CHECK_RUNNING):
             return
-        await page.wait_for_function(_NO_BOT_CHECK_RUNNING, polling=250, timeout=_BOT_CHECK_WAIT_MS)
+        await page.wait_for_function(
+            page_scripts.NO_BOT_CHECK_RUNNING, polling=250, timeout=_BOT_CHECK_WAIT_MS
+        )
         await page.wait_for_load_state("load", timeout=5_000)
+
+
+async def _scroll_through(page: Page) -> dict[str, Any] | None:
+    """Scroll to the bottom and back, so parts drawn only when seen get drawn. Returns the text
+    the page showed at the bottom, since some footers hide again once they're out of view."""
+    with contextlib.suppress(PlaywrightError):  # a page that moves on meanwhile is read anyway
+        seen: dict[str, Any] | None = await page.evaluate(page_scripts.SCROLL)
+        return seen
+    return None
+
+
+def _longer(a: TextRegions, b: TextRegions) -> TextRegions:
+    """Each region's text from whichever of two readings showed more of it."""
+    return TextRegions(
+        header=max(a.header, b.header, key=len),
+        main=max(a.main, b.main, key=len),
+        footer=max(a.footer, b.footer, key=len),
+    )
 
 
 async def _read(page: Page, url: str) -> tuple[dict[str, Any], bytes]:
@@ -140,9 +97,9 @@ async def _read(page: Page, url: str) -> tuple[dict[str, Any], bytes]:
     another page meanwhile, that one is read once it has loaded."""
     for attempt in range(1, _READ_ATTEMPTS + 1):
         try:
-            read: dict[str, Any] = await page.evaluate(_READ_SCRIPT)
+            read: dict[str, Any] = await page.evaluate(page_scripts.READ)
             screenshot = await page.screenshot(type="jpeg", quality=70)
-            if await page.evaluate(_PAGE_ID_SCRIPT) == read["page"]:
+            if await page.evaluate(page_scripts.PAGE_ID) == read["page"]:
                 return read, screenshot
         except PlaywrightTimeoutError:
             raise  # a slow page won't be quicker the second time
@@ -301,7 +258,11 @@ class BrowserFetcher:
             with contextlib.suppress(PlaywrightTimeoutError):
                 await page.wait_for_load_state("networkidle", timeout=2_000)
             await _wait_for_bot_check(page)
+            at_bottom = await _scroll_through(page)
             read, screenshot = await _read(page, url)
+            text = TextRegions.model_validate(read["text"])
+            if at_bottom and at_bottom["page"] == read["page"]:  # the same page, both times
+                text = _longer(text, TextRegions.model_validate(at_bottom["text"]))
             return PageSnapshot(
                 url=url,
                 final_url=read["url"],
@@ -309,6 +270,7 @@ class BrowserFetcher:
                 status_code=read["status"] or (response.status if response else None),
                 html=read["html"],
                 images=tuple(RenderedImage.model_validate(image) for image in read["images"]),
+                text=text,
                 screenshot=screenshot,
                 fetched_at=datetime.now(UTC),
                 loaded_with=started.name,

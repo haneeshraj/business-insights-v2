@@ -38,6 +38,20 @@ async def test_captures_the_rendered_page_and_a_screenshot(
     assert snapshot.screenshot[:2] == b"\xff\xd8"  # a JPEG
 
 
+async def test_reads_the_visible_text_of_each_region(fetcher: BrowserFetcher, site: str) -> None:
+    text = (await fetcher.fetch(f"{site}/cafe")).text
+    assert text is not None
+    assert text.header == "Menu"
+    assert text.main == "Fresh coffee daily"  # the hidden paragraph is left out
+    assert text.footer == "Example Cafe, 12 Queen St W, Toronto"
+
+
+async def test_footers_drawn_only_when_seen_are_read(fetcher: BrowserFetcher, site: str) -> None:
+    text = (await fetcher.fetch(f"{site}/lazy-footer")).text
+    assert text is not None
+    assert text.footer == "12 Queen St W, Toronto"
+
+
 async def test_header_logo_knows_where_it_sits(fetcher: BrowserFetcher, site: str) -> None:
     logo = _image((await fetcher.fetch(f"{site}/cafe")).images, "Example Cafe logo")
     assert logo.url == f"{site}/images/logo.png"

@@ -245,6 +245,14 @@ class RenderedImage(_Frozen):
     links_home: bool = False  # sits inside a link to the site's home page
 
 
+class TextRegions(_Frozen):
+    """The page's visible text, split by where it appears."""
+
+    header: str = ""
+    main: str = ""
+    footer: str = ""
+
+
 class PageSnapshot(_Frozen):
     """What loading a page captured. Evidence is built from this; nothing here is judged yet."""
 
@@ -257,6 +265,7 @@ class PageSnapshot(_Frozen):
     status_code: int | None = None
     html: str  # the page after its scripts ran
     images: tuple[RenderedImage, ...] = ()
+    text: TextRegions | None = None  # the visible text, when a browser read the page
     screenshot: bytes | None = None  # JPEG of the first screen
     fetched_at: AwareDatetime
     loaded_with: str  # the browser that loaded it, like "chromium-shell" or "edge"
@@ -295,14 +304,6 @@ class StructuredData(_Frozen):
     telephone: str | None = None
     address: Address | None = None
     same_as: tuple[WebUrl, ...] = ()  # the business's other profiles, such as social media
-
-
-class TextRegions(_Frozen):
-    """The page's visible text, split by where it appears."""
-
-    header: str = ""
-    main: str = ""
-    footer: str = ""
 
 
 class Contacts(_Frozen):

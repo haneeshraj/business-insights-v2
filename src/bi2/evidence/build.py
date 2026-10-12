@@ -4,6 +4,7 @@ from bi2.core.models import Evidence, PageInfo, PageKind, PageSnapshot
 from bi2.evidence.document import parse_html
 from bi2.evidence.meta import extract_meta
 from bi2.evidence.structured import extract_structured_data
+from bi2.evidence.text import extract_text_regions, shorten
 
 
 def build_evidence(snapshot: PageSnapshot) -> Evidence:
@@ -11,6 +12,7 @@ def build_evidence(snapshot: PageSnapshot) -> Evidence:
     doc = parse_html(snapshot.html)
     base = snapshot.final_url
     refused = snapshot.status_code is not None and snapshot.status_code >= 400
+    text = extract_text_regions(snapshot, doc)
     return Evidence(
         page=PageInfo(
             url=snapshot.url,
@@ -19,4 +21,5 @@ def build_evidence(snapshot: PageSnapshot) -> Evidence:
         ),
         meta=extract_meta(doc, base),
         structured=extract_structured_data(doc, base),
+        text=shorten(text),
     )
