@@ -12,3 +12,25 @@ class Fetcher(Protocol):
     async def fetch(self, url: str) -> PageSnapshot:
         """Load one page. Raises UnsafeUrl, PageTimeout or FetchError."""
         ...
+
+
+class Downloader(Protocol):
+    """Downloads a file, such as a logo, with the same safety checks as loading pages."""
+
+    async def download(self, url: str, *, max_bytes: int) -> bytes:
+        """The file's content. Raises UnsafeUrl, or FetchError, including when the file is
+        larger than max_bytes."""
+        ...
+
+
+class FileStore(Protocol):
+    """The files a run produces, such as screenshots and logos, at paths relative to the
+    run's output folder, like "example-cafe.ca/logo.png"."""
+
+    async def save(self, path: str, data: bytes) -> str:
+        """Save a file, replacing one already there, and return its path."""
+        ...
+
+    async def read(self, path: str) -> bytes:
+        """Read a file saved earlier."""
+        ...
