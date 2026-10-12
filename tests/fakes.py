@@ -3,6 +3,7 @@
 from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import PageSnapshot
+from bi2.core.routing import Routing
 from bi2.core.settings import Settings, Thresholds
 
 
@@ -56,6 +57,7 @@ def fake_context(
     downloads: dict[str, bytes] | None = None,
     files: MemoryFiles | None = None,
     accept: float = 0.85,
+    routing: Routing | None = None,
 ) -> RunContext:
     """A RunContext built from the stand-ins above."""
     return RunContext(
@@ -63,4 +65,5 @@ def fake_context(
         fetcher=FakeFetcher(pages),
         downloader=FakeDownloader(downloads),
         files=files or MemoryFiles(),
+        routing=routing or Routing(),
     )

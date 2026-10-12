@@ -1,8 +1,9 @@
 """RunContext: the settings and ports a run needs, handed to the pipeline and the resolvers."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from bi2.core.ports import Downloader, Fetcher, FileStore
+from bi2.core.routing import Routing
 from bi2.core.settings import Settings
 
 
@@ -16,3 +17,4 @@ class RunContext:
     fetcher: Fetcher
     downloader: Downloader
     files: FileStore
+    routing: Routing = field(default_factory=Routing)  # which answers to keep without AI
