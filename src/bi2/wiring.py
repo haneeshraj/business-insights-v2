@@ -14,7 +14,6 @@ from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import PageSnapshot
 from bi2.core.ports import Fetcher
-from bi2.core.routing import load_routing
 from bi2.core.settings import Settings
 from bi2.fetch.browser import BrowserChoice, BrowserFetcher
 from bi2.fetch.http import HttpDownloader
@@ -46,9 +45,5 @@ async def local_context(
             )
         downloader = await stack.enter_async_context(HttpDownloader(allow_private=allow_private))
         yield RunContext(
-            settings=Settings(),
-            fetcher=fetcher,
-            downloader=downloader,
-            files=LocalFiles(out),
-            routing=load_routing(),
+            settings=Settings(), fetcher=fetcher, downloader=downloader, files=LocalFiles(out)
         )

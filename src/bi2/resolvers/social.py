@@ -59,4 +59,4 @@ async def social_links_from_the_page(
 
 async def resolve_social_links(ev: Evidence, ctx: RunContext) -> SocialResult:
     """The business's social media profiles."""
-    return await run_cascade("social_links", [social_links_from_the_page], ev, ctx)
+    return await run_cascade([social_links_from_the_page], ev, ctx)

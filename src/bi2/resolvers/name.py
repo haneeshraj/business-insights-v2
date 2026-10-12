@@ -87,4 +87,4 @@ async def name_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[CompanyN
 
 async def resolve_name(ev: Evidence, ctx: RunContext) -> NameResult:
     """The business's name. Search and a model join as later steps."""
-    return await run_cascade("company_name", [name_from_the_page], ev, ctx)
+    return await run_cascade([name_from_the_page], ev, ctx)

@@ -109,4 +109,4 @@ async def logo_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | 
 
 async def resolve_logo(ev: Evidence, ctx: RunContext) -> LogoResult:
     """The business's logo. Asking a vision model "which number is the logo?" joins later."""
-    return await run_cascade("logo", [logo_from_the_page], ev, ctx)
+    return await run_cascade([logo_from_the_page], ev, ctx)

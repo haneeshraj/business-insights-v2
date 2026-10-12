@@ -35,14 +35,11 @@ def _name(step: Callable[..., Any]) -> str:
     return getattr(step, "__name__", repr(step))
 
 
-async def run_cascade[T](
-    field: str, steps: Sequence[Step[T]], ev: Evidence, ctx: RunContext
-) -> FieldResult[T]:
+async def run_cascade[T](steps: Sequence[Step[T]], ev: Evidence, ctx: RunContext) -> FieldResult[T]:
     """Run a field's steps in order, the same way for every field.
 
-    - The first answer the routing decision keeps is the value, and the field is ok. The
-      decision is learned from checked answers (see core/routing.py); before enough are
-      checked, an answer is kept when it's at least as sure as the accept threshold.
+    - The first answer at least as sure as the accept threshold is the value, and the field
+      is ok.
     - If no answer gets there, the surest one is kept and the field needs review, so the
       analyst has a starting point.
     - With no answer at all, the field is not found; if every step failed, it's an error.
@@ -65,15 +62,9 @@ async def run_cascade[T](
             )
             continue
         confidence = round(outcome.confidence, 2)
-        keep, why = ctx.routing.decide(field, confidence, accept)
-        if keep:
+        if confidence >= accept:
             records.append(
-                StepRecord(
-                    step=_name(step),
-                    outcome=StepOutcome.RESOLVED,
-                    detail=why,
-                    confidence=confidence,
-                )
+                StepRecord(step=_name(step), outcome=StepOutcome.RESOLVED, confidence=confidence)
             )
             return FieldResult(
                 value=outcome.value,
@@ -87,7 +78,7 @@ async def run_cascade[T](
             StepRecord(
                 step=_name(step),
                 outcome=StepOutcome.ESCALATED,
-                detail=why,
+                detail=f"not sure enough: {confidence:.2f}, below {accept:.2f}",
                 confidence=confidence,
             )
         )
