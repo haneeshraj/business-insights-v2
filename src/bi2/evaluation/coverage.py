@@ -24,6 +24,7 @@ CHECKS: Final = (
     "logo (top candidate)",
     "address (structured data)",
     "address (page text)",
+    "country (top guess)",
     "phone",
     "social_links",
 )
@@ -126,6 +127,13 @@ def evidence_coverage(gold: GoldSite, ev: Evidence) -> tuple[FieldCoverage, ...]
         checks += _logo(gold.logo_urls, ev)
     if isinstance(gold.address, ExpectedAddress):
         checks += _address(gold.address, ev)
+        if gold.address.country:
+            top = ev.countries[0] if ev.countries else ""
+            checks.append(
+                FieldCoverage(
+                    check="country (top guess)", found=top == gold.address.country, where=top
+                )
+            )
     if isinstance(gold.phones, tuple):
         checks.append(_phone(gold.phones, ev))
     if isinstance(gold.social_links, tuple):

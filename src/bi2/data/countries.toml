@@ -1,27 +1,34 @@
-# Countries v2 knows about, keyed by ISO 3166-1 code: the names pages use for them, and their
-# internet domains. Adding a country is one entry. Read by bi2/evidence/countries.py.
+# Countries v2 knows about, keyed by ISO 3166-1 code: the names pages use for them, their
+# internet domains, and their postcode format when it's distinctive enough to tell apart from
+# other numbers. A pattern with a "postcode" group needs the text around it, such as a US state
+# before a ZIP code. Adding a country is one entry. Read by bi2/evidence/countries.py.
 
 version = "2026-10-12"
 
 [CA]
 names = ["Canada"]
 domains = ["ca"]
+postcode = '\b[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ -]?\d[ABCEGHJ-NPRSTV-Z]\d\b'
 
 [US]
 names = ["United States", "United States of America", "USA", "U.S.A.", "U.S."]
 domains = ["us"]
+postcode = '\b(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\.?,? +(?P<postcode>\d{5}(?:-\d{4})?)\b'
 
 [GB]
 names = ["United Kingdom", "UK", "U.K.", "Great Britain", "Britain", "England", "Scotland", "Wales", "Northern Ireland"]
 domains = ["uk"]
+postcode = '\b[A-PR-UWYZ][A-HK-Y]?\d[A-HJKPSTUW\d]? \d[ABD-HJLNP-UW-Z]{2}\b'
 
 [IE]
 names = ["Ireland", "Republic of Ireland", "Éire"]
 domains = ["ie"]
+postcode = '\b(?:[AC-FHKNPRTV-Y]\d{2}|D6W) ?[\dAC-FHKNPRTV-Y]{4}\b'
 
 [AU]
 names = ["Australia"]
 domains = ["au"]
+postcode = '\b(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT),? +(?P<postcode>\d{4})\b'
 
 [NZ]
 names = ["New Zealand", "Aotearoa"]

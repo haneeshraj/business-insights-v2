@@ -42,6 +42,7 @@ def _rows(ev: Evidence) -> list[tuple[str, str]]:
         ("Schema address", data.address.text if data.address else ""),
         ("Schema logo", data.logo_url or ""),
         ("sameAs", " | ".join(data.same_as)),
+        ("Countries", ", ".join(ev.countries)),
         ("Header text", ev.text.header),
         ("Main text", ev.text.main),
         ("Footer text", ev.text.footer),
