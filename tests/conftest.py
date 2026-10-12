@@ -84,7 +84,7 @@ async def _browser_that_starts() -> BrowserName | None:
 
 @pytest.fixture(scope="session")
 def browser() -> BrowserName:
-    """The browser the tests use: Playwright's own Chromium if installed, otherwise Chrome."""
+    """The browser the tests use: the first of Chromium, Chrome and Edge that starts."""
     try:
         name = asyncio.run(_browser_that_starts())
     except BrowserUnavailable:

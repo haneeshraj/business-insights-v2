@@ -1,8 +1,10 @@
 """Tests for BrowserFetcher, against the local test website."""
 
+from typing import get_args
+
 import pytest
 
-from bi2.core.errors import PageTimeout, UnsafeUrl
+from bi2.core.errors import BrowserUnavailable, PageTimeout, UnsafeUrl
 from bi2.core.models import RenderedImage
 from bi2.fetch.browser import BrowserFetcher, BrowserName
 
@@ -68,3 +70,14 @@ async def test_private_addresses_are_refused_by_default(browser: BrowserName, si
     async with BrowserFetcher(browser=browser) as fetcher:
         with pytest.raises(UnsafeUrl, match="isn't on the public internet"):
             await fetcher.fetch(f"{site}/cafe")
+
+
+@pytest.mark.parametrize("name", get_args(BrowserName))
+async def test_each_browser_can_load_pages(name: BrowserName, site: str) -> None:
+    try:
+        async with BrowserFetcher(browser=name, allow_private=True) as fetcher:
+            snapshot = await fetcher.fetch(f"{site}/cafe")
+    except BrowserUnavailable:
+        pytest.skip(f"{name} isn't installed on this machine")
+    assert fetcher.browser_name == name
+    assert "12 Queen St W" in snapshot.html

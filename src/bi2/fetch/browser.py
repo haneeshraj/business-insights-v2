@@ -16,9 +16,14 @@ from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeU
 from bi2.core.models import PageSnapshot, RenderedImage
 from bi2.fetch.safety import Resolver, ensure_public_url, host_is_public, system_resolver
 
-# "chromium" is Playwright's own browser; "chrome" is Google Chrome installed on this machine.
-BrowserName = Literal["chromium", "chrome"]
-BrowserChoice = Literal["auto", "chromium", "chrome"]
+# "chromium" is Playwright's own browser; "chrome" and "edge" are Google Chrome and Microsoft
+# Edge installed on this machine. All three run the same Chromium engine.
+BrowserName = Literal["chromium", "chrome", "edge"]
+BrowserChoice = Literal["auto", BrowserName]
+
+# The Playwright channel that starts each browser, in the order "auto" tries them. Playwright's
+# own Chromium comes first because it's the version Playwright is tested against.
+_CHANNELS: dict[BrowserName, str | None] = {"chromium": None, "chrome": "chrome", "edge": "msedge"}
 
 # Runs in the page. Lists every image-like element with where it was drawn, whether it sits in
 # the header, and whether it links to the home page. Lazy-loaded images report their real URL
@@ -69,7 +74,7 @@ _IMAGES_SCRIPT = """
 
 
 class BrowserFetcher:
-    """Loads pages in headless Chromium: the rendered HTML, every image with its position, and
+    """Loads pages in a headless browser: the rendered HTML, every image with its position, and
     a screenshot of the first screen.
 
     Every request a page makes, including redirects and images, is checked before it's sent,
@@ -81,7 +86,7 @@ class BrowserFetcher:
         *,
         timeout_s: float = 20.0,
         viewport: tuple[int, int] = (1280, 800),
-        browser: BrowserChoice = "auto",  # "auto" tries Chromium, then Chrome
+        browser: BrowserChoice = "auto",  # "auto" tries Chromium, then Chrome, then Edge
         allow_private: bool = False,  # only for tests that serve pages from this machine
         resolver: Resolver = system_resolver,
     ) -> None:
@@ -96,27 +101,19 @@ class BrowserFetcher:
         self.browser_name: BrowserName | None = None  # which browser started
 
     async def __aenter__(self) -> Self:
-        names: tuple[BrowserName, ...]
-        if self._choice == "chromium":
-            names = ("chromium",)
-        elif self._choice == "chrome":
-            names = ("chrome",)
-        else:
-            names = ("chromium", "chrome")
+        names = tuple(_CHANNELS) if self._choice == "auto" else (self._choice,)
         self._playwright = await async_playwright().start()
         for name in names:
             try:
-                self._browser = await self._playwright.chromium.launch(
-                    channel="chrome" if name == "chrome" else None
-                )
+                self._browser = await self._playwright.chromium.launch(channel=_CHANNELS[name])
             except PlaywrightError:
                 continue
             self.browser_name = name
             return self
         await self._playwright.stop()
         raise BrowserUnavailable(
-            "no browser could start. Run `uv run playwright install chromium`, "
-            "or install Google Chrome."
+            f"no browser could start (tried {', '.join(names)}). Run "
+            "`uv run playwright install chromium`, or install Google Chrome or Microsoft Edge."
         )
 
     async def __aexit__(

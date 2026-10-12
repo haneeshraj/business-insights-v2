@@ -7,7 +7,6 @@ import asyncio
 import re
 import time
 from collections import Counter
-from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlsplit
@@ -26,21 +25,6 @@ dev_app = typer.Typer(
     no_args_is_help=True,
     help="Try one part of the pipeline on real websites (for contributors).",
 )
-
-
-class BrowserOption(StrEnum):
-    """Which browser to load pages with."""
-
-    AUTO = "auto"  # Playwright's Chromium if installed, otherwise Google Chrome
-    CHROMIUM = "chromium"
-    CHROME = "chrome"
-
-
-_BROWSERS: dict[BrowserOption, BrowserChoice] = {
-    BrowserOption.AUTO: "auto",
-    BrowserOption.CHROMIUM: "chromium",
-    BrowserOption.CHROME: "chrome",
-}
 
 
 class FetchCheck(BaseModel):
@@ -209,8 +193,9 @@ def fetch(
         Path, typer.Option(help="Where to save screenshots, HTML and details (git ignores it).")
     ] = Path("bi2-results/dev/fetch"),
     browser: Annotated[
-        BrowserOption, typer.Option(help="Which browser to use.")
-    ] = BrowserOption.AUTO,
+        BrowserChoice,
+        typer.Option(help="Which browser to use. auto tries chromium, then chrome, then edge."),
+    ] = "auto",
     timeout: Annotated[float, typer.Option(help="Seconds to wait for each page.")] = 20.0,
     concurrency: Annotated[int, typer.Option(help="Pages loaded at once with --gold.")] = 4,
     allow_private: Annotated[bool, typer.Option(hidden=True)] = False,  # for tests only
@@ -219,9 +204,7 @@ def fetch(
     if (url is None) == (gold is None):
         typer.echo("error: give either a URL or --gold, not both", err=True)
         raise typer.Exit(code=2)
-    fetcher = BrowserFetcher(
-        timeout_s=timeout, browser=_BROWSERS[browser], allow_private=allow_private
-    )
+    fetcher = BrowserFetcher(timeout_s=timeout, browser=browser, allow_private=allow_private)
     console = Console()
     try:
         if gold is not None:

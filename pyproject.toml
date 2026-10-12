@@ -141,7 +141,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "live: needs network access and API keys; skipped unless selected with -m live",
-    "browser: needs Playwright's Chromium or Google Chrome; skipped when neither starts",
+    "browser: needs Playwright's Chromium, Google Chrome or Microsoft Edge; skipped when none starts",
 ]
 
 # --- import-linter: the layer rules from docs/codebase.md -------------------
