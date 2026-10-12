@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import contextlib
 import threading
 import time
 from collections.abc import AsyncIterator, Iterator
@@ -84,11 +85,13 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(404, "text/plain", b"not found")
 
     def _send(self, status: int, content_type: str, body: bytes) -> None:
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        # Browsers hang up early when a page moves on, so a dropped connection is normal here.
+        with contextlib.suppress(ConnectionError):
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
     def log_message(self, format: str, *args: object) -> None:  # keep test output quiet
         pass

@@ -48,7 +48,8 @@ dependencies = [
     "rich>=15.0",
     "prompt-toolkit>=3.0.50",
     "keyring>=25.6",
-    # Evidence extraction: images, phone numbers, registrable domains
+    # Evidence extraction: HTML parsing, images, phone numbers, registrable domains
+    "selectolax>=1.0",
     "pillow>=12.0",
     "phonenumbers>=9.0",
     "tldextract>=5.1",

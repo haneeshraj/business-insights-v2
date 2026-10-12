@@ -3,9 +3,23 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from bi2.core.models import SiteResult
+from bi2.core.models import PageSnapshot, SiteResult
 
 NOT_FOUND: dict[str, Any] = {"status": "not_found"}
+
+
+def page_snapshot(html: str, url: str = "https://example-cafe.ca/", **fields: Any) -> PageSnapshot:
+    """A loaded page, as the browser would capture it."""
+    data: dict[str, Any] = {
+        "url": url,
+        "final_url": url,
+        "status_code": 200,
+        "html": html,
+        "fetched_at": datetime(2026, 10, 11, tzinfo=UTC),
+        "loaded_with": "chromium-shell",
+    }
+    data.update(fields)
+    return PageSnapshot.model_validate(data)
 
 
 def answered(value: Any, *, confidence: float = 0.9, status: str = "ok") -> dict[str, Any]:

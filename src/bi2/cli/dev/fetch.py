@@ -1,30 +1,22 @@
-"""`bi2 dev`: try one part of the pipeline on real websites (for contributors).
-
-Each part of the pipeline gets a command here, so it can be checked on real sites on its own.
-"""
+"""`bi2 dev fetch`: load pages in the browser and show what it captured."""
 
 import asyncio
-import re
 import time
 from collections import Counter
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import urlsplit
 
 import typer
 from pydantic import BaseModel, ConfigDict
 from rich.console import Console
 from rich.table import Table
 
+from bi2.cli.dev.options import AllowPrivate, Browser, Timeout
+from bi2.cli.dev.saved import save_snapshot
 from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import PageSnapshot, RenderedImage
 from bi2.evaluation.gold import load_gold_set
-from bi2.fetch.browser import BrowserChoice, BrowserFetcher
-
-dev_app = typer.Typer(
-    no_args_is_help=True,
-    help="Try one part of the pipeline on real websites (for contributors).",
-)
+from bi2.fetch.browser import BrowserFetcher
 
 
 class FetchCheck(BaseModel):
@@ -40,24 +32,6 @@ class FetchCheck(BaseModel):
     final_url: str = ""
     browser: str = ""  # the browser that loaded it
     detail: str = ""
-
-
-def _folder_name(url: str) -> str:
-    parts = urlsplit(url)
-    name = (parts.netloc.removeprefix("www.") + parts.path).strip("/")
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", name) or "page"
-
-
-def _save(snapshot: PageSnapshot, out: Path) -> Path:
-    """Save the screenshot, the HTML and everything else the browser captured."""
-    folder = out / _folder_name(snapshot.url)
-    folder.mkdir(parents=True, exist_ok=True)
-    (folder / "page.html").write_text(snapshot.html, encoding="utf-8")
-    if snapshot.screenshot:
-        (folder / "screenshot.jpg").write_bytes(snapshot.screenshot)
-    details = snapshot.model_dump_json(indent=2, exclude={"html", "screenshot"})
-    (folder / "snapshot.json").write_text(details, encoding="utf-8")
-    return folder
 
 
 def _possible_logos(images: tuple[RenderedImage, ...]) -> list[RenderedImage]:
@@ -122,7 +96,7 @@ async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
         return FetchCheck(
             url=url, outcome="failed", seconds=time.monotonic() - started, detail=str(exc)
         )
-    await asyncio.to_thread(_save, snapshot, out)  # so other pages keep loading meanwhile
+    await asyncio.to_thread(save_snapshot, snapshot, out)  # so other pages keep loading meanwhile
     status = snapshot.status_code
     return FetchCheck(
         url=url,
@@ -144,7 +118,7 @@ async def _fetch_one(fetcher: BrowserFetcher, url: str, out: Path, console: Cons
             typer.echo(f"Couldn't load {url}: {exc}", err=True)
             return 1
         seconds = time.monotonic() - started
-        folder = await asyncio.to_thread(_save, snapshot, out)
+        folder = await asyncio.to_thread(save_snapshot, snapshot, out)
         console.print(_summary_table(snapshot, seconds, fetcher.browser_name or "", folder))
         console.print(_logo_table(snapshot.images))
     return 0
@@ -196,7 +170,6 @@ def _report_gold(checks: list[FetchCheck], out: Path, first_browser: str, consol
     console.print(f"Details for each site are in {out}", markup=False)
 
 
-@dev_app.command()
 def fetch(
     url: Annotated[str | None, typer.Argument(help="The page to load.")] = None,
     gold: Annotated[
@@ -208,16 +181,10 @@ def fetch(
     out: Annotated[
         Path, typer.Option(help="Where to save screenshots, HTML and details (git ignores it).")
     ] = Path("bi2-results/dev/fetch"),
-    browser: Annotated[
-        BrowserChoice,
-        typer.Option(
-            help="Which browser to use. auto loads pages in chromium-shell, and loads pages it's "
-            "refused again in a full browser."
-        ),
-    ] = "auto",
-    timeout: Annotated[float, typer.Option(help="Seconds to wait for each page.")] = 20.0,
+    browser: Browser = "auto",
+    timeout: Timeout = 20.0,
     concurrency: Annotated[int, typer.Option(help="Pages loaded at once with --gold.")] = 4,
-    allow_private: Annotated[bool, typer.Option(hidden=True)] = False,  # for tests only
+    allow_private: AllowPrivate = False,
 ) -> None:
     """Load pages in the headless browser and show what it captured."""
     if (url is None) == (gold is None):

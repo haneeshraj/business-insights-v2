@@ -3,7 +3,6 @@
 import re
 from enum import StrEnum
 from typing import Final, Literal
-from urllib.parse import parse_qs, urlsplit
 
 from pydantic import BaseModel, ConfigDict
 
@@ -21,6 +20,7 @@ from bi2.core.models import (
     Status,
 )
 from bi2.core.text import fold, names_match
+from bi2.core.urls import image_key, social_key
 from bi2.evaluation.gold import ExpectedAddress, GoldSite
 
 # Everything scored for a site: its page kind, then each output field.
@@ -36,15 +36,8 @@ _GOLD_ATTRIBUTE: Final = {
     "social_links": "social_links",
 }
 
-# Social profile URLs whose first two path parts name the profile, such as linkedin.com/company/x.
-_TWO_PART_PATHS: Final = {"company", "school", "showcase", "channel", "c", "user"}
-_SOCIAL_HOST_ALIASES: Final = {"twitter.com": "x.com", "fb.com": "facebook.com"}
-
 _HOUSE_NUMBER = re.compile(r"^\s*(\d+[A-Za-z]?)\b")
 _NOT_ALPHANUMERIC = re.compile(r"[^0-9A-Z]")
-_IMAGE_EXTENSION = re.compile(r"\.(png|jpe?g|gif|svg|webp|avif|ico)", re.IGNORECASE)
-# Size tags that image CDNs add to file names: logo_400x.png, logo_300x300.png, logo-300x100.png
-_SIZE_TAG = re.compile(r"(?:[_-](?:\d+x\d*|\{width\}x))+$", re.IGNORECASE)
 
 
 class Verdict(StrEnum):
@@ -104,21 +97,6 @@ def score_name(result: NameResult, expected: tuple[str, ...] | None) -> FieldSco
         got=value or "",
         expected=" | ".join(expected),
     )
-
-
-def image_key(url: str) -> str:
-    """A key under which the same image matches however its URL is written.
-
-    Ignores the scheme, "www.", query strings, CDN size tags in the file name, and anything a
-    CDN appends after the file name (such as Wix's `/v1/fill/...`).
-    """
-    parts = urlsplit(url)
-    path = parts.path
-    extension = _IMAGE_EXTENSION.search(path)
-    if extension:
-        stem = _SIZE_TAG.sub("", path[: extension.start()])
-        path = f"{stem}.{extension.group(1).lower()}"
-    return parts.netloc.casefold().removeprefix("www.") + path.casefold()
 
 
 def score_logo(
@@ -225,27 +203,6 @@ def score_phone(
         got=value or "",
         expected=expected if isinstance(expected, str) else " | ".join(expected),
     )
-
-
-def social_key(url: str) -> str:
-    """A key under which the same social profile matches however its URL is written.
-
-    Ignores the scheme, "www." and "m.", treats twitter.com as x.com and every pinterest.* as
-    pinterest.com, and keeps only the part of the path that names the profile.
-    """
-    parts = urlsplit(url)
-    host = parts.netloc.casefold().removeprefix("www.").removeprefix("m.")
-    host = (
-        "pinterest.com" if host.startswith("pinterest.") else _SOCIAL_HOST_ALIASES.get(host, host)
-    )
-    segments = [segment for segment in parts.path.split("/") if segment]
-    if not segments:
-        return host
-    keep = 2 if len(segments) > 1 and segments[0].casefold() in _TWO_PART_PATHS else 1
-    key = f"{host}/{'/'.join(segments[:keep])}"
-    if segments[0] == "profile.php":  # Facebook's numbered profiles keep the number in the query
-        key += "?id=" + parse_qs(parts.query).get("id", [""])[0]
-    return key.casefold()
 
 
 def score_social(

@@ -325,6 +325,7 @@ Each dependency is here for a reason, and anything new needs one too.
 | typer, rich | Terminal app commands and display |
 | keyring | Saving keys in the operating system's keychain |
 | prompt_toolkit | The interactive session's input line: history, completion of `/` commands and multi-line paste, on Windows, macOS and Linux |
+| selectolax | Fast HTML parsing with CSS selectors, for evidence extraction (Python's own parser can't select elements) |
 | pillow | Shrinking screenshots before they go to a model, drawing numbered boxes for the logo question, detecting real image types |
 | phonenumbers | Reliable phone parsing, and country hints from phone numbers |
 | tldextract (with its bundled suffix list) | Correct registrable domains (`.co.uk`, `.com.au`) |

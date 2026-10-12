@@ -280,7 +280,7 @@ class PageMeta(_Frozen):
 
     title: str = ""
     description: str = ""
-    site_name: str = ""  # og:site_name; on a platform profile, this names the platform
+    site_name: str = ""  # og:site_name or the app name; on a platform profile, the platform's
     og_title: str = ""
     og_image: WebUrl | None = None
 
