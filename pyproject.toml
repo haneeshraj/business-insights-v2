@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 [project]
 name = "business-insights"  # PyPI name still to be confirmed
 version = "2.0.0.dev0"
-description = "Find a business's name, logo, merchant category code (MCC) and headquarters address from its website."
+description = "Find a business's name, logo, phone, email, social links, merchant category code (MCC) and headquarters address from its website."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
