@@ -7,9 +7,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from bi2.evaluation.gold import load_gold_set
+from bi2.evaluation.compare import Comparison, Totals, compare_runs
+from bi2.evaluation.gold import load_gold_set, site_key
 from bi2.evaluation.report import Report, build_report, load_results
 from bi2.evaluation.scoring import Verdict
+from bi2.evaluation.verifications import load_verifications
 
 eval_app = typer.Typer(
     no_args_is_help=True,
@@ -106,3 +108,99 @@ def score(
     if json_out:
         json_out.write_text(report.model_dump_json(indent=2), encoding="utf-8")
         console.print(f"Saved the full report to {json_out}")
+
+
+def _results_file(path: Path) -> Path:
+    """A run's results: the folder `bi2 analyze` wrote them to, or the results file itself."""
+    return path / "results.jsonl" if path.is_dir() else path
+
+
+def _short(text: str, limit: int = 70) -> str:
+    """Long answers, like logo addresses, cut in the middle so both ends still show."""
+    if len(text) <= limit:
+        return text
+    return text[: limit // 2] + "\N{HORIZONTAL ELLIPSIS}" + text[-(limit // 2 - 1) :]
+
+
+def _share(totals: Totals | None, count: int) -> str:
+    return "" if totals is None or not totals.checked else f"{count} of {totals.checked}"
+
+
+def _totals_table(comparison: Comparison) -> Table:
+    table = Table(title="Checked answers that were right")
+    for column in ("Field", "Before", "After", "Right and sure, before", "After"):
+        table.add_column(column, justify="left" if column == "Field" else "right")
+    for field in dict.fromkeys([*comparison.before, *comparison.after]):
+        then, now = comparison.before.get(field), comparison.after.get(field)
+        table.add_row(
+            field,
+            _share(then, then.right if then else 0),
+            _share(now, now.right if now else 0),
+            _share(then, then.right_and_sure if then else 0),
+            _share(now, now.right_and_sure if now else 0),
+        )
+    return table
+
+
+_GROUPS = (
+    ("worse", "Answers that got worse", "red"),
+    ("better", "Answers that got better", "green"),
+    ("not checked", "Answers that changed, but no one has checked", "yellow"),
+    ("the same", "Answers that changed, and are as good as before", "dim"),
+)
+
+
+@eval_app.command()
+def compare(
+    before: Annotated[
+        Path,
+        typer.Argument(help="The earlier run: its results folder or results file.", exists=True),
+    ],
+    after: Annotated[Path, typer.Argument(help="The later run, given the same way.", exists=True)],
+    gold: Annotated[
+        Path | None,
+        typer.Option(help="A gold-set file to judge answers by.", exists=True, dir_okay=False),
+    ] = None,
+    checks: Annotated[
+        Path, typer.Option(help="Your checks from the review page.", dir_okay=False)
+    ] = Path("eval/verifications.jsonl"),
+) -> None:
+    """Compare two runs of the same sites: what got better, and what got worse.
+
+    Exits with 1 when anything got worse, so a script can stop a change that breaks answers,
+    and with 2 when a file can't be read."""
+    try:
+        entries = {site_key(site.url): site for site in load_gold_set(gold).sites} if gold else {}
+        comparison = compare_runs(
+            load_results(_results_file(before)),
+            load_results(_results_file(after)),
+            entries,
+            load_verifications(checks),
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    console = Console()
+    if comparison.before or comparison.after:
+        console.print(_totals_table(comparison))
+    else:
+        console.print("No answers in these runs are checked yet; check them with `bi2 review`.")
+    for verdict, title, style in _GROUPS:
+        changes = [change for change in comparison.changes if change.verdict == verdict]
+        if not changes:
+            continue
+        table = Table(title=title, title_style=style)
+        for column in ("Site", "Field", "Before", "After"):
+            table.add_column(column, overflow="fold")
+        for change in changes:
+            table.add_row(change.site, change.field, _short(change.before), _short(change.after))
+        console.print(table)
+    if comparison.failed_now:
+        console.print("No longer loads: " + ", ".join(comparison.failed_now), style="red")
+    if comparison.loaded_now:
+        console.print("Loads now: " + ", ".join(comparison.loaded_now), style="green")
+    if not (comparison.changes or comparison.failed_now or comparison.loaded_now):
+        console.print("No answers changed.")
+    if comparison.worse:
+        raise typer.Exit(code=1)
