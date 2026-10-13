@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from bi2.cli.dev.saved import save_snapshot
+from bi2.adapters.local.snapshots import save_snapshot
 from bi2.cli.main import app
 from bi2.fetch.browser import BrowserName
 from tests.factories import page_snapshot

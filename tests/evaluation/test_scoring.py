@@ -15,6 +15,7 @@ CAFE = GoldSite(
     mcc_codes=("5814", "5812"),
     address=ExpectedAddress(street="128a Sterling Rd", city="Toronto", postal_code="M6R 2B7"),
     phones=("+14165550123",),
+    emails=("hello@example-cafe.ca",),
     social_links=("https://instagram.com/examplecafe",),
 )
 
@@ -33,6 +34,7 @@ def test_correct_answers_in_different_spellings() -> None:
         mcc=answered({"code": "5812", "description": "Eating Places and Restaurants"}),
         address=answered({"text": "128A Sterling Road, Toronto, ON M6R2B7, Canada"}),
         phone=answered("+14165550123"),
+        email=answered("Hello@Example-Cafe.ca"),
         social_links=answered(
             [{"platform": "instagram", "url": "https://www.instagram.com/ExampleCafe/"}]
         ),
@@ -115,3 +117,10 @@ def test_address_without_a_postal_code_compares_the_city() -> None:
     want = ExpectedAddress(street="5 Market Square", city="Dublin")
     assert address_matches(Address(text="5 Market Square, Dublin"), want)
     assert not address_matches(Address(text="5 Market Square, Cork"), want)
+
+
+def test_email_must_be_an_accepted_address_whatever_its_case() -> None:
+    bar = GoldSite(url="https://example-bar.ca/", category="bar", emails=("info@example-bar.ca",))
+    assert _verdicts(bar, email=answered("INFO@example-bar.ca"))["email"] is Verdict.CORRECT
+    assert _verdicts(bar, email=answered("jobs@example-bar.ca"))["email"] is Verdict.WRONG
+    assert _verdicts(bar)["email"] is Verdict.MISSED

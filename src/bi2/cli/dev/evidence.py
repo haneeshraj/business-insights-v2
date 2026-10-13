@@ -10,7 +10,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from bi2.cli.dev.saved import load_snapshot, save_snapshot, saved_folders
+from bi2.adapters.local.snapshots import load_snapshot, save_snapshot, saved_folders
 from bi2.cli.options import AllowPrivate, Browser, Timeout
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable, FetchError

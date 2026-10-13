@@ -34,8 +34,9 @@ def test_social_links_are_profiles_listed_first_then_linked() -> None:
 
 
 def test_contact_pages_are_the_sites_own_pages_best_first() -> None:
+    # A page named for contact details comes before ones that only might hold them.
     assert extract_contact_pages(PAGE, BASE) == (
+        "https://shop.example-cafe.ca/pages/contact",
         "https://example-cafe.ca/about-us",
         "https://example-cafe.ca/find-us",
-        "https://shop.example-cafe.ca/pages/contact",
     )

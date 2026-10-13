@@ -41,6 +41,7 @@ def _run(tmp_path: Path) -> Path:
         company_name=answered("Example Cafe"),
         logo=answered({"url": f"{URL}logo.png", "image_file": f"{site_folder(URL)}/logo.png"}),
         phone=answered("+14165550199", confidence=0.6, status="needs_review"),
+        email=answered("hello@example-cafe.ca"),
         mcc=not_built_yet().model_dump(),
         address=not_built_yet().model_dump(),
     )
@@ -97,13 +98,19 @@ def test_every_answer_that_can_be_checked_gets_a_check(server: ReviewServer) -> 
     assert status == 200
     cells = re.findall(r'<td class="check" data-site="([^"]+)" data-field="(\w+)"', page)
     # Not the fields that aren't built yet, and nothing on the site that failed.
-    assert [field for _, field in cells] == ["company_name", "logo", "phone", "social_links"]
+    assert [field for _, field in cells] == [
+        "company_name",
+        "logo",
+        "phone",
+        "email",
+        "social_links",
+    ]
     assert {site for site, _ in cells} == {URL}
     assert "Gold set: right" in page  # the gold set already checks the name
     # Where v2 found nothing, the question is whether there's anything to find.
     assert ">The site has none</button>" in page
     assert ">Missed it</button>" in page
-    assert "1 of 4 answers checked" in page
+    assert "1 of 5 answers checked" in page
     # Only the page's own scripts may run.
     nonce = re.search(r"script-src 'nonce-([^']+)'", headers["Content-Security-Policy"])
     assert nonce is not None
@@ -122,7 +129,7 @@ def test_a_check_is_saved_with_its_note_and_the_page_learns_from_it(
     assert (phone["by"], phone["verdict"]) == ("you", "right")
     assert "You: right" in phone["label"]
     assert "sent on, right" in phone["label"]  # it needed review, but it was right
-    assert "2 of 4 answers checked: 1 by you" in update["summary"]
+    assert "2 of 5 answers checked: 1 by you" in update["summary"]
     assert "It&#x27;s on their contact page" in update["summary"]
     [saved] = load_verifications(tmp_path / "checks.jsonl").values()
     assert (saved.answer, saved.shown, saved.note) == (
@@ -150,6 +157,7 @@ def test_a_wrong_answer_can_be_given_the_right_one(server: ReviewServer) -> None
 
     assert correct("phone", "416-555-0123") == "+14165550123"  # written the standard way
     assert correct("logo", "#2") == f"{URL}brand.svg"  # a candidate's number gives its address
+    assert correct("email", "Hello@Example-Cafe.CA") == "hello@example-cafe.ca"
     page = _request(server, "GET", "/")[2].decode()
     assert 'class="correct" type="text" maxlength="2000" value="+14165550123"' in page
     assert ">+14165550123<" in page  # in the summary's notes
@@ -157,6 +165,7 @@ def test_a_wrong_answer_can_be_given_the_right_one(server: ReviewServer) -> None
         ("phone", "call us", "isn't a phone number"),
         ("logo", "#9", "no logo candidate #9"),
         ("social_links", "instagram", "full addresses"),
+        ("email", "hello at example-cafe.ca", "isn't an email address"),
     ):
         status, update = _check(server, site=URL, field=field, verdict="wrong", correct=given)
         assert (status, problem in update["error"]) == (400, True)
@@ -202,7 +211,7 @@ def test_review_starts_the_server_and_says_where(
     )
     assert outcome.exit_code == 0, outcome.output
     assert "Reviewing 2 sites" in outcome.output
-    assert "Checked so far: 0 of 4 answers, 0 by you" in outcome.output  # no gold set
+    assert "Checked so far: 0 of 5 answers, 0 by you" in outcome.output  # no gold set
     assert "Review page: http://127.0.0.1:" in outcome.output
 
 

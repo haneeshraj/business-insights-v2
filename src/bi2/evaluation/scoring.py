@@ -10,6 +10,7 @@ from bi2.core.models import (
     FIELD_NAMES,
     Address,
     AddressResult,
+    EmailResult,
     LogoResult,
     MccResult,
     NameResult,
@@ -33,6 +34,7 @@ _GOLD_ATTRIBUTE: Final = {
     "mcc": "mcc_codes",
     "address": "address",
     "phone": "phones",
+    "email": "emails",
     "social_links": "social_links",
 }
 
@@ -205,6 +207,31 @@ def score_phone(
     )
 
 
+def score_email(
+    result: EmailResult, expected: tuple[str, ...] | Literal["none"] | None
+) -> FieldScore:
+    """Correct when the address is one of the accepted addresses, whatever its case."""
+    if expected is None:
+        return FieldScore(field="email", verdict=Verdict.NOT_SCORED)
+    value = result.value
+    if isinstance(expected, str):  # "none"
+        verdict = _verdict(absent_expected=True, answered=value is not None, correct=False)
+    else:
+        accepted = {email.lower() for email in expected}
+        verdict = _verdict(
+            absent_expected=False,
+            answered=value is not None,
+            correct=value is not None and value.lower() in accepted,
+        )
+    return FieldScore(
+        field="email",
+        verdict=verdict,
+        needs_review=result.status is Status.NEEDS_REVIEW,
+        got=value or "",
+        expected=expected if isinstance(expected, str) else " | ".join(expected),
+    )
+
+
 def score_social(
     result: SocialResult, expected: tuple[str, ...] | Literal["none"] | None
 ) -> FieldScore:
@@ -247,5 +274,6 @@ def score_site(gold: GoldSite, result: SiteResult | None) -> tuple[FieldScore, .
         score_mcc(result.mcc, gold.mcc_codes),
         score_address(result.address, gold.address),
         score_phone(result.phone, gold.phones),
+        score_email(result.email, gold.emails),
         score_social(result.social_links, gold.social_links),
     )

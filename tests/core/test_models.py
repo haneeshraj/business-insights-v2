@@ -202,3 +202,11 @@ def test_field_names_cover_every_field_result() -> None:
         if isinstance(info.annotation, type) and issubclass(info.annotation, FieldResult)
     ]
     assert tuple(declared) == FIELD_NAMES
+
+
+def test_a_result_made_before_the_email_field_existed_still_reads() -> None:
+    old = _site_data()
+    old.pop("email", None)
+    result = SiteResult.model_validate(old)
+    assert result.email.status is Status.NOT_FOUND
+    assert result.email.steps[0].detail == "this field wasn't built when this result was made"

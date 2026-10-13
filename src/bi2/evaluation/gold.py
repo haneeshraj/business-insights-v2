@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from bi2.core.models import CountryCode, MccCode, PageKind, PhoneNumber, WebUrl
+from bi2.core.models import CountryCode, EmailAddress, MccCode, PageKind, PhoneNumber, WebUrl
 
 
 class _Strict(BaseModel):
@@ -55,6 +55,8 @@ class GoldSite(_Strict):
     address: ExpectedAddress | Literal["none"] | None = None
     # E.164 format, such as "+14165550123"; list every number that counts as correct.
     phones: Annotated[tuple[PhoneNumber, ...], Field(min_length=1)] | Literal["none"] | None = None
+    # Lowercase; list every address that counts as correct.
+    emails: Annotated[tuple[EmailAddress, ...], Field(min_length=1)] | Literal["none"] | None = None
     # The business's own profiles; a result is correct when it finds all of them.
     social_links: Annotated[tuple[WebUrl, ...], Field(min_length=1)] | Literal["none"] | None = None
     notes: str = ""

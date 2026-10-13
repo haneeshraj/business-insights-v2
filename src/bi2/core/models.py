@@ -24,7 +24,15 @@ from pydantic import (
 SCHEMA_VERSION: Final = "2.0"
 
 # The fields every SiteResult reports, in output order.
-FIELD_NAMES: Final = ("company_name", "logo", "mcc", "address", "phone", "social_links")
+FIELD_NAMES: Final = (
+    "company_name",
+    "logo",
+    "mcc",
+    "address",
+    "phone",
+    "email",
+    "social_links",
+)
 
 
 def _require_web_url(value: str) -> str:
@@ -41,6 +49,7 @@ CompanyName = Annotated[str, StringConstraints(strip_whitespace=True, min_length
 CountryCode = Annotated[str, StringConstraints(pattern=r"^[A-Z]{2}$")]  # ISO 3166-1, e.g. "CA"
 MccCode = Annotated[str, StringConstraints(pattern=r"^\d{4}$")]  # text, so "0742" keeps its zero
 PhoneNumber = Annotated[str, StringConstraints(pattern=r"^\+[1-9]\d{6,14}$")]  # E.164
+EmailAddress = Annotated[str, StringConstraints(pattern=r"^[^@\s]+@[^@\s]+\.[a-z]{2,24}$")]
 Confidence = Annotated[float, Field(ge=0.0, le=1.0)]
 
 
@@ -187,6 +196,7 @@ LogoResult = FieldResult[Logo]
 MccResult = FieldResult[Mcc]
 AddressResult = FieldResult[Address]
 PhoneResult = FieldResult[PhoneNumber]  # the main number, in E.164 format
+EmailResult = FieldResult[EmailAddress]  # the main address, lowercased
 SocialResult = FieldResult[SocialLinks]
 
 
@@ -328,8 +338,18 @@ class Contacts(_Frozen):
     # "main text".
     phone_places: dict[PhoneNumber, tuple[str, ...]] = Field(default_factory=dict)
     emails: tuple[str, ...] = ()
+    # Where each address was found: "email link", "footer", "header" or "main text".
+    email_places: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     postcodes: tuple[str, ...] = ()
     copyright_line: str | None = None  # often names the legal entity
+
+
+class ContactPage(_Frozen):
+    """The site's contact page, read when its homepage doesn't show both a phone number and an
+    email address."""
+
+    url: WebUrl
+    contacts: Contacts = Field(default_factory=Contacts)
 
 
 class Evidence(_Frozen):
@@ -346,6 +366,7 @@ class Evidence(_Frozen):
     screenshot_file: str | None = None
     contact_pages: tuple[WebUrl, ...] = ()  # the site's own pages likely to hold contact details
     extra_pages: tuple[WebUrl, ...] = ()  # contact and about pages that were also read
+    contact_page: ContactPage | None = None  # the contact details on the contact page, if read
 
     @model_validator(mode="after")
     def _candidate_numbers_are_unique(self) -> Self:
@@ -366,6 +387,20 @@ class Versions(_Frozen):
     data: dict[str, str] = Field(default_factory=dict)
 
 
+def _not_in_this_result() -> FieldResult[Any]:
+    """A field a result was made without, because it wasn't built yet: not found, saying so."""
+    record = StepRecord(
+        step="not_built_yet",
+        outcome=StepOutcome.ESCALATED,
+        detail="this field wasn't built when this result was made",
+    )
+    return FieldResult(status=Status.NOT_FOUND, steps=(record,))
+
+
+def _never_built(field: FieldResult[Any]) -> bool:
+    return bool(field.steps) and field.steps[0].step == "not_built_yet"
+
+
 class SiteResult(_Frozen):
     """Everything v2 reports about one site. Its JSON form is the output contract."""
 
@@ -378,6 +413,8 @@ class SiteResult(_Frozen):
     mcc: MccResult
     address: AddressResult
     phone: PhoneResult
+    # Results made before the email field was built don't have it.
+    email: EmailResult = Field(default_factory=lambda: _not_in_this_result())
     social_links: SocialResult
     error: str | None = None  # why the site couldn't be analyzed at all
     versions: Versions
@@ -388,7 +425,7 @@ class SiteResult(_Frozen):
             not_failed = [
                 name
                 for name, field in self.field_results.items()
-                if field.status is not Status.ERROR
+                if field.status is not Status.ERROR and not _never_built(field)
             ]
             if not_failed:
                 raise ValueError(f"the site failed, so every field must be an error: {not_failed}")

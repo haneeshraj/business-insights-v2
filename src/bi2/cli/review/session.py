@@ -6,6 +6,7 @@ Nothing here changes how v2 decides. The checks are for learning how often it's 
 answers it keeps that are wrong, and which it sends on that were right.
 """
 
+import re
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
@@ -50,6 +51,9 @@ class CheckRequest(BaseModel):
     correct: str = Field(default="", max_length=2000)  # the right answer, with "wrong"
 
 
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[a-z]{2,24}$")
+
+
 def _web_address(text: str) -> bool:
     return text.startswith(("http://", "https://")) and " " not in text
 
@@ -66,6 +70,11 @@ def _correct(field: str, given: str, ev: Evidence | None) -> str:
         if number is None:
             raise BadAnswer(f"{given} isn't a phone number")
         return number
+    if field == "email":
+        email = given.lower().removeprefix("mailto:")
+        if not _EMAIL.match(email):
+            raise BadAnswer(f"{given} isn't an email address")
+        return email
     if field == "social_links":
         profiles = given.replace(",", " ").split()
         if not all(_web_address(profile) for profile in profiles):

@@ -11,11 +11,12 @@ from pydantic import BaseModel, ConfigDict
 from rich.console import Console
 from rich.table import Table
 
-from bi2.cli.dev.saved import save_snapshot
+from bi2.adapters.local.snapshots import save_extra_page, save_snapshot
 from bi2.cli.options import AllowPrivate, Browser, Timeout
 from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import PageSnapshot, RenderedImage
 from bi2.evaluation.gold import load_gold_set
+from bi2.evidence.build import build_evidence
 from bi2.fetch.browser import BrowserFetcher
 
 
@@ -32,6 +33,7 @@ class FetchCheck(BaseModel):
     final_url: str = ""
     browser: str = ""  # the browser that loaded it
     detail: str = ""
+    contact_page: str = ""  # the contact page saved with it, if any
 
 
 def _possible_logos(images: tuple[RenderedImage, ...]) -> list[RenderedImage]:
@@ -80,6 +82,21 @@ def _summary_table(
     return table
 
 
+async def _save_contact_page(fetcher: BrowserFetcher, snapshot: PageSnapshot, site: Path) -> str:
+    """Save the contact page the homepage links, which a run reads when the homepage doesn't
+    show a phone number or an email address. Returns its address, or "" when there's none or
+    it won't load."""
+    pages = build_evidence(snapshot).contact_pages
+    if not pages:
+        return ""
+    try:
+        contact = await fetcher.fetch(pages[0])
+    except FetchError:
+        return ""
+    await asyncio.to_thread(save_extra_page, contact, site)
+    return pages[0]
+
+
 async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
     started = time.monotonic()
     try:
@@ -96,7 +113,8 @@ async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
         return FetchCheck(
             url=url, outcome="failed", seconds=time.monotonic() - started, detail=str(exc)
         )
-    await asyncio.to_thread(save_snapshot, snapshot, out)  # so other pages keep loading meanwhile
+    folder = await asyncio.to_thread(save_snapshot, snapshot, out)  # so others keep loading
+    contact_page = await _save_contact_page(fetcher, snapshot, folder)
     status = snapshot.status_code
     return FetchCheck(
         url=url,
@@ -106,6 +124,7 @@ async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
         images=len(snapshot.images),
         final_url=snapshot.final_url if snapshot.final_url != url else "",
         browser=snapshot.loaded_with,
+        contact_page=contact_page,
     )
 
 
@@ -119,6 +138,7 @@ async def _fetch_one(fetcher: BrowserFetcher, url: str, out: Path, console: Cons
             return 1
         seconds = time.monotonic() - started
         folder = await asyncio.to_thread(save_snapshot, snapshot, out)
+        await _save_contact_page(fetcher, snapshot, folder)
         console.print(_summary_table(snapshot, seconds, fetcher.browser_name or "", folder))
         console.print(_logo_table(snapshot.images))
     return 0
@@ -161,6 +181,8 @@ def _report_gold(checks: list[FetchCheck], out: Path, first_browser: str, consol
     average = sum(loaded_times) / len(loaded_times) if loaded_times else 0.0
     totals = ", ".join(f"{count} {outcome}" for outcome, count in counts.most_common())
     console.print(f"\n{totals}. Loaded pages took {average:.1f} s on average.", markup=False)
+    contact_pages = sum(1 for check in checks if check.contact_page)
+    console.print(f"Contact pages saved with them: {contact_pages}.", markup=False)
     again = sum(1 for check in checks if check.browser and check.browser != first_browser)
     if again:
         console.print(

@@ -10,7 +10,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from bi2.cli.dev.saved import load_snapshot, saved_folders
+from bi2.adapters.local.snapshots import load_snapshot, saved_folders
 from bi2.cli.options import AllowPrivate, Browser, Timeout
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable
@@ -32,6 +32,7 @@ _SHOWN: Final = (
     ("company_name", "name"),
     ("logo", "logo"),
     ("phone", "phone"),
+    ("email", "email"),
     ("social_links", "social"),
 )
 
@@ -75,6 +76,7 @@ async def _analyze_all(
         allow_private=run.allow_private,
         # Runs on saved pages keep what they download beside the pages, so reruns match.
         kept_downloads=run.saved / "downloads" if run.saved is not None else None,
+        saved_pages=run.saved,
     ) as ctx:
         limit = asyncio.Semaphore(run.concurrency)
 

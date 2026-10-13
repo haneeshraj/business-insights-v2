@@ -13,6 +13,7 @@ from typing import Any, Final
 
 from bi2.core.context import RunContext
 from bi2.core.models import Evidence, FieldResult
+from bi2.resolvers.email import resolve_email
 from bi2.resolvers.logo import resolve_logo
 from bi2.resolvers.name import resolve_name
 from bi2.resolvers.phone import resolve_phone
@@ -26,5 +27,6 @@ RESOLVERS: Final[dict[str, Resolver]] = {
     "company_name": resolve_name,
     "logo": resolve_logo,
     "phone": resolve_phone,
+    "email": resolve_email,
     "social_links": resolve_social_links,
 }

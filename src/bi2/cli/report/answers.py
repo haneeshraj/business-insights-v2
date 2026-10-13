@@ -16,6 +16,7 @@ FIELD_LABELS: Final = {
     "mcc": "MCC",
     "address": "Address",
     "phone": "Phone",
+    "email": "Email",
     "social_links": "Social links",
 }
 _STATUS: Final = {
@@ -39,6 +40,7 @@ _RIGHT_ANSWER: Final = {
     "company_name": "The right name",
     "logo": "The right logo: its address, or a candidate number like #2",
     "phone": "The right phone number",
+    "email": "The right email address",
     "social_links": "The right profile addresses, separated by spaces",
 }
 

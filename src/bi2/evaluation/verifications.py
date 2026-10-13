@@ -41,6 +41,8 @@ def answer_key(field: str, answer: FieldResult[Any]) -> str:
         return str(value.code)
     if field == "address":
         return fold(value.text)
+    if field == "email":
+        return str(value).lower()
     return str(value)
 
 
@@ -72,7 +74,7 @@ class Verification(BaseModel):
     verdict: Literal["right", "wrong"]
     note: str = ""  # what the person saw, for whoever improves the rules next
     # The right answer, given with one marked wrong: a name, a phone number in E.164 format,
-    # the logo's address, or profile addresses separated by spaces. A logo with no address of
+    # a lowercase email address, the logo's address, or profile addresses separated by spaces. A logo with no address of
     # its own is written as its candidate number, like "#2".
     correct: str = ""
     status: Status  # how v2 had marked the answer
@@ -112,9 +114,11 @@ _GOLD_FIELDS: Final = {
     "company_name": "company_names",
     "logo": "logo_urls",
     "phone": "phones",
+    "email": "emails",
     "social_links": "social_links",
 }
 _E164: Final = re.compile(r"^\+[1-9]\d{6,14}$")
+_EMAIL: Final = re.compile(r"^[^@\s]+@[^@\s]+\.[a-z]{2,24}$")
 
 
 def _usable(field: str, value: str) -> bool:
@@ -123,6 +127,8 @@ def _usable(field: str, value: str) -> bool:
         return value.startswith(("http://", "https://"))
     if field == "phone":
         return bool(_E164.match(value))
+    if field == "email":
+        return bool(_EMAIL.match(value))
     return bool(value.strip())
 
 

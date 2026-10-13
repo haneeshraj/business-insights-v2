@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from bi2.cli.dev.saved import save_snapshot
+from bi2.adapters.local.snapshots import save_snapshot
 from bi2.cli.main import app
 from bi2.core.models import Box, RenderedImage, SiteResult, Status
 from tests.factories import page_snapshot

@@ -38,6 +38,7 @@ async def test_a_page_is_analyzed_into_a_result_with_its_files_saved() -> None:
         "mcc": Status.NOT_FOUND,
         "address": Status.NOT_FOUND,
         "phone": Status.OK,
+        "email": Status.NOT_FOUND,  # the page shows no address, and links no contact page
         "social_links": Status.OK,
     }
     assert result.company_name.value == "Example Cafe"
@@ -72,3 +73,25 @@ async def test_a_page_that_wont_load_fails_every_field_and_says_why() -> None:
     assert ev is None
     assert result.error == f"couldn't load {URL}"
     assert {field.status for field in result.field_results.values()} == {Status.ERROR}
+
+
+CONTACT = f"{URL}contact-us"
+HOME = """<html><head><title>Example Cafe</title></head>
+<body><header><a href="/contact-us">Contact us</a></header><main>Coffee.</main></body></html>"""
+CONTACT_PAGE = """<html><body><footer>Call us at (416) 555-0123 or write to
+<a href="mailto:hello@example-cafe.ca">hello@example-cafe.ca</a></footer></body></html>"""
+
+
+async def test_the_contact_page_is_read_when_the_homepage_shows_no_phone_or_email() -> None:
+    pages = {CONTACT: page_snapshot(CONTACT_PAGE, url=CONTACT)}
+    result, ev = await analyze_snapshot(page_snapshot(HOME), fake_context(pages=pages))
+    assert ev.extra_pages == (CONTACT,)
+    assert (result.phone.value, result.phone.source) == ("+14165550123", "contact page: footer")
+    assert (result.email.value, result.email.status) == ("hello@example-cafe.ca", Status.OK)
+
+
+async def test_a_contact_page_that_wont_load_leaves_the_homepage_to_stand_alone() -> None:
+    result, ev = await analyze_snapshot(page_snapshot(HOME), fake_context())  # nothing to load
+    assert ev.contact_page is None
+    assert result.phone.status is Status.NOT_FOUND
+    assert result.phone.steps[-1].detail == "no contact page was read"

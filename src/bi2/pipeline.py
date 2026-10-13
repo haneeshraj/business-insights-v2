@@ -31,7 +31,7 @@ from bi2.core.models import (
 )
 from bi2.core.ports import Downloader
 from bi2.core.urls import site_folder
-from bi2.evidence.build import build_evidence
+from bi2.evidence.build import build_contact_page, build_evidence
 from bi2.resolvers import RESOLVERS
 from bi2.resolvers.cascade import not_built_yet
 
@@ -65,13 +65,27 @@ class _BrowserCopiesFirst:
         return await self._downloader.download(url, max_bytes=max_bytes, referer=referer)
 
 
+async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
+    """The evidence with the contact page's details too, when the homepage doesn't show both a
+    phone number and an email address and links a contact page. A contact page that won't load
+    is left out, and the homepage's evidence stands on its own."""
+    if (ev.contacts.phones and ev.contacts.emails) or not ev.contact_pages:
+        return ev
+    try:
+        snapshot = await ctx.fetcher.fetch(ev.contact_pages[0])
+    except FetchError:
+        return ev
+    page = build_contact_page(snapshot)
+    return ev.model_copy(update={"contact_page": page, "extra_pages": (*ev.extra_pages, page.url)})
+
+
 async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[SiteResult, Evidence]:
     """Everything v2 can tell about a loaded page. Saves the screenshot, the evidence and the
     result in the site's folder, along with the logo when one is found."""
     started = time.monotonic()
     if snapshot.image_copies:
         ctx = replace(ctx, downloader=_BrowserCopiesFirst(snapshot.image_copies, ctx.downloader))
-    ev = build_evidence(snapshot)
+    ev = await _with_contact_page(build_evidence(snapshot), ctx)
     folder = site_folder(snapshot.url)
     if snapshot.screenshot:
         saved = await ctx.files.save(f"{folder}/screenshot.jpg", snapshot.screenshot)

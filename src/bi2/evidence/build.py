@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 
 from bi2.core.models import (
+    ContactPage,
     Contacts,
     CountryCode,
     Evidence,
@@ -108,6 +109,15 @@ def _contacts_and_countries(
         postcodes=(postcode for postcode, _ in postcodes),
     )
     return contacts, likely_countries(contacts.phones)
+
+
+def build_contact_page(snapshot: PageSnapshot) -> ContactPage:
+    """The contact details on a site's contact page, read like the homepage's."""
+    doc = parse_html(snapshot.html)
+    structured = extract_structured_data(doc, snapshot.final_url)
+    text = extract_text_regions(snapshot, doc)
+    contacts, _ = _contacts_and_countries(doc, snapshot.final_url, structured, text)
+    return ContactPage(url=snapshot.final_url, contacts=contacts)
 
 
 def build_evidence(snapshot: PageSnapshot) -> Evidence:

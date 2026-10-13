@@ -88,22 +88,27 @@ def phone_countries(phones: Iterable[str]) -> list[str]:
     return countries
 
 
-def find_emails(doc: Document, text: TextRegions) -> list[str]:
-    """Email addresses from the page's email links and text, lowercased."""
+def find_emails(doc: Document, text: TextRegions) -> dict[str, list[str]]:
+    """Email addresses on the page, lowercased, each with the places it was found: email links,
+    then the footer, the header and the main text."""
     found = [
-        unquote(attribute(a, "href")[7:]).split("?")[0] for a in doc.css('a[href^="mailto:" i]')
+        (unquote(attribute(a, "href")[7:]).split("?")[0], "email link")
+        for a in doc.css('a[href^="mailto:" i]')
     ]
-    for part in (text.footer, text.header, text.main):
-        found += _EMAIL.findall(part)
-    emails = []
-    for email in (address.strip().lower() for address in found):
+    for place, part in (("footer", text.footer), ("header", text.header), ("main text", text.main)):
+        found += [(address, place) for address in _EMAIL.findall(part)]
+    places: dict[str, list[str]] = {}
+    for address, place in found:
+        email = address.strip().lower()
         if (
             _EMAIL.fullmatch(email)
             and not email.endswith(_NOT_EMAIL_ENDINGS)
             and not email.rsplit("@", 1)[1].endswith(_NOT_EMAIL_DOMAINS)
         ):
-            emails.append(email)
-    return list(dict.fromkeys(emails))[:_KEEP]
+            seen = places.setdefault(email, [])
+            if place not in seen:
+                seen.append(place)
+    return dict(list(places.items())[:_KEEP])
 
 
 def find_copyright_line(text: TextRegions) -> str | None:
@@ -143,10 +148,12 @@ def extract_contacts(
 ) -> Contacts:
     """Every contact detail on the page."""
     phones = find_phones(doc, text, structured=structured_phone, region=region)
+    emails = find_emails(doc, text)
     return Contacts(
         phones=tuple(phones),
         phone_places={phone: tuple(places) for phone, places in phones.items()},
-        emails=tuple(find_emails(doc, text)),
+        emails=tuple(emails),
+        email_places={email: tuple(places) for email, places in emails.items()},
         postcodes=tuple(list(dict.fromkeys(postcodes))[:_KEEP]),
         copyright_line=find_copyright_line(text),
     )

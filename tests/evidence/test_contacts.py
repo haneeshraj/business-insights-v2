@@ -46,7 +46,10 @@ def test_numbers_without_a_country_code_are_read_as_the_regions() -> None:
 
 
 def test_emails_come_from_links_and_text_without_image_names() -> None:
-    assert find_emails(LINKS, TEXT) == ["hello@example-cafe.ca", "info@example-cafe.ca"]
+    assert find_emails(LINKS, TEXT) == {
+        "hello@example-cafe.ca": ["email link"],
+        "info@example-cafe.ca": ["footer"],
+    }
 
 
 def test_the_copyright_line_and_its_holder() -> None:
