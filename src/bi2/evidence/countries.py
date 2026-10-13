@@ -103,13 +103,26 @@ def find_region_countries(text: str) -> list[CountryCode]:
 
 
 def page_languages(doc: Document) -> list[str]:
-    """The languages the page says it's in, like "en-CA", from its html tag and meta tags."""
+    """The languages the page says it's in, like "en-CA", from its html tag and meta tags.
+
+    When every other language version of the page it links to is for the same country, like
+    "zh-hant-hk" and "zh-hans-hk", those count too: the site is for that country. A site with
+    versions for several countries doesn't say which one it's in."""
     nodes = doc.css(
         'html[lang], meta[property="og:locale" i], meta[http-equiv="content-language" i]'
     )
-    return [
+    found = [
         value for node in nodes if (value := attribute(node, "lang") or attribute(node, "content"))
     ]
+    alternates = [
+        tag
+        for node in doc.css('link[rel="alternate" i][hreflang]')
+        if (tag := attribute(node, "hreflang")) and tag.casefold() != "x-default"
+    ]
+    regions = {_language_region(tag) for tag in alternates}
+    if len(regions) == 1 and None not in regions:
+        found += alternates
+    return found
 
 
 def _language_region(language: str) -> str | None:

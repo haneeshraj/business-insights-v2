@@ -38,6 +38,11 @@ def test_a_zip_code_needs_its_state() -> None:
     assert find_postcodes("Order #14202 ships in 5 days") == []
 
 
+def test_an_eircode_has_a_digit_so_product_names_arent_one() -> None:
+    assert find_postcodes("Grafton St, Dublin 2, D02 X285") == [("D02 X285", "IE")]
+    assert find_postcodes("COMANDANTE C40 HAND GRINDER") == []
+
+
 def test_provinces_and_states_after_a_place_name_count() -> None:
     assert find_region_countries("Visit us: 1 Main St, Toronto, ON M5V 2T6") == ["CA"]
     assert find_region_countries("Montréal, QC and St. Catharines, Ontario") == ["CA"]
@@ -50,6 +55,23 @@ def test_reads_the_page_languages() -> None:
         '<html lang="en-CA"><head><meta property="og:locale" content="en_CA"></head></html>'
     )
     assert page_languages(doc) == ["en-CA", "en_CA"]
+
+
+def test_other_language_versions_count_when_theyre_all_for_one_country() -> None:
+    one_country = parse_html(
+        '<html lang="zh"><head><link rel="alternate" hreflang="zh-hant-hk" href="/hk/">'
+        '<link rel="alternate" hreflang="zh-hans-hk" href="/cn/">'
+        '<link rel="alternate" hreflang="x-default" href="/"></head></html>'
+    )
+    assert page_languages(one_country) == ["zh", "zh-hant-hk", "zh-hans-hk"]
+    assert guess_countries(
+        "https://example-bakery.com/", languages=page_languages(one_country)
+    ) == ("HK",)
+    several = parse_html(
+        '<html lang="en"><head><link rel="alternate" hreflang="en-ca" href="/ca/">'
+        '<link rel="alternate" hreflang="en-us" href="/us/"></head></html>'
+    )
+    assert page_languages(several) == ["en"]
 
 
 def test_clues_add_up_to_the_most_likely_country() -> None:

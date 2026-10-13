@@ -5,7 +5,7 @@
 # A postcode pattern with a "postcode" group needs the text around it, such as a US state
 # before a ZIP code. Adding a country is one entry. Read by bi2/evidence/countries.py.
 
-version = "2026-10-13"
+version = "2026-10-13.2"
 
 [CA]
 names = ["Canada"]
@@ -44,7 +44,9 @@ postcode = '\b[A-PR-UWYZ][A-HK-Y]?\d[A-HJKPSTUW\d]? \d[ABD-HJLNP-UW-Z]{2}\b'
 [IE]
 names = ["Ireland", "Republic of Ireland", "Éire"]
 domains = ["ie"]
-postcode = '\b(?:[AC-FHKNPRTV-Y]\d{2}|D6W) ?[\dAC-FHKNPRTV-Y]{4}\b'
+# A digit among the last four characters is required, so product names like "C40 HAND"
+# aren't taken for Eircodes. The rare Eircode with none is missed.
+postcode = '\b(?:[AC-FHKNPRTV-Y]\d{2}|D6W) ?(?=[AC-FHKNPRTV-Y]{0,3}\d)[\dAC-FHKNPRTV-Y]{4}\b'
 
 [AU]
 names = ["Australia"]
@@ -184,3 +186,121 @@ domains = ["br"]
 [AR]
 names = ["Argentina"]
 domains = ["ar"]
+
+[HK]
+names = ["Hong Kong", "香港"]
+domains = ["hk"]
+languages = ["yue"]
+
+[CN]
+names = ["China", "People's Republic of China", "中国"]
+domains = ["cn"]
+
+[MY]
+names = ["Malaysia"]
+domains = ["my"]
+languages = ["ms"]
+
+[ID]
+names = ["Indonesia"]
+domains = ["id"]
+languages = ["id"]
+
+[PH]
+names = ["Philippines"]
+domains = ["ph"]
+languages = ["fil", "tl"]
+
+[VN]
+names = ["Vietnam", "Viet Nam", "Việt Nam"]
+domains = ["vn"]
+languages = ["vi"]
+
+[IL]
+names = ["Israel"]
+domains = ["il"]
+languages = ["he"]
+
+[SA]
+names = ["Saudi Arabia"]
+domains = ["sa"]
+
+[EG]
+names = ["Egypt"]
+domains = ["eg"]
+
+[NG]
+names = ["Nigeria"]
+domains = ["ng"]
+
+[KE]
+names = ["Kenya"]
+domains = ["ke"]
+
+[CL]
+names = ["Chile"]
+domains = ["cl"]
+
+[PE]
+names = ["Peru", "Perú"]
+domains = ["pe"]
+
+[HU]
+names = ["Hungary", "Magyarország"]
+domains = ["hu"]
+languages = ["hu"]
+
+[RO]
+names = ["Romania", "România"]
+domains = ["ro"]
+languages = ["ro"]
+
+[UA]
+names = ["Ukraine", "Україна"]
+domains = ["ua"]
+languages = ["uk"]
+
+[HR]
+names = ["Croatia", "Hrvatska"]
+domains = ["hr"]
+languages = ["hr"]
+
+[BG]
+names = ["Bulgaria", "България"]
+domains = ["bg"]
+languages = ["bg"]
+
+[SK]
+names = ["Slovakia", "Slovensko"]
+domains = ["sk"]
+languages = ["sk"]
+
+[SI]
+names = ["Slovenia", "Slovenija"]
+domains = ["si"]
+languages = ["sl"]
+
+[LT]
+names = ["Lithuania", "Lietuva"]
+domains = ["lt"]
+languages = ["lt"]
+
+[LV]
+names = ["Latvia", "Latvija"]
+domains = ["lv"]
+languages = ["lv"]
+
+[EE]
+names = ["Estonia", "Eesti"]
+domains = ["ee"]
+languages = ["et"]
+
+[IS]
+names = ["Iceland", "Ísland"]
+domains = ["is"]
+languages = ["is"]
+
+[LU]
+names = ["Luxembourg", "Lëtzebuerg"]
+domains = ["lu"]
+languages = ["lb"]
