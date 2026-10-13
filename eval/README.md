@@ -5,6 +5,7 @@ This folder holds what v2 is measured against. The code that does the measuring 
 - `gold.toml`: the gold set, sites with known answers. It's the tuning set: the sites rules are written against.
 - `test-set.toml`: the test set, sites the rules are never tuned on. Their accuracy is the accuracy we report.
 - `verifications.jsonl`: answers a person checked on the review page, with their notes.
+- `drafted-checks.jsonl`: answers checked against each site's own pages that no person has confirmed yet.
 - `baselines/`: tools for measuring other systems on the same sites, starting with v1.
 
 ## The gold file
@@ -70,9 +71,20 @@ Add `--confirmed-only` to score only sites a person has checked, and `--json rep
 
 The right answers people confirm or give also count on later runs. When a run's answer has changed, it's scored against them the way the gold set scores answers, before the gold set itself. The review page says "Your earlier answers" for these.
 
+## Drafted checks
+
+`drafted-checks.jsonl` has the same form as `verifications.jsonl`. It holds checks made against each site's own pages, its contact page or the live site, for answers no person has checked. The note on each one says what it was checked against.
+
+- A person's check of an answer always counts before a draft of it, and drafts count before the gold set.
+- On the review page, a draft shows as "Drafted", with its note. Pressing Right or Wrong confirms or overrides it.
+- An answer that couldn't be verified has no draft, so it's left out of the scores rather than guessed.
+
 ## The test set
 
-`test-set.toml` lists only the sites, what kind of business each is, and, for profiles on a platform, which platform. The right answers come from checks on the review page.
+`test-set.toml` lists only the sites, what kind of business each is, and, for profiles on a platform, which platform. The right answers come from checks: a person's on the review page, or drafted ones. It has two batches:
+
+- 57 sites, mostly Canadian chains, banks and services.
+- 64 small businesses in 26 countries, with sites in their own languages. A few are there on purpose: a domain that now redirects to a lottery site, one that's parked for sale, a homepage that leads to "page not found", and sites behind bot checks.
 
 ```
 uv run bi2 dev fetch --gold eval/test-set.toml --out eval/snapshots/test-set    # save the pages once

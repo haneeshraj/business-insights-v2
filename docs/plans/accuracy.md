@@ -66,7 +66,19 @@ flowchart LR
 - **Every run is compared with the last** and lists each answer that got better or worse.
 - **Checks that last.** When you mark an answer wrong on the review page, you'll be able to give the right one, or pick the right logo candidate. It becomes a test answer, so it still counts after the rules change.
 - **Who does what:** I draft the test sites and v2's first answers, and you check them on the review page. For an answer that's right, that's one click.
-- **So far:** the first 57 test sites are in `eval/test-set.toml`, from coffee chains and banks to crypto exchanges, a vape shop and profiles on platforms. When their pages were saved, 53 loaded; 2 timed out and 2 blocked the browser, and those count as failures, since they're part of the sample too.
+- **So far:** 121 test sites are in `eval/test-set.toml`.
+  - 57 are mostly Canadian, from coffee chains and banks to crypto exchanges, a vape shop and profiles on platforms.
+  - 64 are small businesses in 26 countries, with sites in their own languages.
+
+  Sites that time out or block the browser count as failures, since they're part of the sample too. Every answer is checked, either by you or by a drafted check against the site's own pages (see eval/README.md). The exception is 29 answers that couldn't be verified, mostly phones not shown anywhere on the site.
+- **The first score on the test set,** on 2026-10-13, with no AI:
+
+  | Field | Right | Right and sure | Sure but wrong |
+  |---|---|---|---|
+  | Names | 108 of 121 (89%) | 76% | 3 of 95 |
+  | Logos | 107 of 121 (88%) | 72% | 1 of 88 |
+  | Social links | 105 of 120 (88%) | 78% | 4 of 97 |
+  | Phones | 55 of 93 (59%) | 53% | 0 of 49 |
 
 ## 5. Step 1: the rules, field by field
 
