@@ -2,7 +2,8 @@
 
 This folder holds what v2 is measured against. The code that does the measuring is in `src/bi2/evaluation`.
 
-- `gold.toml`: the gold set, sites with known answers.
+- `gold.toml`: the gold set, sites with known answers. It's the tuning set: the sites rules are written against.
+- `test-set.toml`: the test set, sites the rules are never tuned on. Their accuracy is the accuracy we report.
 - `verifications.jsonl`: answers a person checked on the review page, with their notes.
 - `baselines/`: tools for measuring other systems on the same sites, starting with v1.
 
@@ -65,6 +66,31 @@ Add `--confirmed-only` to score only sites a person has checked, and `--json rep
 - `shown` is the answer as the page showed it, `status` and `confidence` are how v2 had marked it, and `note` is what the person saw.
 - A newer check of the same answer replaces an older one. The older lines stay, as history.
 - A person's check counts over the gold set's, since the gold set can be wrong: it lists one file for a logo that has several.
+- `correct` is the right answer, given with an answer marked wrong: a name, a phone number in E.164 format, the logo's address, or profile addresses separated by spaces. On the review page, a logo can be given as its candidate number, like `#2`, and is saved as that candidate's address.
+
+The right answers people confirm or give also count on later runs. When a run's answer has changed, it's scored against them the way the gold set scores answers, before the gold set itself. The review page says "Your earlier answers" for these.
+
+## The test set
+
+`test-set.toml` lists only the sites, what kind of business each is, and, for profiles on a platform, which platform. The right answers come from checks on the review page.
+
+```
+uv run bi2 dev fetch --gold eval/test-set.toml --out eval/snapshots/test-set    # save the pages once
+uv run bi2 analyze --saved eval/snapshots/test-set --gold eval/test-set.toml --out bi2-results/test-set
+uv run bi2 review bi2-results/test-set --gold eval/test-set.toml               # check the answers
+```
+
+- Saved pages go in `eval/snapshots/`, which git ignores, since copies of other sites never go in the repository.
+- A run on saved pages keeps the files it downloads beside the pages, so a rerun sees exactly the same pages and files, with no network.
+- Never change a rule because of a test-set site. Add a site like it to the gold set and work on that one, or the test set stops measuring sites the rules haven't seen.
+
+## Comparing runs
+
+```
+uv run bi2 eval compare bi2-results/before bi2-results/after --gold eval/gold.toml
+```
+
+It lists the answers that got better, got worse, changed with no one having checked them, or changed but are as good as before, judged by checks and the gold set. It exits with 1 when anything got worse, including a site that no longer loads, and with 2 when a file can't be read.
 
 ## Reviewing the gold set
 

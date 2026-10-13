@@ -66,6 +66,7 @@ flowchart LR
 - **Every run is compared with the last** and lists each answer that got better or worse.
 - **Checks that last.** When you mark an answer wrong on the review page, you'll be able to give the right one, or pick the right logo candidate. It becomes a test answer, so it still counts after the rules change.
 - **Who does what:** I draft the test sites and v2's first answers, and you check them on the review page. For an answer that's right, that's one click.
+- **So far:** the first 57 test sites are in `eval/test-set.toml`, from coffee chains and banks to crypto exchanges, a vape shop and profiles on platforms. When their pages were saved, 53 loaded; 2 timed out and 2 blocked the browser, and those count as failures, since they're part of the sample too.
 
 ## 5. Step 1: the rules, field by field
 
@@ -98,7 +99,7 @@ Built after step 1 is done, and designed with you first.
 - **What it sees:** only the unsure or missing answers, each with the evidence v2 already has, never the whole page. For a logo, that's the screenshot with numbered candidates. For a name or an address, it's the snippets of page text and structured data.
 - **What it may answer:** it picks one of the candidates, or quotes the page. Code checks that the quote is really there, so it can't make an answer up.
 - **How it's measured:** the same way as the rules, plus the tokens and money spent on each site.
-- **Jev:** typed decisions with Jev get tried here, once we have access.
+- **Jev:** typed decisions with Jev get tried here, once we have access. Jev answers typed questions such as "which of these numbered candidates is the logo?", and the right answers you give on the review page, like a logo's candidate number, are what its answers will be measured against.
 
 ## 7. Step 3: the LLM check
 
@@ -113,7 +114,12 @@ Built after step 1 is done, and designed with you first.
 
 ## 9. Order of work
 
-1. **Repeatable tests:** saved copies of every gold site's pages, a report comparing each run with the last, and the review page taking the right answer when one is wrong.
+1. **Repeatable tests.** Done on 2026-10-12:
+   - saved copies of every gold site's pages, and of the first test sites
+   - `bi2 eval compare`, which says what got better or worse between two runs
+   - the review page taking the right answer when one is wrong
+
+   A second run on the saved pages gave the same answers as the first.
 2. **Rule fixes:**
    - logos (SVG code, and the logos the reader misses)
    - phones from the contact page
