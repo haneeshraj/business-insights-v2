@@ -1,6 +1,7 @@
 """Links that matter as evidence: the business's social media profiles, and its own pages
 that likely hold its address and phone number, such as Contact and About."""
 
+import re
 from collections.abc import Iterable
 from typing import Final
 from urllib.parse import urldefrag, urlsplit
@@ -20,12 +21,24 @@ _KEEP_PAGES: Final = 3
 # address. Then pages that often hold an address.
 _CONTACT_WORDS: Final = {
     "contact": 3, "kontakt": 3, "contacto": 3, "contatti": 3, "contato": 3, "contactez": 3,
-    "nous-joindre": 3, "yhteystiedot": 3, "iletisim": 3, "inquiry": 3, "enquir": 3,
+    "nous-joindre": 3, "yhteystiedot": 3, "iletisim": 3,
+    # Enquiries are often for one thing, like "Media enquiries" or "Business inquiries".
+    "inquir": 2, "enquir": 2,
     "impressum": 2, "imprint": 2, "mentions-legales": 2, "aviso-legal": 2, "note-legali": 2,
     "legal-notice": 2,
     "about": 1, "our-story": 1, "a-propos": 1, "location": 1, "find-us": 1, "visit": 1,
     "store-locator": 1, "stores": 1, "hours": 1,
 }  # fmt: skip
+
+# Words in a page's address that say it's for one purpose, not for reaching the business, or
+# that it's an article or a product: the press, careers, franchising, a blog, a product page.
+_ONE_PURPOSE_PAGE: Final = re.compile(
+    r"(?:^|[/_.-])(?:press|media|news|blog|careers?|jobs?|franchis\w*|invest\w*|sponsor\w*"
+    r"|donat\w*|donors?|wholesale|privacy|cookies?|terms|explore|learn|recipes?|products?)"
+    r"(?=$|[/_.-])"
+)
+# Link text longer than this is a teaser for an article or an offer, not a menu label.
+_LONGEST_LINK_LABEL: Final = 6
 
 
 def extract_social_links(
@@ -43,8 +56,25 @@ def extract_social_links(
     return tuple(found.values())[:_KEEP_PROFILES]
 
 
+def _best_weight(found_in: str, *, weak_too: bool = True) -> int:
+    """The weight of the most telling contact word in a link's address or text."""
+    return max(
+        (
+            weight
+            for word, weight in _CONTACT_WORDS.items()
+            if (weak_too or weight > 1) and word in found_in
+        ),
+        default=0,
+    )
+
+
 def extract_contact_pages(doc: Document, base_url: str) -> tuple[str, ...]:
-    """The site's own pages most likely to hold its address and phone number, best first."""
+    """The site's own pages most likely to hold its address and phone number, best first.
+
+    A link's text counts as much as its address, so "Contact us" leading to /help counts as
+    much as /contact. A page for one purpose, like the press or careers, is never taken, even
+    when its address says "enquiries". In long link text, like a blog post's teaser, weak words
+    such as "about" don't count."""
     here = urldefrag(base_url).url.rstrip("/")
     points: dict[str, int] = {}
     for url, text in links(doc, base_url):
@@ -52,9 +82,11 @@ def extract_contact_pages(doc: Document, base_url: str) -> tuple[str, ...]:
         if url.rstrip("/") == here or not same_site(url, base_url):
             continue
         path, words = urlsplit(url).path.casefold(), fold(text)
-        score = sum(2 * weight for word, weight in _CONTACT_WORDS.items() if word in path)
-        score += sum(
-            weight for word, weight in _CONTACT_WORDS.items() if word.replace("-", " ") in words
+        if _ONE_PURPOSE_PAGE.search(path):
+            continue
+        teaser = len(words.split()) > _LONGEST_LINK_LABEL
+        score = 2 * _best_weight(path) + 2 * _best_weight(
+            words.replace(" ", "-"), weak_too=not teaser
         )
         if score:
             points[url] = max(points.get(url, 0), score)

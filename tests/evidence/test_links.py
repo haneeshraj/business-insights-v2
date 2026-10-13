@@ -40,3 +40,18 @@ def test_contact_pages_are_the_sites_own_pages_best_first() -> None:
         "https://example-cafe.ca/about-us",
         "https://example-cafe.ca/find-us",
     )
+
+
+def test_a_link_saying_contact_counts_as_much_as_a_contact_address() -> None:
+    page = parse_html('<a href="/about-our-farm">About our farm</a> <a href="/help">Contact us</a>')
+    assert extract_contact_pages(page, BASE)[0] == "https://example-cafe.ca/help"
+
+
+def test_pages_for_one_purpose_and_teasers_are_never_the_contact_page() -> None:
+    page = parse_html(
+        '<a href="/about-us/press-enquiries">Press enquiries</a>'
+        '<a href="/franchising/contact-our-team">Own a franchise</a>'
+        '<a href="/blog/how-to-contact-a-roaster">Blog</a>'
+        '<a href="/pages/pickup">Order online and pick up in store, ready in two hours</a>'
+    )
+    assert extract_contact_pages(page, BASE) == ()
