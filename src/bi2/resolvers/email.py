@@ -96,7 +96,10 @@ _GENERAL_STEMS: Final = re.compile(
         (
             "information", "info", "hello", "welcome", "contact", "contato", "contatti",
             "kontakt", "iletisim", "yhteys", "boxoffice", "office", "oficina", "escritorio", "bureau",
-            "ufficio", "kontor", "enquir", "inquir", "servic", "servizi", "palvelu", "support",
+            # Whole words before their stems, so a word's ending isn't left over: "enquiries"
+            # is all general, where "enquir" would leave "ies".
+            "ufficio", "kontor", "enquiries", "inquiries", "enquir", "inquir", "servicio", "servic",
+            "servizi", "palvelu", "support",
             "apoio", "help", "frontdesk", "desk", "care", "customer", "client", "guest", "member", "kund",
             "klant", "asiakas", "atencion", "atendimento", "reception",
         )

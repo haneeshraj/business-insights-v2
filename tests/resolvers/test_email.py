@@ -81,6 +81,9 @@ async def test_a_plainly_general_address_comes_before_one_naming_a_place() -> No
     alone = _evidence({"help.campus@example-cafe.ca": ("email link",)})
     result = await resolve_email(alone, fake_context())
     assert (result.status, result.confidence) == (Status.NEEDS_REVIEW, 0.7)
+    for plain in ("enquiries@example-cafe.ca", "servicioalcliente@example-cafe.ca"):
+        result = await resolve_email(_evidence({plain: ("email link",)}), fake_context())
+        assert result.status is Status.OK, plain  # whole words, with nothing left over
 
 
 async def test_another_domain_named_for_the_same_business_is_its_own() -> None:
