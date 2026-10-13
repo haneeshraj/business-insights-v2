@@ -561,3 +561,232 @@ notes = "United Kingdom, English"
 url = "https://www.truefittandhill.co.uk/"
 category = "barber"
 notes = "United Kingdom, English"
+
+# Third batch, 2026-10-13: 45 sites v2 had never seen, picked before looking at their contact
+# details, to measure the phone and email rules on new sites. Their phones and emails are
+# checked; their other answers aren't yet.
+
+[[site]]
+url = "https://www.pusateris.com/"
+category = "grocer"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.rockymountainsoap.com/"
+category = "soap and skin care shop"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.purdys.com/"
+category = "chocolatier"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.cobsbread.com/"
+category = "bakery chain"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.thomashaas.com/"
+category = "chocolatier"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.stviateurbagel.com/"
+category = "bagel bakery"
+notes = "Canada, English and French"
+
+[[site]]
+url = "https://www.leevalley.com/"
+category = "tool store"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.bulkbarn.ca/"
+category = "bulk food store chain"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.kickinghorsecoffee.com/"
+category = "coffee roaster"
+notes = "Canada, English"
+
+[[site]]
+url = "https://provinceofcanada.com/"
+category = "online clothing shop"
+notes = "Canada, English"
+
+[[site]]
+url = "https://www.vapestreet.ca/"
+category = "vape shop"
+notes = "Canada, English; high-risk"
+
+[[site]]
+url = "https://shakepay.com/"
+category = "crypto app"
+notes = "Canada, English; high-risk"
+
+[[site]]
+url = "https://www.powells.com/"
+category = "bookshop"
+notes = "United States, English"
+
+[[site]]
+url = "https://www.katzsdelicatessen.com/"
+category = "delicatessen"
+notes = "United States, English"
+
+[[site]]
+url = "https://levainbakery.com/"
+category = "bakery"
+notes = "United States, English"
+
+[[site]]
+url = "https://bluebottlecoffee.com/"
+category = "coffee chain"
+notes = "United States, English"
+
+[[site]]
+url = "https://www.bettys.co.uk/"
+category = "tea room and bakery"
+notes = "United Kingdom, English"
+
+[[site]]
+url = "https://dauntbooks.co.uk/"
+category = "bookshop"
+notes = "United Kingdom, English"
+
+[[site]]
+url = "https://www.bewleys.com/"
+category = "cafe and coffee roaster"
+notes = "Ireland, English"
+
+[[site]]
+url = "https://www.nealsyarddairy.co.uk/"
+category = "cheese shop"
+notes = "United Kingdom, English"
+
+[[site]]
+url = "https://www.demel.com/"
+category = "patisserie"
+notes = "Austria, German"
+
+[[site]]
+url = "https://www.poilane.com/"
+category = "bakery"
+notes = "France, French"
+
+[[site]]
+url = "https://www.dallmayr.com/"
+category = "delicatessen"
+notes = "Germany, German"
+
+[[site]]
+url = "https://www.pasticceriamarchesi.com/"
+category = "patisserie"
+notes = "Italy, Italian"
+
+[[site]]
+url = "https://www.damichele.net/"
+category = "pizzeria"
+notes = "Italy, Italian"
+
+[[site]]
+url = "https://www.casamira.es/"
+category = "confectioner"
+notes = "Spain, Spanish"
+
+[[site]]
+url = "https://www.gerbeaud.hu/"
+category = "cafe and patisserie"
+notes = "Hungary, Hungarian"
+
+[[site]]
+url = "https://manteigaria.com/"
+category = "bakery"
+notes = "Portugal, Portuguese"
+
+[[site]]
+url = "https://www.vanstapele.com/"
+category = "cookie bakery"
+notes = "Netherlands, Dutch"
+
+[[site]]
+url = "https://www.maisondandoy.com/"
+category = "biscuit bakery"
+notes = "Belgium, French"
+
+[[site]]
+url = "https://www.spruengli.ch/"
+category = "confectioner"
+notes = "Switzerland, German"
+
+[[site]]
+url = "https://fuglen.no/"
+category = "cafe"
+notes = "Norway, Norwegian"
+
+[[site]]
+url = "https://www.toraya-group.co.jp/"
+category = "confectioner"
+notes = "Japan, Japanese"
+
+[[site]]
+url = "https://www.sunnyhills.com.tw/"
+category = "pastry shop"
+notes = "Taiwan, Chinese"
+
+[[site]]
+url = "https://www.keewah.com/"
+category = "bakery"
+notes = "Hong Kong, Chinese and English"
+
+[[site]]
+url = "https://www.bengawansolo.com.sg/"
+category = "bakery"
+notes = "Singapore, English"
+
+[[site]]
+url = "https://www.unitybooks.co.nz/"
+category = "bookshop"
+notes = "New Zealand, English"
+
+[[site]]
+url = "https://theobroma.in/"
+category = "patisserie chain"
+notes = "India, English"
+
+[[site]]
+url = "https://www.lunecroissanterie.com/"
+category = "bakery"
+notes = "Australia, English"
+
+[[site]]
+url = "https://www.pujol.com.mx/"
+category = "restaurant"
+notes = "Mexico, Spanish"
+
+[[site]]
+url = "https://pergamino.co/"
+category = "coffee roaster"
+notes = "Colombia, Spanish"
+
+[[site]]
+url = "https://www.livrariadavila.com.br/"
+category = "bookshop"
+notes = "Brazil, Portuguese"
+
+[[site]]
+url = "https://booklounge.co.za/"
+category = "bookshop"
+notes = "South Africa, English"
+
+[[site]]
+url = "https://bateel.com/"
+category = "dates and gourmet shop"
+notes = "United Arab Emirates, English and Arabic"
+
+[[site]]
+url = "https://www.javahouseafrica.com/"
+category = "cafe chain"
+notes = "Kenya, English"
