@@ -338,10 +338,12 @@ The business's general address is the one wanted, like info@, hello@ or customer
 ## Loading pages
 
 - Pages load in Playwright's Chromium shell, a stripped-down build made for headless use. It's about 40% faster than a full browser.
-- Bot detection spots the shell more easily. When a site refuses it, with an error status or a dropped connection, the page loads again in a full browser: Playwright's full Chromium, or else Chrome or Edge. On the gold set this took loaded sites from 51 to 54 of 56.
+- Bot detection spots the shell more easily. When a site refuses it, with an error status or a dropped connection, or stalls it until it times out, the page loads again in a full browser: Playwright's full Chromium, or else Chrome or Edge. On the gold set this took loaded sites from 51 to 54 of 56. Retrying pages that time out added Canadian Tire and Sport Chek, which never answer the shell.
+- When a site's security certificate is for its other name, with or without "www.", the page loads under that name. The browser still checks the certificate, so nothing it would refuse gets through.
 - Bot checks that run in the page, like Cloudflare's "Just a moment...", answer with an error page and move on to the real page once they pass. An error page with scripts gets up to 10 seconds to move on. One with no scripts, like Akamai's "Access Denied", can't move on, so it isn't waited on.
 - A page's status is the status of the page that was read, not of the first response, which may have been a bot check.
 - Some sites refuse every browser, sometimes depending on how often they've seen us that day. Their fields go to search or to `needs_review`.
+- Other browsers don't help with those. On 2026-10-13, 6 sites behind bot checks blocked Playwright's Chromium, Chrome and Edge alike, headless or in a visible window, even given 20 seconds to let us through.
 
 ## Speed
 

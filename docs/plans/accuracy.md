@@ -112,6 +112,12 @@ flowchart LR
     - Kee Wah: its Hong Kong numbers weren't read, since Hong Kong isn't among the 35 countries yet.
   - One bug it found is fixed: an address like enquiries@ is plainly general now, where it was left unsure.
 
+- **Pages that wouldn't load,** tried on 2026-10-13 in Playwright's Chromium, Chrome and Edge, headless and in a visible window:
+  - 6 bot checks blocked every one of them, so other browsers aren't worth building.
+  - Canadian Tire and Sport Chek load in any full browser; only the fast shell gets stalled. Pages that time out in the shell now load again in a full browser.
+  - Bengawan Solo's certificate is for its name without "www.". A site whose certificate is for its other name now loads under that one.
+  - With these three loading, the test set's names, logos and social links each gain 2 right answers, and phones and emails 2 and 3. One is wrong: Sport Chek's structured data gives its parent Canadian Tire's number, not its own.
+
 ## 5. Step 1: the rules, field by field
 
 | Field | Fix | Sites from the review it fixes |
@@ -126,7 +132,7 @@ flowchart LR
 | Phone | More countries, starting with Hong Kong, and check that a postcode clue isn't a product code. Find gold-set sites like these first | Kee Wah, Coffee Supreme (test set) |
 | Phone | Handle sites that show a different number on each visit | Flight Centre |
 | Name | When the page never states the name, offer the words in the domain as an unsure name | The Only Cafe |
-| All | When a page blocks us, retry in a visible browser window. For big brands, look the business up on Wikidata, which is free and lists official names and logo files | Loblaws, Shoppers, Roots (blocked on some visits) |
+| All | When a page blocks us, look big brands up on Wikidata, which is free and lists official names and logo files. A visible browser window was tried on 2026-10-13 and got past no bot check | Loblaws, Shoppers, Roots (blocked on some visits) |
 | All | When a platform profile is walled off, use the business's own website instead | Bellwoods' Instagram (19+ wall) |
 | Address | Build it: structured data first, then the footer and the contact page (postcode, city and house number). Homepages alone hold the address only a third of the time | not built yet |
 | MCC | Build it: match the business's kind, from its structured data and page words, against the 914 MCC descriptions with a local search, with no AI. Unsure ones go to the AI pass | not built yet |
