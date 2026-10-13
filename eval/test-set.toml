@@ -1,0 +1,240 @@
+# The test set: sites v2's rules are never tuned on, so their accuracy is the accuracy we
+# report. The gold set (gold.toml) is the tuning set, the sites rules are written against.
+#
+# The right answers come from people's checks on the review page (verifications.jsonl), not
+# from this file. It lists the sites, what kind of business each is, and, for profiles on a
+# platform, which platform. See eval/README.md, "The test set".
+
+[[site]]
+url = "https://www.timhortons.ca/"
+category = "coffee chain"
+
+[[site]]
+url = "https://www.pizzapizza.ca/"
+category = "pizza chain"
+
+[[site]]
+url = "https://www.thekeg.com/"
+category = "steakhouse chain"
+
+[[site]]
+url = "https://www.balzacs.com/"
+category = "coffee chain"
+
+[[site]]
+url = "https://www.pilotcoffeeroasters.com/"
+category = "coffee roaster"
+
+[[site]]
+url = "https://www.davidstea.com/"
+category = "tea shop"
+
+[[site]]
+url = "https://www.nadege-patisserie.com/"
+category = "bakery"
+
+[[site]]
+url = "https://www.sobeys.com/"
+category = "grocery chain"
+
+[[site]]
+url = "https://www.metro.ca/"
+category = "grocery chain"
+
+[[site]]
+url = "https://www.nofrills.ca/"
+category = "grocery chain"
+
+[[site]]
+url = "https://www.farmboy.ca/"
+category = "grocery chain"
+
+[[site]]
+url = "https://www.longos.com/"
+category = "grocery chain"
+
+[[site]]
+url = "https://www.rexall.ca/"
+category = "pharmacy chain"
+
+[[site]]
+url = "https://www.canadiantire.ca/"
+category = "retail chain"
+
+[[site]]
+url = "https://www.sportchek.ca/"
+category = "sporting goods"
+
+[[site]]
+url = "https://shop.lululemon.com/"
+category = "athletic apparel"
+
+[[site]]
+url = "https://www.aritzia.com/"
+category = "clothing"
+
+[[site]]
+url = "https://www.simons.ca/"
+category = "department store"
+
+[[site]]
+url = "https://www.dollarama.com/"
+category = "dollar store"
+
+[[site]]
+url = "https://www.londondrugs.com/"
+category = "drugstore and electronics"
+
+[[site]]
+url = "https://www.structube.com/"
+category = "furniture"
+
+[[site]]
+url = "https://www.maisonbirks.com/"
+category = "jewellery"
+
+[[site]]
+url = "https://www.lecreuset.ca/"
+category = "cookware"
+
+[[site]]
+url = "https://www.mastermindtoys.com/"
+category = "toy store"
+
+[[site]]
+url = "https://www.sail.ca/"
+category = "outdoor retailer"
+
+[[site]]
+url = "https://www.mrlube.com/"
+category = "auto service"
+
+[[site]]
+url = "https://www.hrblock.ca/"
+category = "tax preparation"
+
+[[site]]
+url = "https://www.lifelabs.com/"
+category = "medical labs"
+
+[[site]]
+url = "https://www.dentalcorp.ca/"
+category = "dental clinics"
+
+[[site]]
+url = "https://www.mollymaid.ca/"
+category = "cleaning service"
+
+[[site]]
+url = "https://www.budget.ca/"
+category = "car rental"
+
+[[site]]
+url = "https://www.telus.com/"
+category = "telecom"
+
+[[site]]
+url = "https://www.bell.ca/"
+category = "telecom"
+
+[[site]]
+url = "https://www.freedommobile.ca/"
+category = "telecom"
+
+[[site]]
+url = "https://www.wealthsimple.com/"
+category = "investing app"
+
+[[site]]
+url = "https://www.koho.ca/"
+category = "fintech"
+
+[[site]]
+url = "https://www.questrade.com/"
+category = "brokerage"
+
+[[site]]
+url = "https://www.tangerine.ca/"
+category = "bank"
+
+[[site]]
+url = "https://www.enbridgegas.com/"
+category = "utility"
+
+[[site]]
+url = "https://www.westjet.com/"
+category = "airline"
+
+[[site]]
+url = "https://www.viarail.ca/"
+category = "rail"
+
+[[site]]
+url = "https://www.fairmont.com/"
+category = "hotels"
+
+[[site]]
+url = "https://www.bluemountain.ca/"
+category = "ski resort"
+
+[[site]]
+url = "https://www.ndax.io/"
+category = "crypto exchange"
+
+[[site]]
+url = "https://bitbuy.ca/"
+category = "crypto exchange"
+
+[[site]]
+url = "https://ocs.ca/"
+category = "cannabis retail"
+
+[[site]]
+url = "https://thescore.bet/"
+category = "sports betting"
+
+[[site]]
+url = "https://www.180smoke.ca/"
+category = "vape shop"
+
+[[site]]
+url = "https://www.yorku.ca/"
+category = "university"
+
+[[site]]
+url = "https://www.sickkids.ca/"
+category = "hospital"
+
+[[site]]
+url = "https://www.unicef.ca/"
+category = "charity"
+
+[[site]]
+url = "https://knix.com/"
+category = "online apparel"
+
+[[site]]
+url = "https://www.frankandoak.com/"
+category = "online apparel"
+
+[[site]]
+url = "https://kotn.com/"
+category = "online apparel"
+
+[[site]]
+url = "https://www.instagram.com/pilotcoffeeroasters/"
+category = "coffee roaster"
+page_kind = "platform_profile"
+platform = "instagram"
+
+[[site]]
+url = "https://www.facebook.com/timhortons/"
+category = "coffee chain"
+page_kind = "platform_profile"
+platform = "facebook"
+
+[[site]]
+url = "https://www.pinterest.ca/lululemon/"
+category = "athletic apparel"
+page_kind = "platform_profile"
+platform = "pinterest"
