@@ -128,7 +128,7 @@ flowchart LR
 | Phone | When the homepage shows no number, load the contact page v2 already found. Done on 2026-10-13, for emails too | Get Well, Old Flame, Coinbase |
 | Phone | Read numbers the way the site's country writes them, for more countries and for pages in a country's main language. Done on 2026-10-13 | Fritz (Korea), Hiiragiya (Japan) |
 | Email | A new field: the business's general address, from the homepage or its contact page, never one for one purpose. Done on 2026-10-13 | |
-| Phone, email | Never take a page for one purpose, like press enquiries or franchising, as the contact page. Find gold-set sites like these first | Bettys, Pizza Pizza (test set) |
+| Phone, email | Never take a page for one purpose, like press enquiries or franchising, as the contact page, and count a link's text as much as its address. Done on 2026-10-13: tuned on the gold set's MEC, OLG and Indigo, it changed 12 test-set picks. Test-set phones went from 112 to 115 right and emails from 133 to 139, and no email the rules are sure of is wrong now | Bettys, Pizza Pizza (test set) |
 | Phone | More countries, starting with Hong Kong, and check that a postcode clue isn't a product code. Find gold-set sites like these first | Kee Wah, Coffee Supreme (test set) |
 | Phone | Handle sites that show a different number on each visit | Flight Centre |
 | Name | When the page never states the name, offer the words in the domain as an unsure name | The Only Cafe |
