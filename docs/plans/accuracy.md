@@ -67,11 +67,12 @@ flowchart LR
 - **Every run is compared with the last** and lists each answer that got better or worse.
 - **Checks that last.** When you mark an answer wrong on the review page, you'll be able to give the right one, or pick the right logo candidate. It becomes a test answer, so it still counts after the rules change.
 - **Who does what:** I draft the test sites and v2's first answers, and you check them on the review page. For an answer that's right, that's one click.
-- **So far:** 121 test sites are in `eval/test-set.toml`.
+- **So far:** 166 test sites are in `eval/test-set.toml`.
   - 57 are mostly Canadian, from coffee chains and banks to crypto exchanges, a vape shop and profiles on platforms.
   - 64 are small businesses in 26 countries, with sites in their own languages.
+  - 45 are sites v2 had never seen, picked before looking at their contact details, to measure the phone and email rules on new sites. Only their phones and emails are checked so far.
 
-  Sites that time out or block the browser count as failures, since they're part of the sample too. Every answer is checked, either by you or by a drafted check against the site's own pages (see eval/README.md). The exception is 40 answers that couldn't be verified, mostly phones and emails not shown on the pages v2 reads.
+  Sites that time out or block the browser count as failures, since they're part of the sample too. Every answer is checked, either by you or by a drafted check against the site's own pages (see eval/README.md). The exceptions are 50 answers that couldn't be verified, mostly phones and emails not shown on the pages v2 reads, and the third batch's names, logos and social links, which aren't checked yet.
 - **The first score on the test set,** on 2026-10-13, with no AI:
 
   | Field | Right | Right and sure | Sure but wrong |
@@ -95,7 +96,21 @@ flowchart LR
     - a number read as the wrong country's: Coffee Supreme's, where a product code looked like an Irish postcode
     - an address for one purpose that its name doesn't give away: Drop Coffee's wholesale one, Wealthsimple's for group savings
     - numbers on a page v2 doesn't open, or only in text the page hides (7 sites)
-  - **A caveat:** the email rules were written while looking at these sites' answers, since email was new and no site had a checked email yet. So the email scores show how well the rules fit these sites, not how they do on new ones. A third batch of new sites measures that.
+  - **A caveat:** the email rules were written while looking at these sites' answers, since email was new and no site had a checked email yet. So these email scores show how well the rules fit these sites, not how they do on new ones. The third batch measures that.
+
+- **On the third batch,** 45 sites v2 had never seen, with the rules unchanged:
+
+  | Field | Right | Right and sure | Sure but wrong |
+  |---|---|---|---|
+  | Phones | 32 of 39 (82%) | 44% | 0 of 17 |
+  | Emails | 35 of 41 (85%) | 51% | 1 of 22 |
+
+  - That's close to the scores above, so the rules hold on new sites.
+  - Five misses are pages v2 couldn't read: a bot check, two country pickers, and two sites that wouldn't load.
+  - Two are rule gaps, for the next round:
+    - Bettys: v2 took its press page for its contact page, and kept the press officer's address.
+    - Kee Wah: its Hong Kong numbers weren't read, since Hong Kong isn't among the 35 countries yet.
+  - One bug it found is fixed: an address like enquiries@ is plainly general now, where it was left unsure.
 
 ## 5. Step 1: the rules, field by field
 
@@ -107,6 +122,8 @@ flowchart LR
 | Phone | When the homepage shows no number, load the contact page v2 already found. Done on 2026-10-13, for emails too | Get Well, Old Flame, Coinbase |
 | Phone | Read numbers the way the site's country writes them, for more countries and for pages in a country's main language. Done on 2026-10-13 | Fritz (Korea), Hiiragiya (Japan) |
 | Email | A new field: the business's general address, from the homepage or its contact page, never one for one purpose. Done on 2026-10-13 | |
+| Phone, email | Never take a page for one purpose, like press enquiries or franchising, as the contact page. Find gold-set sites like these first | Bettys, Pizza Pizza (test set) |
+| Phone | More countries, starting with Hong Kong, and check that a postcode clue isn't a product code. Find gold-set sites like these first | Kee Wah, Coffee Supreme (test set) |
 | Phone | Handle sites that show a different number on each visit | Flight Centre |
 | Name | When the page never states the name, offer the words in the domain as an unsure name | The Only Cafe |
 | All | When a page blocks us, retry in a visible browser window. For big brands, look the business up on Wikidata, which is free and lists official names and logo files | Loblaws, Shoppers, Roots (blocked on some visits) |

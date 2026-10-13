@@ -84,10 +84,11 @@ The right answers people confirm or give also count on later runs. When a run's 
 
 ## The test set
 
-`test-set.toml` lists only the sites, what kind of business each is, and, for profiles on a platform, which platform. The right answers come from checks: a person's on the review page, or drafted ones. It has two batches:
+`test-set.toml` lists only the sites, what kind of business each is, and, for profiles on a platform, which platform. The right answers come from checks: a person's on the review page, or drafted ones. It has three batches:
 
 - 57 sites, mostly Canadian chains, banks and services.
 - 64 small businesses in 26 countries, with sites in their own languages. A few are there on purpose: a domain that now redirects to a lottery site, one that's parked for sale, a homepage that leads to "page not found", and sites behind bot checks.
+- 45 sites v2 had never seen, picked before looking at their contact details, to measure the phone and email rules on new sites. Only their phones and emails are checked so far.
 
 ```
 uv run bi2 dev fetch --gold eval/test-set.toml --out eval/snapshots/test-set    # save the pages once
