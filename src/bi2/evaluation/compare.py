@@ -84,11 +84,12 @@ def compare_runs(
     after: list[SiteResult],
     gold: dict[str, GoldSite],
     checks: dict[CheckKey, Verification],
+    drafts: dict[CheckKey, Verification] | None = None,
 ) -> Comparison:
     """What changed between two runs of the same sites. Sites in only one run are left out."""
     labels_before, labels_after = (
-        label_answers(before, gold, checks),
-        label_answers(after, gold, checks),
+        label_answers(before, gold, checks, drafts),
+        label_answers(after, gold, checks, drafts),
     )
     was = {(site_key(label.site), label.field): label.outcome for label in labels_before}
     now = {(site_key(label.site), label.field): label.outcome for label in labels_after}

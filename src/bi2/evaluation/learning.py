@@ -1,15 +1,18 @@
 """What checked answers teach: whether each answer was right, which of four groups it's in, and
 how often each field's answers were right at each confidence.
 
-An answer counts as checked in one of three ways, and the first that applies wins:
+An answer counts as checked in one of five ways, and the first that applies wins:
 
 1. A person marked that very answer right or wrong on the review page.
-2. A person confirmed or gave the right answer for that field, on this run or an earlier one,
+2. A drafted check marked it: one made from the site's own pages that no person has confirmed
+   yet (eval/drafted-checks.jsonl).
+3. A person confirmed or gave the right answer for that field, on this run or an earlier one,
    so a changed answer can be scored against it.
-3. The gold set can score it.
+4. A drafted check did.
+5. The gold set can score it.
 
-People come before the gold set, since the gold set can be wrong: it lists one file for a logo
-that has several.
+People come before drafts, and both before the gold set, since the gold set can be wrong: it
+lists one file for a logo that has several.
 
 The four groups, by what v2 did with an answer and whether it was right:
 
@@ -61,7 +64,7 @@ class Label(NamedTuple):
     right: bool
     kept: bool  # v2 accepted it without sending it on
     confidence: float | None  # None when v2 found nothing
-    by: str  # "you", "your answers" (the right answers people gave) or "gold set"
+    by: str  # "you", "draft", "your answers", "drafted answers" or "gold set"; see above
     note: str = ""
     correct: str = ""  # the right answer, when a person gave one with this answer marked wrong
 
@@ -100,30 +103,37 @@ def label_answers(
     results: Iterable[SiteResult],
     gold: dict[str, GoldSite],
     checks: dict[CheckKey, Verification],
+    drafts: dict[CheckKey, Verification] | None = None,
 ) -> list[Label]:
     """A label for every checked answer. Sites that failed and fields not built yet have
     none: they'd say nothing about how v2 decides."""
-    yours = answers_from_checks(checks.values())
+    drafts = drafts or {}
+    yours, drafted = answers_from_checks(checks.values()), answers_from_checks(drafts.values())
     labels: list[Label] = []
     for result in results:
         if result.error:
             continue
         key = site_key(result.page.url)
-        by_yours, by_gold = _scored(yours.get(key), result), _scored(gold.get(key), result)
+        answer_keys = (
+            (_scored(yours.get(key), result), "your answers"),
+            (_scored(drafted.get(key), result), "drafted answers"),
+            (_scored(gold.get(key), result), "gold set"),
+        )
         for field, answer in result.field_results.items():
             if not checkable(result, field):
                 continue
-            check = checks.get((key, field, answer_key(field, answer)))
+            this = (key, field, answer_key(field, answer))
+            check, by = checks.get(this), "you"
+            if check is None:
+                check, by = drafts.get(this), "draft"
             note = correct = ""
             if check is not None:
-                right, by = check.verdict == "right", "you"
-                note, correct = check.note, check.correct
-            elif field in by_yours:
-                right, by = by_yours[field].verdict is Verdict.CORRECT, "your answers"
-            elif field in by_gold:
-                right, by = by_gold[field].verdict is Verdict.CORRECT, "gold set"
+                right, note, correct = check.verdict == "right", check.note, check.correct
             else:
-                continue
+                scored = next(((s[field], by) for s, by in answer_keys if field in s), None)
+                if scored is None:
+                    continue
+                right, by = scored[0].verdict is Verdict.CORRECT, scored[1]
             kept = answer.status is Status.OK
             labels.append(
                 Label(result.page.url, field, right, kept, answer.confidence, by, note, correct)

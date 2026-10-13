@@ -34,6 +34,13 @@ def review(
     checks: Annotated[
         Path, typer.Option(help="Where your checks and notes are kept.", dir_okay=False)
     ] = Path("eval/verifications.jsonl"),
+    drafts: Annotated[
+        Path,
+        typer.Option(
+            help="Drafted checks no person has confirmed yet; skipped when the file isn't there.",
+            dir_okay=False,
+        ),
+    ] = Path("eval/drafted-checks.jsonl"),
     port: Annotated[
         int, typer.Option(help="The port to serve the page on; 0 picks a free one.", min=0)
     ] = 0,
@@ -51,7 +58,7 @@ def review(
             if gold.is_file()
             else {}
         )
-        session = ReviewSession(results, entries, checks)
+        session = ReviewSession(results, entries, checks, drafts)
     except (OSError, ValueError) as exc:  # a results, gold or checks file that can't be read
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc

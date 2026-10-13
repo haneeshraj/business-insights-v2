@@ -164,6 +164,9 @@ def compare(
     checks: Annotated[
         Path, typer.Option(help="Your checks from the review page.", dir_okay=False)
     ] = Path("eval/verifications.jsonl"),
+    drafts: Annotated[
+        Path, typer.Option(help="Drafted checks, used after yours.", dir_okay=False)
+    ] = Path("eval/drafted-checks.jsonl"),
 ) -> None:
     """Compare two runs of the same sites: what got better, and what got worse.
 
@@ -176,6 +179,7 @@ def compare(
             load_results(_results_file(after)),
             entries,
             load_verifications(checks),
+            load_verifications(drafts),
         )
     except (OSError, ValueError) as exc:
         typer.echo(f"error: {exc}", err=True)

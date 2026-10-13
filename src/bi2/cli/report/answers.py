@@ -27,7 +27,13 @@ _STATUS: Final = {
 # What right and wrong mean, as the buttons say it. When v2 found nothing, the question is
 # whether the business has one at all: a page that blocked v2 still means it missed one.
 _VERDICTS: Final = {True: ("Right", "Wrong"), False: ("The site has none", "Missed it")}
-_WHO: Final = {"you": "You", "your answers": "Your earlier answers", "gold set": "Gold set"}
+_WHO: Final = {
+    "you": "You",
+    "draft": "Drafted",
+    "your answers": "Your earlier answers",
+    "drafted answers": "Earlier drafts",
+    "gold set": "Gold set",
+}
 # What to type as the right answer, when an answer is wrong.
 _RIGHT_ANSWER: Final = {
     "company_name": "The right name",
@@ -87,9 +93,13 @@ def label_html(label: Label | None, *, found: bool = True) -> str:
     short = "".join(word[0] for word in outcome.term.split())  # "tp" for true positive
     who = _WHO.get(label.by, label.by)
     said = _VERDICTS[found][0 if label.right else 1].lower()
+    # A draft says what it was checked against, so a person can confirm it at a glance.
+    why = (
+        f' <span class="muted">{e(label.note)}</span>' if label.by == "draft" and label.note else ""
+    )
     return (
         f'<span class="by">{who}: {said}</span> '
-        f'<span class="group {short}" title="{e(outcome.term)}">{e(outcome)}</span>'
+        f'<span class="group {short}" title="{e(outcome.term)}">{e(outcome)}</span>{why}'
     )
 
 

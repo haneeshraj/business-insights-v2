@@ -78,3 +78,16 @@ def test_a_site_that_no_longer_loads_counts_as_worse() -> None:
     before = [site_result(URL, company_name=answered("Example Cafe"))]
     comparison = compare_runs(before, [failed_result(URL, "refused", 1.0)], GOLD, {})
     assert (comparison.failed_now, comparison.changes, comparison.worse) == ([URL], [], True)
+
+
+def test_your_checks_come_before_drafts_and_drafts_before_the_gold_set() -> None:
+    result = site_result(URL, company_name=answered("Someone Else"), phone=answered("+14165550123"))
+    yours = _check("company_name", "someone else", "wrong")
+    drafts = [
+        _check("company_name", "someone else", "right"),  # yours says otherwise, and wins
+        _check("phone", "+14165550123", "wrong", correct="+14165550100"),  # the gold set says right
+    ]
+    labels = label_answers([result], GOLD, {yours.key: yours}, {d.key: d for d in drafts})
+    by_field = {label.field: (label.by, label.right) for label in labels}
+    assert by_field["company_name"] == ("you", False)
+    assert by_field["phone"] == ("draft", False)

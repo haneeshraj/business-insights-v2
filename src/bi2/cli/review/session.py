@@ -96,7 +96,13 @@ class ReviewSession:
     """The review page's state. The server calls it from several threads, so every method
     takes the lock."""
 
-    def __init__(self, results_dir: Path, gold: dict[str, GoldSite], checks_file: Path) -> None:
+    def __init__(
+        self,
+        results_dir: Path,
+        gold: dict[str, GoldSite],
+        checks_file: Path,
+        drafts_file: Path | None = None,
+    ) -> None:
         self.results_dir = results_dir
         self.checks_file = checks_file
         self._gold = gold
@@ -110,11 +116,12 @@ class ReviewSession:
             if checkable(result, field)
         ]
         self._checks = load_verifications(checks_file)
+        self._drafts = load_verifications(drafts_file) if drafts_file else {}
         self._lock = threading.Lock()
         self._labels = self._label()
 
     def _label(self) -> dict[tuple[str, str], Label]:
-        labels = label_answers(self._results, self._gold, self._checks)
+        labels = label_answers(self._results, self._gold, self._checks, self._drafts)
         return {(label.site, label.field): label for label in labels}
 
     @property
