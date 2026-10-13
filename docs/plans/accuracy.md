@@ -109,7 +109,7 @@ flowchart LR
   - Five misses are pages v2 couldn't read: a bot check, two country pickers, and two sites that wouldn't load.
   - Two are rule gaps, for the next round:
     - Bettys: v2 took its press page for its contact page, and kept the press officer's address.
-    - Kee Wah: its Hong Kong numbers weren't read, since Hong Kong isn't among the 35 countries yet.
+    - Kee Wah: its Hong Kong numbers weren't read, since Hong Kong wasn't among the 35 countries. Fixed since: see the table below.
   - One bug it found is fixed: an address like enquiries@ is plainly general now, where it was left unsure.
 
 - **Pages that wouldn't load,** tried on 2026-10-13 in Playwright's Chromium, Chrome and Edge, headless and in a visible window:
@@ -129,7 +129,7 @@ flowchart LR
 | Phone | Read numbers the way the site's country writes them, for more countries and for pages in a country's main language. Done on 2026-10-13 | Fritz (Korea), Hiiragiya (Japan) |
 | Email | A new field: the business's general address, from the homepage or its contact page, never one for one purpose. Done on 2026-10-13 | |
 | Phone, email | Never take a page for one purpose, like press enquiries or franchising, as the contact page, and count a link's text as much as its address. Done on 2026-10-13: tuned on the gold set's MEC, OLG and Indigo, it changed 12 test-set picks. Test-set phones went from 112 to 115 right and emails from 133 to 139, and no email the rules are sure of is wrong now | Bettys, Pizza Pizza (test set) |
-| Phone | More countries, starting with Hong Kong, and check that a postcode clue isn't a product code. Find gold-set sites like these first | Kee Wah, Coffee Supreme (test set) |
+| Phone | More countries, starting with Hong Kong, and check that a postcode clue isn't a product code. Done on 2026-10-13: 60 countries now, a site whose other language versions are all for one country points to it, and an Eircode needs a digit. Kee Wah's number is read now. Coffee Supreme stays wrong, since nothing on its page says New Zealand | Kee Wah, Coffee Supreme (test set) |
 | Phone | Handle sites that show a different number on each visit | Flight Centre |
 | Name | When the page never states the name, offer the words in the domain as an unsure name | The Only Cafe |
 | All | When a page blocks us, look big brands up on Wikidata, which is free and lists official names and logo files. A visible browser window was tried on 2026-10-13 and got past no bot check | Loblaws, Shoppers, Roots (blocked on some visits) |
