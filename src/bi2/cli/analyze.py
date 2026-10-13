@@ -15,10 +15,11 @@ from bi2.cli.options import AllowPrivate, Browser, Timeout
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable
 from bi2.core.models import FIELD_NAMES, Evidence, SiteResult, Status
+from bi2.core.urls import site_folder
 from bi2.evaluation.gold import GoldSite, load_gold_set, site_key
 from bi2.evaluation.scoring import SCORED_FIELDS, FieldScore, Verdict, score_site
 from bi2.fetch.browser import BrowserChoice
-from bi2.pipeline import analyze_snapshot, analyze_url
+from bi2.pipeline import analyze_snapshot, analyze_url, failed_result
 from bi2.wiring import local_context
 
 _SHORT: Final = {
@@ -48,6 +49,7 @@ class _Run(NamedTuple):
     timeout: float
     concurrency: int
     allow_private: bool
+    saved: Path | None = None  # the folder of saved pages, when the run uses them
 
 
 def _progress(done: int, total: int, site: _Analyzed) -> str:
@@ -71,6 +73,8 @@ async def _analyze_all(
         browser=run.browser,
         timeout_s=run.timeout,
         allow_private=run.allow_private,
+        # Runs on saved pages keep what they download beside the pages, so reruns match.
+        kept_downloads=run.saved / "downloads" if run.saved is not None else None,
     ) as ctx:
         limit = asyncio.Semaphore(run.concurrency)
 
@@ -134,6 +138,17 @@ def _sources(
     return [site.url for site in load_gold_set(gold).sites]
 
 
+def _unsaved(gold: Path, saved: Path) -> list[_Analyzed]:
+    """A failed result for each gold-file site whose page wasn't saved, so a run on saved pages
+    still counts every site: a page that wouldn't load is part of the sample too."""
+    have = {folder.name for folder in saved_folders(saved)}
+    return [
+        _Analyzed(failed_result(site.url, "its page wasn't saved, since it didn't load", 0.0), None)
+        for site in load_gold_set(gold).sites
+        if site_folder(site.url) not in have
+    ]
+
+
 def _report_site(site: _Analyzed, out: Path, gold: dict[str, GoldSite]) -> ReportSite:
     ev = site.evidence
     entry = gold.get(site_key(site.result.page.url))
@@ -191,12 +206,14 @@ def analyze(
         typer.echo("error: there are no pages to analyze", err=True)
         raise typer.Exit(code=1)
     console = Console()
-    run = _Run(out, browser, timeout, concurrency, allow_private)
+    run = _Run(out, browser, timeout, concurrency, allow_private, saved)
     try:
         analyzed = asyncio.run(_analyze_all(sources, run, console))
     except BrowserUnavailable as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
+    if saved is not None and gold is not None:
+        analyzed += _unsaved(gold, saved)
     results = [site.result for site in analyzed]
     out.mkdir(parents=True, exist_ok=True)
     lines = (result.model_dump_json() for result in results)

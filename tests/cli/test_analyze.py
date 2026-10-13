@@ -64,3 +64,22 @@ def test_analyze_needs_something_to_analyze() -> None:
     outcome = runner.invoke(app, ["analyze"])
     assert outcome.exit_code == 2
     assert "give the pages to analyze" in outcome.output
+
+
+def test_a_gold_site_with_no_saved_page_counts_as_failed(tmp_path: Path) -> None:
+    saved = tmp_path / "saved"
+    save_snapshot(page_snapshot(PAGE), saved)
+    gold = tmp_path / "gold.toml"
+    gold.write_text(
+        '[[site]]\nurl = "https://example-cafe.ca/"\ncategory = "cafe"\n\n'
+        '[[site]]\nurl = "https://slow-site.ca/"\ncategory = "shop"\n',
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    args = ["analyze", "--saved", str(saved), "--gold", str(gold), "--out", str(out)]
+    outcome = runner.invoke(app, args)
+    assert outcome.exit_code == 0, outcome.output
+    lines = (out / "results.jsonl").read_text(encoding="utf-8").splitlines()
+    results = {r.page.url: r for r in map(SiteResult.model_validate_json, lines)}
+    assert results["https://slow-site.ca/"].error == "its page wasn't saved, since it didn't load"
+    assert results["https://example-cafe.ca/"].error is None
