@@ -73,6 +73,23 @@ def test_copies_of_one_image_become_one_candidate() -> None:
     assert candidates[0].kind == "img"
 
 
+def test_stand_ins_for_a_missing_image_are_never_candidates() -> None:
+    hidden = Box(x=0, y=0, width=0, height=0)
+    stand_in = _image(
+        f"{BASE}images/cover404.png",
+        alt="default image",
+        in_header=True,
+        links_home=True,
+        box=hidden,
+    )
+    banner = _image(
+        f"{BASE}promo-280x275.jpg", alt="Christmas", box=Box(x=380, y=3490, width=240, height=238)
+    )
+    assert [c.url for c in _rank([stand_in, banner])] == [f"{BASE}promo-280x275.jpg"]
+    named_by_id = _image(f"{BASE}uploads/1781042768620-404e272d.webp")  # a 404 in an ID
+    assert len(_rank([named_by_id])) == 1
+
+
 def test_inline_svgs_and_icons_count_but_placeholders_dont() -> None:
     svg = RenderedImage(
         kind="svg", alt="Example Cafe wordmark", box=HEADER_SPOT, in_header=True, links_home=True

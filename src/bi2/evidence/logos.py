@@ -25,6 +25,14 @@ _NOT_LOGO: Final = re.compile(
     r"spinner|placeholder|award|trustpilot|app-?store|google-?play"
 )
 
+# Stand-ins a site shows when an image is missing, like Waterstones' hidden "default image",
+# cover404.png. They're pictures of nothing, so they're never candidates. A 404 counts only
+# right before the file type, since file names made of hex IDs often hold one, like 404e272d.
+_STAND_IN: Final = re.compile(
+    r"default[ _-]?image|no[ _-]?image|image[ _-]?not[ _-]?found|"
+    r"(?<![0-9])404\.(?:png|jpe?g|gif|svg|webp|avif)\b"
+)
+
 # Points for each sign that an image is the logo, or isn't.
 _LINKS_HOME, _IN_HEADER, _SAYS_LOGO, _SAYS_NAME = 4, 3, 3, 2
 _DECLARED, _SEEN_AGAIN = 3, 1  # named as the logo by structured data; drawn more than once
@@ -170,6 +178,8 @@ def extract_logo_candidates(
         url = image.url if image.url.startswith(("http://", "https://")) else None
         if url is None and image.kind != "svg":
             continue  # a placeholder or an inline data image, with no address to use
+        if _STAND_IN.search(_words(image)):
+            continue
         if profile is None:
             points = _points(image, brand)
         elif _platforms_own(image, platforms()[profile.platform].name):
