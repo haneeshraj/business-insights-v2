@@ -252,9 +252,11 @@ The URL a user gives may not be the business's own website. It may be the busine
   - the JSON-LD logo and the page icons
 
   Each candidate carries its position and size, whether it is in the header, whether it links to the homepage, and its alt text and class.
+  Placeholders are left out, and so are stand-ins a site shows when an image is missing, like a hidden "default image".
 - A heuristic ranks the candidates. If the JSON-LD logo and the top header candidate are the same file, the field is `ok`.
 - Otherwise, send the screenshot with numbered boxes plus the numbered list, and ask which number is the logo. Use Jev if it accepts images; otherwise use a small vision LLM.
 - Save the logo with its real file type. For inline SVG or background-image logos, take a screenshot of the element.
+- Take the logo file from the browser's own copy when it has one. While a page loads, the browser keeps copies of up to 20 images likeliest to be the logo: those in the header, linking home or named as a logo, then the rest from the top down. Some sites refuse a separate download of an image they gave the browser; in the 2026-10-12 review, six right logos were lost that way.
 - Also keep the square icon (`apple-touch-icon`, favicon) for enrichment use.
 
 ### MCC
