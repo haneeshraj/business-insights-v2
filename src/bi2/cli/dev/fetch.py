@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.table import Table
 
 from bi2.adapters.local.snapshots import save_extra_page, save_snapshot
-from bi2.cli.options import AllowPrivate, Browser, Timeout
+from bi2.cli.options import DEFAULT_CONCURRENCY, AllowPrivate, Browser, Timeout
 from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import PageSnapshot, RenderedImage
 from bi2.evaluation.gold import load_gold_set
@@ -206,7 +206,9 @@ def fetch(
     ] = Path("bi2-results/dev/fetch"),
     browser: Browser = "auto",
     timeout: Timeout = 20.0,
-    concurrency: Annotated[int, typer.Option(help="Pages loaded at once with --gold.")] = 4,
+    concurrency: Annotated[
+        int, typer.Option(help="Pages loaded at once with --gold.")
+    ] = DEFAULT_CONCURRENCY,
     allow_private: AllowPrivate = False,
 ) -> None:
     """Load pages in the headless browser and show what it captured."""

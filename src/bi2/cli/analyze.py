@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.table import Table
 
 from bi2.adapters.local.snapshots import load_snapshot, saved_folders
-from bi2.cli.options import AllowPrivate, Browser, Timeout
+from bi2.cli.options import DEFAULT_CONCURRENCY, AllowPrivate, Browser, Timeout
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable
 from bi2.core.models import FIELD_NAMES, Evidence, SiteResult, Status
@@ -191,7 +191,7 @@ def analyze(
     open_report: Annotated[
         bool, typer.Option("--open", help="Open the HTML report in your browser when it's done.")
     ] = False,
-    concurrency: Annotated[int, typer.Option(help="Sites analyzed at once.")] = 4,
+    concurrency: Annotated[int, typer.Option(help="Sites analyzed at once.")] = DEFAULT_CONCURRENCY,
     browser: Browser = "auto",
     timeout: Timeout = 20.0,
     allow_private: AllowPrivate = False,

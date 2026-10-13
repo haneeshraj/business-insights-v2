@@ -348,6 +348,15 @@ The business's general address is the one wanted, like info@, hello@ or customer
 ## Speed
 
 - Several sites at once, using browser contexts rather than separate Chrome processes, with the resolvers running in parallel within a site. On the website, more worker containers can be added if the demo gets busy.
+- **How many at once:** loading a page takes about 19 seconds, and everything after it about 0.3. Drawing pages keeps the CPU busy, so past a point each extra site slows the others down. On 2026-10-13, 45 sites run live on a 20-core laptop took:
+
+  | At once | Time | Each site, median | Peak memory |
+  |---|---|---|---|
+  | 4 | 258 s, and 275 s run again | 19–20 s | 2.6 GB |
+  | 8 | 223 s | 32 s | 3.7 GB |
+  | 12 | 256 s | 51 s | 5.3 GB |
+
+  The default is one site for every two cores, up to 8. More sites at once made none fail.
 - Wait for the page to be ready instead of a fixed 5 seconds, and drop the 10- and 50-second sleeps.
 - Plain HTTP for secondary pages, and the browser only when a page needs JavaScript.
 - Cache evidence per domain, and skip unchanged pages on re-runs. On the website, shared results skip the work entirely.
