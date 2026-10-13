@@ -66,7 +66,7 @@ uv run bi2 review                      # the results in bi2-results/analyze
 uv run bi2 review path/to/results      # another run
 ```
 
-Press Right or Wrong, and add a note about what you saw. For an answer where nothing was found, Right means there's nothing to find. Each check is saved to `eval/verifications.jsonl` straight away, and the summary at the top updates: how many answers fall in each of the four groups, and how often each field was right at each confidence. Where your check and the gold set disagree, yours counts. The page is served from your machine only, and Ctrl+C in the terminal stops it.
+For each answer, press Right or Wrong and add a note about what you saw. The check is about v2's answer, not the gold set's. Where v2 found nothing, the buttons are Nothing to find and Missed it. Each check is saved to `eval/verifications.jsonl` straight away, and the summary at the top updates: how many answers fall in each of the four groups, and how often each field was right at each confidence. Where your check and the gold set disagree, yours counts. The page is served from your machine only, and Ctrl+C in the terminal stops it.
 
 ## The rules that matter most
 

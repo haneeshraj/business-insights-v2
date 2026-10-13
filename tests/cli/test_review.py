@@ -93,6 +93,9 @@ def test_every_answer_that_can_be_checked_gets_a_check(server: ReviewServer) -> 
     assert [field for _, field in cells] == ["company_name", "logo", "phone", "social_links"]
     assert {site for site, _ in cells} == {URL}
     assert "Gold set: right" in page  # the gold set already checks the name
+    # Where v2 found nothing, the question is whether there's anything to find.
+    assert ">Nothing to find</button>" in page
+    assert ">Missed it</button>" in page
     assert "1 of 4 answers checked" in page
     # Only the page's own scripts may run.
     nonce = re.search(r"script-src 'nonce-([^']+)'", headers["Content-Security-Policy"])
@@ -127,6 +130,9 @@ def test_a_check_is_saved_with_its_note_and_the_page_learns_from_it(
     assert 'data-verdict="wrong" aria-pressed="true"' in page
     assert 'value="that&#x27;s the old name"' in page
     assert "kept, wrong" in page
+    update = _check(server, site=URL, field="social_links", verdict="wrong")[1]
+    social = next(answer for answer in update["answers"] if answer["field"] == "social_links")
+    assert "You: missed it" in social["label"]
 
 
 def test_only_the_page_it_served_can_save_checks(server: ReviewServer, tmp_path: Path) -> None:

@@ -117,13 +117,14 @@ class ReviewSession:
             for result, field in self._answers:
                 label = self._labels.get((result.page.url, field))
                 yours = label is not None and label.by == "you"
+                found = result.field_results[field].value is not None
                 answers.append(
                     {
                         "site": result.page.url,
                         "field": field,
                         "by": label.by if label is not None else "",
                         "verdict": ("right" if label.right else "wrong") if label and yours else "",
-                        "label": label_html(label),
+                        "label": label_html(label, found=found),
                     }
                 )
             return {"answers": answers, "summary": self._learned()}
