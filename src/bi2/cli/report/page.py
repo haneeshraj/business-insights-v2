@@ -58,8 +58,10 @@ figcaption { margin-top: 4px; overflow-wrap: anywhere; }
 .status.needs_review { color: var(--warn); }
 .status.not_found { color: var(--muted); }
 .status.error { color: var(--bad); }
-.answer-logo { max-width: 220px; max-height: 64px; display: block; margin-bottom: 4px;
-               background: repeating-conic-gradient(#8881 0 25%, transparent 0 50%) 0 0 / 12px 12px; }
+.logo-pair { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+.answer-logo { max-width: 160px; max-height: 64px; display: block; padding: 4px;
+               border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+.answer-logo.on-dark { background: #1d1d22; }
 .checks td:first-child { width: 24px; font-weight: 700; }
 .share { width: 40%; }
 .count { white-space: nowrap; }

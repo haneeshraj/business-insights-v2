@@ -25,8 +25,8 @@ _STATUS: Final = {
     Status.ERROR: "error",
 }
 # What right and wrong mean, as the buttons say it. When v2 found nothing, the question is
-# whether there's anything to find.
-_VERDICTS: Final = {True: ("Right", "Wrong"), False: ("Nothing to find", "Missed it")}
+# whether the business has one at all: a page that blocked v2 still means it missed one.
+_VERDICTS: Final = {True: ("Right", "Wrong"), False: ("The site has none", "Missed it")}
 _WHO: Final = {"you": "You", "your answers": "Your earlier answers", "gold set": "Gold set"}
 # What to type as the right answer, when an answer is wrong.
 _RIGHT_ANSWER: Final = {
@@ -44,8 +44,11 @@ def _value(name: str, field: FieldResult[Any], page: Path, root: Path) -> str:
     if name == "logo":
         parts = []
         if value.image_file:
+            # On a light and a dark background, so a logo drawn in white still shows.
+            src = e(file_url(root / value.image_file, page))
             parts.append(
-                f'<img class="answer-logo" src="{e(file_url(root / value.image_file, page))}" alt="">'
+                f'<span class="logo-pair"><img class="answer-logo" src="{src}" alt="">'
+                f'<img class="answer-logo on-dark" src="{src}" alt=""></span>'
             )
         if value.url:
             parts.append(link(value.url, value.url.rsplit("/", 1)[-1][:50] or value.url))

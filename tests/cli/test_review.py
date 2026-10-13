@@ -101,7 +101,7 @@ def test_every_answer_that_can_be_checked_gets_a_check(server: ReviewServer) -> 
     assert {site for site, _ in cells} == {URL}
     assert "Gold set: right" in page  # the gold set already checks the name
     # Where v2 found nothing, the question is whether there's anything to find.
-    assert ">Nothing to find</button>" in page
+    assert ">The site has none</button>" in page
     assert ">Missed it</button>" in page
     assert "1 of 4 answers checked" in page
     # Only the page's own scripts may run.

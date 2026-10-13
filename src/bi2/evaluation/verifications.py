@@ -130,7 +130,7 @@ def answers_from_checks(checks: Iterable[Verification]) -> dict[str, GoldSite]:
     """The right answers people confirmed or gave, by site, in the gold set's form.
 
     An answer marked right counts, and so does the right answer given with one marked wrong.
-    "Nothing to find" marked right makes the field "none". For social links, the latest right
+    "The site has none" marked right makes the field "none". For social links, the latest right
     answer is the whole list, since a right answer must find every profile in it."""
     values: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     nothing: dict[str, set[str]] = defaultdict(set)

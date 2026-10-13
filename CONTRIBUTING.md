@@ -66,7 +66,7 @@ uv run bi2 review                      # the results in bi2-results/analyze
 uv run bi2 review path/to/results      # another run
 ```
 
-For each answer, press Right or Wrong and add a note about what you saw. The check is about v2's answer, not the gold set's. Where v2 found nothing, the buttons are Nothing to find and Missed it. When an answer is wrong, a box asks for the right one; for a logo, its address or its candidate number, like `#2`. Each check is saved to `eval/verifications.jsonl` straight away, and the summary at the top updates: how many answers fall in each of the four groups, and how often each field was right at each confidence. Where your check and the gold set disagree, yours counts. The page is served from your machine only, and Ctrl+C in the terminal stops it.
+For each answer, press Right or Wrong and add a note about what you saw. The check is about v2's answer, not the gold set's. Where v2 found nothing, the buttons are The site has none and Missed it; a page that blocked v2 still means it missed one. When an answer is wrong, a box asks for the right one; for a logo, its address or its candidate number, like `#2`. Each check is saved to `eval/verifications.jsonl` straight away, and the summary at the top updates: how many answers fall in each of the four groups, and how often each field was right at each confidence. Where your check and the gold set disagree, yours counts. The page is served from your machine only, and Ctrl+C in the terminal stops it.
 
 ## Testing a change
 
