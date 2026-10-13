@@ -67,3 +67,9 @@ def test_clues_add_up_to_the_most_likely_country() -> None:
     assert guess_countries("https://example.com/", address_country="IE")[0] == "IE"
     toronto = guess_countries("https://example.com/", languages=["en-US"], regions=["CA"])
     assert toronto == ("CA", "US")
+
+
+def test_a_language_spoken_mainly_in_one_country_points_to_it() -> None:
+    assert guess_countries("https://example.com/", languages=["ko"]) == ("KR",)
+    assert guess_countries("https://example.cat/", languages=["ca"]) == ("ES",)
+    assert guess_countries("https://example.com/", languages=["en"]) == ()  # spoken in many

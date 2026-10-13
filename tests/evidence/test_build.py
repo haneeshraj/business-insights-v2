@@ -67,3 +67,11 @@ def test_a_platform_profile_gives_the_business_not_the_platform() -> None:
 def test_a_platform_page_that_isnt_a_profile_is_unknown() -> None:
     post = "https://www.instagram.com/p/C1a2b3c4/"
     assert build_evidence(page_snapshot(PROFILE, url=post)).page.kind is PageKind.UNKNOWN
+
+
+def test_phone_numbers_are_read_the_way_the_sites_country_writes_them() -> None:
+    korean = """<html lang="ko"><head><title>프릳츠커피컴퍼니</title></head>
+    <body><footer>서울 마포구 · 02 3275 2047</footer></body></html>"""
+    ev = build_evidence(page_snapshot(korean, url="https://fritz.co.kr/"))
+    assert ev.countries[0] == "KR"
+    assert ev.contacts.phones == ("+82232752047",)

@@ -1,10 +1,11 @@
 # Countries v2 knows about, keyed by ISO 3166-1 code: the names pages use for them, their
-# internet domains, their postcode format when it's distinctive enough to tell apart from other
-# numbers, and their provinces or states as addresses write them after the city ("Toronto, ON").
+# internet domains, the languages spoken mainly there (so a page in Korean points to Korea), their
+# postcode format when it's distinctive enough to tell apart from other numbers, and their
+# provinces or states as addresses write them after the city ("Toronto, ON").
 # A postcode pattern with a "postcode" group needs the text around it, such as a US state
 # before a ZIP code. Adding a country is one entry. Read by bi2/evidence/countries.py.
 
-version = "2026-10-11"
+version = "2026-10-13"
 
 [CA]
 names = ["Canada"]
@@ -64,15 +65,18 @@ domains = ["de"]
 
 [ES]
 names = ["Spain", "España"]
-domains = ["es"]
+domains = ["es", "cat", "eus", "gal"]
+languages = ["ca", "eu", "gl"]
 
 [IT]
 names = ["Italy", "Italia"]
 domains = ["it"]
+languages = ["it"]
 
 [NL]
 names = ["Netherlands", "The Netherlands", "Holland", "Nederland"]
 domains = ["nl"]
+languages = ["nl"]
 
 [BE]
 names = ["Belgium", "België", "Belgique"]
@@ -89,14 +93,17 @@ domains = ["at"]
 [SE]
 names = ["Sweden", "Sverige"]
 domains = ["se"]
+languages = ["sv"]
 
 [NO]
 names = ["Norway", "Norge"]
 domains = ["no"]
+languages = ["nb", "nn", "no"]
 
 [DK]
 names = ["Denmark", "Danmark"]
 domains = ["dk"]
+languages = ["da"]
 
 [MX]
 names = ["Mexico", "México"]
@@ -109,3 +116,71 @@ domains = ["in"]
 [SG]
 names = ["Singapore"]
 domains = ["sg"]
+
+[FI]
+names = ["Finland", "Suomi"]
+domains = ["fi"]
+languages = ["fi"]
+
+[PT]
+names = ["Portugal"]
+domains = ["pt"]
+
+[PL]
+names = ["Poland", "Polska"]
+domains = ["pl"]
+languages = ["pl"]
+
+[CZ]
+names = ["Czechia", "Czech Republic", "Česko", "Česká republika"]
+domains = ["cz"]
+languages = ["cs"]
+
+[GR]
+names = ["Greece", "Hellas", "Ελλάδα"]
+domains = ["gr"]
+languages = ["el"]
+
+[TR]
+names = ["Türkiye", "Turkey"]
+domains = ["tr"]
+languages = ["tr"]
+
+[MA]
+names = ["Morocco", "Maroc"]
+domains = ["ma"]
+
+[ZA]
+names = ["South Africa"]
+domains = ["za"]
+
+[AE]
+names = ["United Arab Emirates", "UAE"]
+domains = ["ae"]
+
+[JP]
+names = ["Japan", "日本"]
+domains = ["jp"]
+languages = ["ja"]
+
+[KR]
+names = ["South Korea", "Korea", "Republic of Korea", "대한민국"]
+domains = ["kr"]
+languages = ["ko"]
+
+[TW]
+names = ["Taiwan", "台灣", "臺灣"]
+domains = ["tw"]
+
+[TH]
+names = ["Thailand"]
+domains = ["th"]
+languages = ["th"]
+
+[BR]
+names = ["Brazil", "Brasil"]
+domains = ["br"]
+
+[AR]
+names = ["Argentina"]
+domains = ["ar"]

@@ -31,6 +31,7 @@ class Country(BaseModel):
 
     names: tuple[str, ...] = Field(min_length=1)
     domains: tuple[str, ...] = ()  # the last part of the country's web addresses, like "ca"
+    languages: tuple[str, ...] = ()  # spoken mainly there, like "ko"; not "en", "es" or "fr"
     postcode: str | None = None  # a regular expression, for distinctive postcode formats only
     regions: tuple[str, ...] = ()  # provinces or states, as written after a city
 
@@ -118,6 +119,16 @@ def _language_region(language: str) -> str | None:
     return region.upper() if region else None
 
 
+def _language_countries(language: str) -> list[str]:
+    """The countries a page's language points to: the one in its tag, like Canada for "en-CA",
+    or else the country whose main language it is, like Korea for "ko"."""
+    region = _language_region(language)
+    if region:
+        return [region]
+    spoken = re.split(r"[-_]", language)[0].lower()
+    return [code for code, country in countries().items() if spoken in country.languages]
+
+
 def guess_countries(
     url: str,
     *,
@@ -138,7 +149,7 @@ def guess_countries(
         points[address_country] += _POINTS["address"]
     # Each clue counts once per country, however often it appears. dict.fromkeys keeps the
     # order the clues were found in, which settles ties.
-    spoken = (region for language in languages if (region := _language_region(language)))
+    spoken = (code for language in languages for code in _language_countries(language))
     for code in dict.fromkeys(spoken):
         points[code] += _POINTS["language"]
     for code in dict.fromkeys(code for _, code in postcodes):
