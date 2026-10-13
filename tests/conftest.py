@@ -134,6 +134,8 @@ class _Handler(BaseHTTPRequestHandler):
             return  # hang up without answering, like some sites do to bots
         if path.startswith("/refused-once/") and _first_visit(path):
             path = "/denied"
+        if path.startswith("/slow-once/") and _first_visit(path):
+            time.sleep(3)  # stalls the first browser, like sites that stall only the shell
         if path == "/redirect":
             self.send_response(302)
             self.send_header("Location", "/cafe")
@@ -141,7 +143,9 @@ class _Handler(BaseHTTPRequestHandler):
             return
         if path == "/slow":
             time.sleep(3)
-        if path in ("/cafe", "/slow") or path.startswith(("/refused-once/", "/dropped-once/")):
+        if path in ("/cafe", "/slow") or path.startswith(
+            ("/refused-once/", "/dropped-once/", "/slow-once/")
+        ):
             self._send(200, "text/html", CAFE_PAGE)
         elif path == "/lazy-footer":
             self._send(200, "text/html", LAZY_FOOTER_PAGE)

@@ -71,7 +71,7 @@ def _summary_table(
     table.add_column(overflow="fold")
     browser = f"{snapshot.loaded_with} (headless)"
     if snapshot.loaded_with != first_browser:
-        browser += f", after {first_browser} was refused"
+        browser += f", after {first_browser} was refused or timed out"
     table.add_row("Browser", browser)
     table.add_row("Final URL", snapshot.final_url)
     table.add_row("Status", str(snapshot.status_code or "unknown"))
@@ -186,7 +186,8 @@ def _report_gold(checks: list[FetchCheck], out: Path, first_browser: str, consol
     again = sum(1 for check in checks if check.browser and check.browser != first_browser)
     if again:
         console.print(
-            f"Loaded again in a full browser after {first_browser} was refused: {again}.",
+            f"Loaded again in a full browser after {first_browser} was refused or timed out: "
+            f"{again}.",
             markup=False,
         )
     console.print(f"Details for each site are in {out}", markup=False)

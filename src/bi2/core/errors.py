@@ -18,5 +18,10 @@ class PageTimeout(FetchError):
     """A page didn't load in time."""
 
 
+class WrongCertificateName(FetchError):
+    """The site's security certificate is for another of its names, such as the one without
+    "www.", so no browser loads the page under this one."""
+
+
 class BrowserUnavailable(Bi2Error):
     """No browser could be started."""

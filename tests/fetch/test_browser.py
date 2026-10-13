@@ -181,6 +181,21 @@ async def test_dropped_connections_load_again_in_a_full_browser(
     assert snapshot.loaded_with in FULL_BROWSERS
 
 
+async def test_pages_too_slow_for_the_shell_load_again_in_a_full_browser(site: str) -> None:
+    async with BrowserFetcher(timeout_s=1, allow_private=True) as fetcher:
+        if fetcher.browser_name != "chromium-shell":
+            pytest.skip("needs Playwright's Chromium shell, the browser that falls back")
+        snapshot = await fetcher.fetch(f"{site}/slow-once/auto")
+    assert snapshot.status_code == 200
+    assert snapshot.loaded_with in FULL_BROWSERS
+
+
+async def test_a_page_too_slow_for_every_browser_still_times_out(site: str) -> None:
+    async with BrowserFetcher(timeout_s=1, allow_private=True) as fetcher:
+        with pytest.raises(PageTimeout, match="didn't load within 1 seconds"):
+            await fetcher.fetch(f"{site}/slow")
+
+
 async def test_a_chosen_browser_is_never_swapped(
     fetcher: BrowserFetcher, browser: BrowserName, site: str
 ) -> None:

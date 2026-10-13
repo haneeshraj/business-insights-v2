@@ -23,7 +23,13 @@ from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import ValidationError
 
 from bi2 import __version__
-from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
+from bi2.core.errors import (
+    BrowserUnavailable,
+    FetchError,
+    PageTimeout,
+    UnsafeUrl,
+    WrongCertificateName,
+)
 from bi2.core.models import PageSnapshot, RenderedImage, TextRegions
 from bi2.fetch import page_scripts
 from bi2.fetch.safety import Resolver, ensure_public_url, host_is_public, system_resolver
@@ -162,12 +168,23 @@ async def _read(page: Page, url: str) -> tuple[dict[str, Any], bytes]:
     raise FetchError(f"{url} kept moving on to other pages while it was read")
 
 
+def _other_name(url: str) -> str | None:
+    """The same address under the site's other usual name, with "www." taken off or put on.
+    None for an IP address, which has no other name."""
+    parts = urlsplit(url)
+    host = parts.hostname
+    if not host or ":" in host or host.replace(".", "").isdigit():
+        return None
+    other = host.removeprefix("www.") if host.startswith("www.") else f"www.{host}"
+    return parts._replace(netloc=other if parts.port is None else f"{other}:{parts.port}").geturl()
+
+
 class BrowserFetcher:
     """Loads pages in a headless browser: the rendered HTML, every image with its position, and
     a screenshot of the first screen.
 
-    With "auto", pages load in the fast Chromium shell, and a page the site won't give the shell
-    is loaded again in a full browser.
+    With "auto", pages load in the fast Chromium shell, and a page the site won't give the shell,
+    or that doesn't load in it in time, is loaded again in a full browser.
 
     Every request a page makes, including redirects and images, is checked before it's sent,
     so a page can't make v2 fetch from a private network.
@@ -251,18 +268,35 @@ class BrowserFetcher:
     async def fetch(self, url: str) -> PageSnapshot:
         """Load one page. Raises UnsafeUrl, PageTimeout or FetchError.
 
-        With "auto", a page the site won't give the shell (an error status or a dropped
-        connection) is loaded again in a full browser.
+        - With "auto", a page the site won't give the shell is loaded again in a full browser:
+          an error status, a dropped connection, or a page that doesn't load in time, since
+          some sites stall only the shell.
+        - When the site's security certificate is for its other name, with or without "www.",
+          the page is loaded under that name. The snapshot keeps the address it was asked for.
         """
         if self._main is None:
             raise RuntimeError("use BrowserFetcher inside an `async with` block")
         if not self._allow_private:
             await ensure_public_url(url, self._resolver)
         try:
-            snapshot = await self._load(self._main, url)
-        except (PageTimeout, UnsafeUrl):
+            return await self._fetch(self._main, url)
+        except WrongCertificateName:
+            other = _other_name(url)
+            if other is None:
+                raise
+            if not self._allow_private:
+                await ensure_public_url(other, self._resolver)
+            snapshot = await self._fetch(self._main, other)
+        return snapshot.model_copy(update={"url": url})
+
+    async def _fetch(self, main: _Started, url: str) -> PageSnapshot:
+        """Load one page in the main browser, and again in a full one when the site won't give
+        the main browser the page."""
+        try:
+            snapshot = await self._load(main, url)
+        except (UnsafeUrl, WrongCertificateName):
             raise  # a full browser wouldn't do better
-        except FetchError:
+        except FetchError:  # refused, dropped, or too slow
             full = await self._full_browser()
             if full is None:
                 raise
@@ -337,6 +371,10 @@ class BrowserFetcher:
         except PlaywrightError as exc:
             if blocked:
                 raise UnsafeUrl(f"{url} tried to reach a private address: {blocked[0]}") from exc
+            if "ERR_CERT_COMMON_NAME_INVALID" in exc.message:
+                raise WrongCertificateName(
+                    f"couldn't load {url}: its security certificate is for another name"
+                ) from exc
             raise FetchError(f"couldn't load {url}: {exc.message}") from exc
         except ValidationError as exc:  # for example, the page ended up on a non-web address
             raise FetchError(f"couldn't use what {url} returned: {exc}") from exc
