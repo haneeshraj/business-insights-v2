@@ -54,6 +54,19 @@ async def test_a_page_is_analyzed_into_a_result_with_its_files_saved() -> None:
     assert set(result.versions.data) == {"countries", "platforms"}
 
 
+async def test_the_logo_comes_from_the_browsers_copy_when_a_download_is_refused() -> None:
+    files = MemoryFiles()
+    snapshot = page_snapshot(
+        PAGE,
+        images=(LOGO,),
+        screenshot=screenshot_with_logo(20, 10, 160, 60),
+        image_copies={f"{URL}logo.png": picture(160, 60)},
+    )
+    result, _ = await analyze_snapshot(snapshot, fake_context(files=files))  # no downloads
+    assert result.logo.status is Status.OK
+    assert "example-cafe.ca/logo.png" in files.files
+
+
 async def test_a_page_that_wont_load_fails_every_field_and_says_why() -> None:
     result, ev = await analyze_url(URL, fake_context())
     assert ev is None

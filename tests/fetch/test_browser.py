@@ -9,6 +9,8 @@ import pytest
 from bi2.core.errors import BrowserUnavailable, FetchError, PageTimeout, UnsafeUrl
 from bi2.core.models import RenderedImage
 from bi2.fetch.browser import BrowserFetcher, BrowserName
+from bi2.fetch.http import HttpDownloader
+from tests.conftest import LOGO_PNG
 
 pytestmark = pytest.mark.browser
 
@@ -93,6 +95,17 @@ async def test_inline_svg_logos_are_captured(fetcher: BrowserFetcher, site: str)
     wordmark = _image((await fetcher.fetch(f"{site}/cafe")).images, "Example Cafe wordmark")
     assert wordmark.kind == "svg"
     assert wordmark.url == ""
+
+
+async def test_the_browser_keeps_copies_of_images_a_site_wont_give_out_again(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    logo = f"{site}/images/browser-only.png"
+    snapshot = await fetcher.fetch(f"{site}/browser-only-logo")
+    assert snapshot.image_copies == {logo: LOGO_PNG}
+    async with HttpDownloader(allow_private=True) as downloader:
+        with pytest.raises(FetchError):  # the site refuses a separate download
+            await downloader.download(logo, max_bytes=1_000_000)
 
 
 async def test_redirects_are_followed(fetcher: BrowserFetcher, site: str) -> None:

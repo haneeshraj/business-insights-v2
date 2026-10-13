@@ -7,6 +7,8 @@ It depends only on core, evidence and resolvers, and gets everything else from t
 import asyncio
 import time
 import tomllib
+from collections.abc import Mapping
+from dataclasses import replace
 from datetime import UTC, datetime
 from functools import cache
 from importlib.resources import files
@@ -27,6 +29,7 @@ from bi2.core.models import (
     StepRecord,
     Versions,
 )
+from bi2.core.ports import Downloader
 from bi2.core.urls import site_folder
 from bi2.evidence.build import build_evidence
 from bi2.resolvers import RESOLVERS
@@ -47,10 +50,27 @@ def _versions() -> Versions:
     return Versions(pipeline=__version__, data=_data_versions())
 
 
+class _BrowserCopiesFirst:
+    """Gives the browser's copy of an image when it kept one, and downloads it otherwise. Some
+    sites refuse a separate download of an image they gave the browser to show the page."""
+
+    def __init__(self, copies: Mapping[str, bytes], downloader: Downloader) -> None:
+        self._copies = copies
+        self._downloader = downloader
+
+    async def download(self, url: str, *, max_bytes: int, referer: str | None = None) -> bytes:
+        copy = self._copies.get(url)
+        if copy is not None and len(copy) <= max_bytes:
+            return copy
+        return await self._downloader.download(url, max_bytes=max_bytes, referer=referer)
+
+
 async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[SiteResult, Evidence]:
     """Everything v2 can tell about a loaded page. Saves the screenshot, the evidence and the
     result in the site's folder, along with the logo when one is found."""
     started = time.monotonic()
+    if snapshot.image_copies:
+        ctx = replace(ctx, downloader=_BrowserCopiesFirst(snapshot.image_copies, ctx.downloader))
     ev = build_evidence(snapshot)
     folder = site_folder(snapshot.url)
     if snapshot.screenshot:

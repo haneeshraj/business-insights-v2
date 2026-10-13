@@ -78,6 +78,12 @@ STUCK_CHECK_PAGE = b"""<!doctype html>
 # A block like Akamai's: an error page with no scripts, so nothing will move it on.
 DENIED_PAGE = b"<html><head><title>Access Denied</title></head><body>Access Denied</body></html>"
 
+# A page whose logo is given only to browsers, like sites that refuse separate downloads.
+BROWSER_ONLY_PAGE = b"""<!doctype html>
+<html><head><title>Example Cafe</title></head>
+<body><header><a href="/"><img src="/images/browser-only.png" alt="Example Cafe" width="160"
+height="60"></a></header><main>Coffee</main></body></html>"""
+
 # A 1x1 transparent PNG.
 PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
@@ -133,6 +139,14 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, "text/html", STUCK_CHECK_PAGE)
         elif path == "/denied":
             self._send(403, "text/html", DENIED_PAGE)
+        elif path == "/browser-only-logo":
+            self._send(200, "text/html", BROWSER_ONLY_PAGE)
+        elif path == "/images/browser-only.png":
+            # A browser says what it wants an image for; a separate download doesn't.
+            if self.headers.get("Sec-Fetch-Dest") == "image":
+                self._send(200, "image/png", LOGO_PNG)
+            else:
+                self._send(403, "text/plain", b"forbidden")
         elif path == "/images/brand.png":
             self._send(200, "image/png", LOGO_PNG)
         elif path.startswith("/images/"):

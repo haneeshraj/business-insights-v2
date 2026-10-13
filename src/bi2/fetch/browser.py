@@ -2,12 +2,22 @@
 
 import asyncio
 import contextlib
+import math
 from datetime import UTC, datetime
 from types import TracebackType
 from typing import Any, Literal, NamedTuple, Self
 from urllib.parse import urlsplit
 
-from playwright.async_api import Browser, Page, Playwright, Route, ViewportSize, async_playwright
+from playwright.async_api import (
+    Browser,
+    Page,
+    Playwright,
+    Request,
+    Response,
+    Route,
+    ViewportSize,
+    async_playwright,
+)
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import ValidationError
@@ -41,6 +51,10 @@ _AUTO_ORDER: tuple[BrowserName, ...] = ("chromium-shell", *_FULL_BROWSERS)
 
 # How many times to try reading a page that keeps moving on to other pages while it's read.
 _READ_ATTEMPTS = 3
+
+# The browser's copies of images kept with a page: the likeliest logos, and none too big to be.
+_COPIES = 20
+_MAX_COPY_BYTES = 2_000_000
 
 
 class _Started(NamedTuple):
@@ -87,6 +101,46 @@ def _longer(a: TextRegions, b: TextRegions) -> TextRegions:
         main=max(a.main, b.main, key=len),
         footer=max(a.footer, b.footer, key=len),
     )
+
+
+def _remember_image(response: Response, responses: dict[str, Response]) -> None:
+    """Keep track of each image the page loaded, under the address it was asked for and every
+    address it was redirected through."""
+    request: Request | None = response.request
+    if request is None or request.resource_type != "image" or not response.ok:
+        return
+    while request is not None:
+        responses.setdefault(request.url, response)
+        request = request.redirected_from
+
+
+def _likeliest_logo_first(image: dict[str, Any]) -> tuple[bool, float]:
+    """Images in the header, linking home or named as a logo come first, then the rest from the
+    top of the page down."""
+    named = "logo" in f"{image['url']} {image['alt']} {image['css_class']}".lower()
+    likely = image["in_header"] or image["links_home"] or named
+    return not likely, image["box"]["y"] if image.get("box") else math.inf
+
+
+async def _image_copies(
+    images: list[dict[str, Any]], responses: dict[str, Response]
+) -> dict[str, bytes]:
+    """The browser's copies of the images likeliest to be the logo, from what it loaded."""
+    copies: dict[str, bytes] = {}
+    for image in sorted(images, key=_likeliest_logo_first):
+        url = image["url"]
+        response = responses.get(url)
+        if response is None or url in copies:
+            continue
+        try:
+            body = await response.body()
+        except PlaywrightError:  # no longer in the browser's memory
+            continue
+        if len(body) <= _MAX_COPY_BYTES:
+            copies[url] = body
+            if len(copies) == _COPIES:
+                break
+    return copies
 
 
 async def _read(page: Page, url: str) -> tuple[dict[str, Any], bytes]:
@@ -222,6 +276,7 @@ class BrowserFetcher:
     async def _load(self, started: _Started, url: str) -> PageSnapshot:
         """Load one page in one browser."""
         blocked: list[str] = []
+        images: dict[str, Response] = {}
 
         async def guard(route: Route) -> None:
             parts = urlsplit(route.request.url)
@@ -243,6 +298,7 @@ class BrowserFetcher:
         try:
             page = await context.new_page()
             await page.route("**/*", guard)
+            page.on("response", lambda response: _remember_image(response, images))
             try:
                 response = await page.goto(
                     url, wait_until="domcontentloaded", timeout=self._timeout_ms
@@ -264,6 +320,7 @@ class BrowserFetcher:
             text = TextRegions.model_validate(read["text"])
             if at_bottom and at_bottom["page"] == read["page"]:  # the same page, both times
                 text = _longer(text, TextRegions.model_validate(at_bottom["text"]))
+            copies = await _image_copies(read["images"], images)
             return PageSnapshot(
                 url=url,
                 final_url=read["url"],
@@ -273,6 +330,7 @@ class BrowserFetcher:
                 images=tuple(RenderedImage.model_validate(image) for image in read["images"]),
                 text=text,
                 screenshot=screenshot,
+                image_copies=copies,
                 fetched_at=datetime.now(UTC),
                 loaded_with=started.name,
             )

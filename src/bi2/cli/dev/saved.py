@@ -9,7 +9,8 @@ from bi2.core.urls import site_folder
 
 
 def save_snapshot(snapshot: PageSnapshot, out: Path) -> Path:
-    """Save the screenshot, the HTML and everything else the browser captured."""
+    """Save the screenshot, the HTML and everything else the browser captured. The browser's
+    copies of images go in snapshot.json, in base64."""
     folder = out / site_folder(snapshot.url)
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "page.html").write_text(snapshot.html, encoding="utf-8")
@@ -24,14 +25,13 @@ def load_snapshot(folder: Path) -> PageSnapshot:
     """Read back a page that save_snapshot saved."""
     details = json.loads((folder / "snapshot.json").read_text(encoding="utf-8"))
     details.setdefault("loaded_with", "")  # pages saved before this was recorded
+    details["html"] = (folder / "page.html").read_text(encoding="utf-8")
+    # Read as JSON, so the image copies are decoded from base64 the way they were written.
+    snapshot = PageSnapshot.model_validate_json(json.dumps(details))
     screenshot = folder / "screenshot.jpg"
-    return PageSnapshot.model_validate(
-        {
-            **details,
-            "html": (folder / "page.html").read_text(encoding="utf-8"),
-            "screenshot": screenshot.read_bytes() if screenshot.exists() else None,
-        }
-    )
+    if not screenshot.exists():
+        return snapshot
+    return snapshot.model_copy(update={"screenshot": screenshot.read_bytes()})
 
 
 def saved_folders(directory: Path) -> list[Path]:

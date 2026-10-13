@@ -271,6 +271,9 @@ class PageSnapshot(_Frozen):
     images: tuple[RenderedImage, ...] = ()
     text: TextRegions | None = None  # the visible text, when a browser read the page
     screenshot: bytes | None = None  # JPEG of the first screen
+    # The browser's own copies of the images likeliest to be the logo, by URL. Some sites refuse
+    # a separate download of an image they gave the browser to show the page.
+    image_copies: dict[str, bytes] = Field(default_factory=dict)
     fetched_at: AwareDatetime
     loaded_with: str  # the browser that loaded it, like "chromium-shell" or "edge"
 
