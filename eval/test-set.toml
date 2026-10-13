@@ -238,3 +238,326 @@ url = "https://www.pinterest.ca/lululemon/"
 category = "athletic apparel"
 page_kind = "platform_profile"
 platform = "pinterest"
+
+# Second batch, 2026-10-13: small businesses in other countries and languages. The notes
+# say where each one is and what language its site is in.
+
+[[site]]
+url = "https://www.leboulanger-de-saintjust.fr/"
+category = "bakery"
+notes = "France, French"
+
+[[site]]
+url = "https://dupainetdesidees.com/"
+category = "bakery"
+notes = "France, French"
+
+[[site]]
+url = "https://shakespeareandcompany.com/"
+category = "bookshop"
+notes = "France, English and French"
+
+[[site]]
+url = "https://www.cafe-de-flore.com/"
+category = "cafe"
+notes = "France. The address now redirects to a Vietnamese lottery site, so v2 should report what's there, and the redirect is a risk signal."
+
+[[site]]
+url = "https://www.fiveelephant.com/"
+category = "cafe and bakery"
+notes = "Germany, German and English"
+
+[[site]]
+url = "https://thebarn.de/"
+category = "coffee roaster"
+notes = "Germany, German"
+
+[[site]]
+url = "https://www.drloosen.com/"
+category = "winery"
+notes = "Germany, German and English"
+
+[[site]]
+url = "https://www.cafesperl.at/"
+category = "cafe"
+notes = "Austria, German"
+
+[[site]]
+url = "https://www.winkel43.nl/"
+category = "cafe"
+notes = "Netherlands, Dutch"
+
+[[site]]
+url = "https://www.athenaeum.nl/"
+category = "bookshop"
+notes = "Netherlands, Dutch"
+
+[[site]]
+url = "https://www.artespiga.com/"
+category = "bakery"
+notes = "Spain, Spanish. The homepage redirects to a 'page not found', but its footer still shows the business's details."
+
+[[site]]
+url = "https://nomadcoffee.es/"
+category = "coffee roaster"
+notes = "Spain, Spanish"
+
+[[site]]
+url = "https://www.granjaviader.cat/"
+category = "cafe"
+notes = "Spain, Catalan"
+
+[[site]]
+url = "https://www.chocolateriasangines.com/"
+category = "chocolate shop"
+notes = "Spain, Spanish"
+
+[[site]]
+url = "https://www.trattoriadelghiottone.it/"
+category = "trattoria"
+notes = "Italy, Italian"
+
+[[site]]
+url = "https://www.trattoriacicceria.it/"
+category = "trattoria"
+notes = "Italy, Italian"
+
+[[site]]
+url = "https://www.anticocaffegreco.eu/"
+category = "cafe"
+notes = "Italy, Italian"
+
+[[site]]
+url = "https://pasteisdebelem.pt/"
+category = "bakery"
+notes = "Portugal, Portuguese"
+
+[[site]]
+url = "https://www.livrarialello.pt/"
+category = "bookshop"
+notes = "Portugal, Portuguese"
+
+[[site]]
+url = "https://www.avidaportuguesa.com/"
+category = "gift shop"
+notes = "Portugal, Portuguese"
+
+[[site]]
+url = "https://www.quintadovallado.com/"
+category = "winery"
+notes = "Portugal, Portuguese and English"
+
+[[site]]
+url = "https://www.vetekatten.se/"
+category = "bakery and cafe"
+notes = "Sweden, Swedish"
+
+[[site]]
+url = "https://www.dropcoffee.com/"
+category = "coffee roaster"
+notes = "Sweden, Swedish and English"
+
+[[site]]
+url = "https://www.laglace.dk/"
+category = "bakery and cafe"
+notes = "Denmark, Danish"
+
+[[site]]
+url = "https://coffeecollective.dk/"
+category = "coffee roaster"
+notes = "Denmark, Danish"
+
+[[site]]
+url = "https://timwendelboe.no/"
+category = "coffee roaster"
+notes = "Norway, Norwegian and English"
+
+[[site]]
+url = "https://www.caferegatta.fi/"
+category = "cafe"
+notes = "Finland, Finnish"
+
+[[site]]
+url = "https://bistrocharlotte.com/"
+category = "bakery and bistro"
+notes = "Poland, Polish"
+
+[[site]]
+url = "https://www.cafelouvre.cz/"
+category = "cafe"
+notes = "Czechia, Czech"
+
+[[site]]
+url = "https://lukumades.com/"
+category = "dessert shop"
+notes = "Greece, Greek and English"
+
+[[site]]
+url = "https://www.karakoygulluoglu.com/"
+category = "baklava shop"
+notes = "Turkey, Turkish"
+
+[[site]]
+url = "https://www.hafizmustafa.com/"
+category = "confectioner"
+notes = "Turkey, Turkish"
+
+[[site]]
+url = "https://cafeclock.com/"
+category = "cafe"
+notes = "Morocco, English"
+
+[[site]]
+url = "https://rawcoffeecompany.com/"
+category = "coffee roaster"
+notes = "United Arab Emirates, English"
+
+[[site]]
+url = "https://truth.coffee/"
+category = "cafe"
+notes = "South Africa, English"
+
+[[site]]
+url = "https://www.clarkesbooks.co.za/"
+category = "bookshop"
+notes = "South Africa, English"
+
+[[site]]
+url = "https://www.karachibakery.com/"
+category = "bakery"
+notes = "India, English"
+
+[[site]]
+url = "https://www.glensbakehouse.com/"
+category = "bakery"
+notes = "India, English"
+
+[[site]]
+url = "https://bombaysweetshop.com/"
+category = "sweet shop"
+notes = "India, English"
+
+[[site]]
+url = "https://glitchcoffee.com/"
+category = "coffee roaster"
+notes = "Japan, Japanese and English"
+
+[[site]]
+url = "https://onibuscoffee.com/"
+category = "coffee roaster"
+notes = "Japan, Japanese"
+
+[[site]]
+url = "https://www.ippodo-tea.co.jp/"
+category = "tea shop"
+notes = "Japan, Japanese"
+
+[[site]]
+url = "https://www.inoda-coffee.co.jp/"
+category = "cafe"
+notes = "Japan, Japanese"
+
+[[site]]
+url = "https://www.hiiragiya.co.jp/"
+category = "inn (ryokan)"
+notes = "Japan, Japanese"
+
+[[site]]
+url = "https://fritz.co.kr/"
+category = "coffee roaster"
+notes = "South Korea, Korean"
+
+[[site]]
+url = "https://anthracitecoffee.com/"
+category = "coffee roaster"
+notes = "South Korea, Korean"
+
+[[site]]
+url = "https://www.simplekaffa.com/"
+category = "cafe"
+notes = "Taiwan, Chinese"
+
+[[site]]
+url = "https://www.tiongbahrubakery.com/"
+category = "bakery"
+notes = "Singapore, English"
+
+[[site]]
+url = "https://www.marketlane.com.au/"
+category = "coffee roaster"
+notes = "Australia, English"
+
+[[site]]
+url = "https://www.readings.com.au/"
+category = "bookshop"
+notes = "Australia, English"
+
+[[site]]
+url = "https://coffeesupreme.com/"
+category = "coffee roaster"
+notes = "New Zealand, English"
+
+[[site]]
+url = "https://www.rosetta.com.mx/"
+category = "bakery and restaurant"
+notes = "Mexico, Spanish"
+
+[[site]]
+url = "https://www.cafedetacuba.com.mx/"
+category = "restaurant"
+notes = "Mexico. The address is now a parked domain for sale: there's no business on it."
+
+[[site]]
+url = "https://www.contramar.com.mx/"
+category = "restaurant"
+notes = "Mexico, Spanish"
+
+[[site]]
+url = "https://www.cafetortoni.com.ar/"
+category = "cafe"
+notes = "Argentina, Spanish"
+
+[[site]]
+url = "https://santiagopadariaartesanal.com.br/"
+category = "bakery"
+notes = "Brazil, Portuguese"
+
+[[site]]
+url = "https://www.russanddaughters.com/"
+category = "deli"
+notes = "United States, English"
+
+[[site]]
+url = "https://www.zingermansdeli.com/"
+category = "deli"
+notes = "United States, English"
+
+[[site]]
+url = "https://citylights.com/"
+category = "bookshop"
+notes = "United States, English"
+
+[[site]]
+url = "https://www.tartinebakery.com/"
+category = "bakery"
+notes = "United States, English"
+
+[[site]]
+url = "https://www.monmouthcoffee.co.uk/"
+category = "coffee roaster"
+notes = "United Kingdom, English"
+
+[[site]]
+url = "https://www.edinburghbookshop.com/"
+category = "bookshop"
+notes = "United Kingdom, English"
+
+[[site]]
+url = "https://www.lighthousebookshop.com/"
+category = "bookshop"
+notes = "United Kingdom, English"
+
+[[site]]
+url = "https://www.truefittandhill.co.uk/"
+category = "barber"
+notes = "United Kingdom, English"
