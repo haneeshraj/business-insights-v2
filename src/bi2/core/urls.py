@@ -53,6 +53,11 @@ def public_suffix(url: str) -> str:
     return _domains()(url).suffix
 
 
+def domain_name(url: str) -> str:
+    """The registered name without its public suffix: `shop.example.co.uk` gives `example`."""
+    return _domains()(url).domain
+
+
 def site_folder(url: str) -> str:
     """A folder name for a page's files, such as `example-cafe.ca_menu`."""
     parts = urlsplit(url)

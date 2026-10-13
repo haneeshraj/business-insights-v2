@@ -325,6 +325,7 @@ class StructuredData(_Frozen):
     legal_name: str | None = None
     logo_url: WebUrl | None = None
     telephone: str | None = None
+    email: str | None = None
     address: Address | None = None
     same_as: tuple[WebUrl, ...] = ()  # the business's other profiles, such as social media
 
@@ -338,7 +339,9 @@ class Contacts(_Frozen):
     # "main text".
     phone_places: dict[PhoneNumber, tuple[str, ...]] = Field(default_factory=dict)
     emails: tuple[str, ...] = ()
-    # Where each address was found: "email link", "footer", "header" or "main text".
+    # Where each address was found: "structured data", "email link", "footer", "header",
+    # "main text", or only "hidden text", which the page doesn't show until it's opened, like
+    # an accordion or a dialog.
     email_places: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     postcodes: tuple[str, ...] = ()
     copyright_line: str | None = None  # often names the legal entity

@@ -34,6 +34,7 @@ from bi2.core.urls import site_folder
 from bi2.evidence.build import build_contact_page, build_evidence
 from bi2.resolvers import RESOLVERS
 from bi2.resolvers.cascade import not_built_yet
+from bi2.resolvers.email import shows_an_email
 
 
 @cache
@@ -67,9 +68,10 @@ class _BrowserCopiesFirst:
 
 async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
     """The evidence with the contact page's details too, when the homepage doesn't show both a
-    phone number and an email address and links a contact page. A contact page that won't load
-    is left out, and the homepage's evidence stands on its own."""
-    if (ev.contacts.phones and ev.contacts.emails) or not ev.contact_pages:
+    phone number and an email address that could be the business's general one, and links a
+    contact page. A contact page that won't load is left out, and the homepage's evidence
+    stands on its own."""
+    if (ev.contacts.phones and shows_an_email(ev)) or not ev.contact_pages:
         return ev
     try:
         snapshot = await ctx.fetcher.fetch(ev.contact_pages[0])

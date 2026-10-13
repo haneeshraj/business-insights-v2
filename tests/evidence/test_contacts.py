@@ -52,6 +52,36 @@ def test_emails_come_from_links_and_text_without_image_names() -> None:
     }
 
 
+def test_structured_data_spelled_out_and_hidden_addresses_count_too() -> None:
+    doc = parse_html(
+        "<body><main>Write to hello(at)example-cafe.fi or tilaukset [at] example-cafe [dot] fi"
+        "</main><div hidden>Customer service: palvelu@example-cafe.fi</div></body>"
+    )
+    text = TextRegions(
+        main="Write to hello(at)example-cafe.fi or tilaukset [at] example-cafe [dot] fi",
+        footer="Mail: kahvila\N{FULLWIDTH COMMERCIAL AT}example.jp",
+    )
+    # The main text's addresses are in the page's code too, but aren't counted again as hidden.
+    assert find_emails(doc, text, structured="mailto:info@example-cafe.fi") == {
+        "info@example-cafe.fi": ["structured data"],
+        "kahvila@example.jp": ["footer"],
+        "hello@example-cafe.fi": ["main text"],
+        "tilaukset@example-cafe.fi": ["main text"],
+        "palvelu@example-cafe.fi": ["hidden text"],
+    }
+
+
+def test_link_leftovers_and_placeholders_are_not_addresses() -> None:
+    doc = parse_html(
+        '<a href="mailto:Hello@Example-Cafe.ca&gt; Hello@Example-Cafe.ca">Write to us</a>'
+        "<p>you@company.com your@mail.address name@example.com info@thecoffeecompany.com</p>"
+    )
+    assert find_emails(doc, TextRegions()) == {
+        "hello@example-cafe.ca": ["email link"],
+        "info@thecoffeecompany.com": ["hidden text"],  # a real domain ending in a placeholder's
+    }
+
+
 def test_the_copyright_line_and_its_holder() -> None:
     line = find_copyright_line(TEXT)
     assert line == "© 2026 Example Cafe Ltd. All rights reserved."

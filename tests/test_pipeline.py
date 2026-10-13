@@ -90,6 +90,20 @@ async def test_the_contact_page_is_read_when_the_homepage_shows_no_phone_or_emai
     assert (result.email.value, result.email.status) == ("hello@example-cafe.ca", Status.OK)
 
 
+async def test_the_contact_page_is_read_when_the_homepage_only_shows_a_jobs_address() -> None:
+    home = HOME.replace(
+        "<main>Coffee.</main>",
+        "<main>Coffee. Call (416) 555-0123. Jobs: careers@example-cafe.ca</main>",
+    )
+    pages = {CONTACT: page_snapshot(CONTACT_PAGE, url=CONTACT)}
+    result, ev = await analyze_snapshot(page_snapshot(home), fake_context(pages=pages))
+    assert ev.extra_pages == (CONTACT,)
+    assert (result.email.value, result.email.source) == (
+        "hello@example-cafe.ca",
+        "contact page: email link + footer",
+    )
+
+
 async def test_a_contact_page_that_wont_load_leaves_the_homepage_to_stand_alone() -> None:
     result, ev = await analyze_snapshot(page_snapshot(HOME), fake_context())  # nothing to load
     assert ev.contact_page is None

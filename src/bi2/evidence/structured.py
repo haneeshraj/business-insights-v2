@@ -1,7 +1,7 @@
 """What the page's schema.org data says about the business.
 
 Sites add this data for search engines, and it often states the business's name, logo, phone
-number, address and social profiles outright. Only JSON-LD is read, the format nearly every
+number, email address, address and social profiles outright. Only JSON-LD is read, the format nearly every
 site uses.
 """
 
@@ -110,14 +110,15 @@ def _score(node: dict[str, Any]) -> int:
     return 1 + 3 * business + sum(1 for key in details if node.get(key))
 
 
-def _telephone(node: dict[str, Any]) -> str:
-    phone = _text(node.get("telephone"))
-    if phone:
-        return phone
+def _contact_detail(node: dict[str, Any], key: str) -> str:
+    """The node's own "telephone" or "email", or else its first contact point's."""
+    value = _text(node.get(key))
+    if value:
+        return value
     points = node.get("contactPoint")
     for point in points if isinstance(points, list) else [points]:
-        if isinstance(point, dict) and (phone := _text(point.get("telephone"))):
-            return phone
+        if isinstance(point, dict) and (value := _text(point.get(key))):
+            return value
     return ""
 
 
@@ -190,7 +191,8 @@ def extract_structured_data(doc: Document, base_url: str) -> StructuredData:
         name=_text(best.get("name")) or None,
         legal_name=_first(same, lambda node: _text(node.get("legalName"))) or None,
         logo_url=_first(same, lambda node: _url(node.get("logo"), base_url)),
-        telephone=_first(same, _telephone) or None,
+        telephone=_first(same, lambda node: _contact_detail(node, "telephone")) or None,
+        email=_first(same, lambda node: _contact_detail(node, "email")) or None,
         address=_first(same, lambda node: _address(node.get("address"))),
         same_as=tuple(same_as),
     )

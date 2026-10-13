@@ -26,7 +26,11 @@ def test_reads_an_organization() -> None:
             "name": "Example Cafe &amp; Bakery",
             "legalName": "Example Cafe Ltd.",
             "logo": {"@type": "ImageObject", "url": "/images/logo.png"},
-            "contactPoint": {"@type": "ContactPoint", "telephone": "+1 416-555-0123"},
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+1 416-555-0123",
+                "email": "mailto:hello@example-cafe.ca",
+            },
             "address": {
                 "@type": "PostalAddress",
                 "streetAddress": "128a Sterling Rd",
@@ -43,6 +47,7 @@ def test_reads_an_organization() -> None:
     assert data.legal_name == "Example Cafe Ltd."
     assert data.logo_url == "https://example-cafe.ca/images/logo.png"
     assert data.telephone == "+1 416-555-0123"
+    assert data.email == "mailto:hello@example-cafe.ca"  # the contacts reader takes the address
     assert data.address is not None
     assert data.address.text == "128a Sterling Rd, Toronto, ON M6R 2B7, Canada"
     assert (data.address.city, data.address.postal_code) == ("Toronto", "M6R 2B7")

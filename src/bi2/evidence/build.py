@@ -105,6 +105,7 @@ def _contacts_and_countries(
         doc,
         text,
         structured_phone=structured.telephone,
+        structured_email=structured.email,
         region=hint[0] if hint else None,
         postcodes=(postcode for postcode, _ in postcodes),
     )
