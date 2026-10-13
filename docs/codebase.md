@@ -101,7 +101,7 @@ The core helpers v2 starts with:
 | Module | Functions |
 |---|---|
 | `text.py` | `clean_space(s)`, `fold(s)` (case and accents removed, for comparing), `normalize_company_name(s)` (drops legal suffixes such as Inc. and Ltd.), `names_match(a, b)` |
-| `urls.py` | `normalize_url(url)`, `registrable_domain(url)` (`shop.example.co.uk` → `example.co.uk`), `same_site(a, b)`, `absolute_url(base, href)` |
+| `urls.py` | `normalize_url(url)`, `registrable_domain(url)` (`shop.example.co.uk` → `example.co.uk`), `domain_name(url)` (→ `example`), `same_site(a, b)`, `absolute_url(base, href)` |
 | `netsafety.py` | `is_public_address(ip)` |
 | `hashing.py` | `content_hash(data)`, `cache_key(namespace, **parts)` |
 | `money.py` | `cost_usd(model, usage)` |
@@ -181,7 +181,7 @@ Most contributions should mean adding files plus one registry line:
 | A field | A model in `core/models.py`, a resolver, its prompts, gold-set labels | `resolvers/__init__.py` |
 | An LLM provider | An adapter implementing `LLMProvider` | `llm/providers/__init__.py` and `data/models.toml` |
 | A search or geocoding provider | An adapter implementing the port | `services/__init__.py` |
-| A country | Postcode, phone and search-locale entries | `data/countries.toml` |
+| A country | Its names, domains, main languages, postcode format and provinces | `data/countries.toml` |
 | A platform (Pinterest, Yelp and so on) | Its domains and profile URL patterns | `data/platforms.toml` |
 | An output format | A writer | `cli/output.py` |
 | An interactive command | A handler function | The command table in `cli/interactive/commands.py` |
@@ -274,7 +274,7 @@ Data files ship inside the package and are loaded with `importlib.resources`, so
 | `schema_types.toml` | schema.org business types → likely MCC codes | By hand |
 | `models.toml` | Model aliases, capabilities and prices | When providers change models or prices |
 | `profiles.toml` | The `cheap`, `balanced` and `accurate` presets | Alongside eval runs |
-| `countries.toml` | Postcode patterns, phone codes and search locale per country | By hand |
+| `countries.toml` | Each country's names, domains, main languages, postcode pattern and provinces | By hand; adding a country is one entry |
 | `legal_suffixes.txt` | Inc., Ltd., LLC, GmbH, S.A. and so on | By hand |
 | `platforms.toml` | Platforms where businesses have pages (Pinterest, Instagram, Yelp, TripAdvisor…), with their profile URL patterns | By hand; adding a platform is one entry |
 

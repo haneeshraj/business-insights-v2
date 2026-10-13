@@ -4,7 +4,7 @@ Status: brainstorm draft, 2026-10-09. The product shape, tech stack and access m
 
 ## Goal
 
-Produce v1's four fields (company name, logo, MCC, headquarters address), plus the business's phone number and social media links, and do it cheaper, more accurate and faster. The users are bank teams: merchant onboarding and underwriting, KYB, merchant risk, and transaction enrichment. Banking-specific fields (legal name, website compliance checklist, product risk and so on) come after v2.0 and reuse the same design.
+Produce v1's four fields (company name, logo, MCC, headquarters address), plus the business's phone number, email address and social media links, and do it cheaper, more accurate and faster. The users are bank teams: merchant onboarding and underwriting, KYB, merchant risk, and transaction enrichment. Banking-specific fields (legal name, website compliance checklist, product risk and so on) come after v2.0 and reuse the same design.
 
 ## Product shape
 
@@ -200,7 +200,8 @@ Evidence     no model calls:
  │           logo candidates with on-screen position and size
  │           visible text by region (header, main, footer)
  │           phones, emails, postcodes, copyright line, classified links
- │           country hints (domain, phone codes, postcode format), one screenshot
+ │           country hints (domain, language, phone codes, postcode format), one screenshot
+ │           the contact page's phones and emails, when the homepage lacks a phone or a general email
  │
  ├────────────┬────────────┬────────────┐
  ▼            ▼            ▼            ▼
@@ -281,9 +282,25 @@ The URL a user gives may not be the business's own website. It may be the busine
 
 ### Phone number
 
-- Free sources: `tel:` links, the structured-data `telephone`, and numbers in the footer and contact page. Every number is converted to E.164 format using the site's country hints.
+- Free sources: `tel:` links, the structured-data `telephone`, and numbers in the footer, header and main text.
+- **The site's country:** every number is converted to E.164 format, reading numbers written without a country code the way the site's likeliest country writes them. Its country comes from its domain, its language, postcodes and the like, using `data/countries.toml`, which lists 35 countries. A page in a language spoken mainly in one country, like Korean, points to that country.
+- **The contact page:** when the homepage shows no phone number, or no email address that could be the business's general one, the contact page it links is read too. That's one more page, and only for the sites that need it. A page named for contact details comes first, in the languages of the sites v2 reads, then legal notices such as an Impressum, which must show a phone and an email in many countries, then about and location pages.
 - If there is one number, the field is `ok`.
-- If there are several, such as one per location, the Decider picks the main one, preferring the number shown next to the headquarters address.
+- If a contact page lists several, such as one per store, the field needs review. Later, the Decider picks the main one, preferring the number shown next to the headquarters address.
+
+### Email address
+
+The business's general address is the one wanted, like info@, hello@ or customer service, or their equivalents in the languages of the sites v2 reads.
+
+- **Free sources,** on the homepage and then the contact page:
+  - the structured data's `email`
+  - `mailto:` links
+  - addresses in the footer, header and main text, including ones spelled out for spam robots, like `info(at)example.fi`
+  - text the page doesn't show until it's opened, like a closed accordion or a dialog. Only a general address on the business's own domain counts from there.
+- **The business's own domain comes first.** That's the site's domain, or another one named for the same business, like rainhardbrewery.com for rainhardbrewing.com. An address on an unrelated domain, like a Gmail address, is common for small businesses but could be anyone's, so it counts for less.
+- **A general address comes before any other,** like a person's or a store's. One made only of general words, like customer.care@, comes before one that also names a product or a place, like helpdesk.campus@.
+- **The answer needs review when it isn't plainly the general one:** a general address with other words in it, or one of several addresses that are neither general nor for one purpose, like one per store.
+- **Never the answer:** an address for one purpose, like privacy, the press, jobs or fraud reports, or one nobody reads, like noreply. When the homepage shows only those, the contact page is read too.
 
 ### Social media links
 
@@ -424,7 +441,7 @@ business-insights-v2/
 | Agent style | Proposed | A fixed workflow, with an investigator agent for escalations only |
 | Default model | Proposed | Gemini Flash for text and images, when the user has a Gemini key; a stronger model only on escalation |
 | Jev | Proposed | Build against the Decider interface now; turn Jev on for users with a Jev key, after testing it on the gold set |
-| v2.0 scope | Decided | v1's four fields plus phone number and social media links, with statuses and sources; banking fields in v2.1 |
+| v2.0 scope | Decided | v1's four fields plus phone number, email address and social media links, with statuses and sources; banking fields in v2.1 |
 
 ## Open questions
 

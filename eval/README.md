@@ -22,6 +22,7 @@ logo_urls = ["https://www.example-cafe.ca/logo.png"]
 mcc_codes = ["5814", "5812"]         # any of these is correct; put the best one first
 address = { street = "12 Queen St W", city = "Toronto", postal_code = "M5H 2N2", country = "CA" }
 phones = ["+14165550123"]            # E.164 format; any of these is correct
+emails = ["hello@example-cafe.ca"]   # lowercase; any of these is correct
 social_links = ["https://instagram.com/examplecafe"]  # all of these must be found
 notes = "Where the answers came from."
 ```
@@ -42,6 +43,7 @@ How answers are judged:
 | MCC | The code is one of the accepted codes |
 | Address | The postal code matches (or the city, when no postal code is given) and so does the house number |
 | Phone | It's one of the accepted numbers, both written in E.164 format |
+| Email | It's one of the accepted addresses, ignoring case |
 | Social links | Every expected profile is found, ignoring "www.", "m." and twitter.com versus x.com. Extra profiles don't count against it. |
 | Page kind | The page is recognized as the business's own site, or as a profile on the right platform |
 
@@ -67,7 +69,7 @@ Add `--confirmed-only` to score only sites a person has checked, and `--json rep
 - `shown` is the answer as the page showed it, `status` and `confidence` are how v2 had marked it, and `note` is what the person saw.
 - A newer check of the same answer replaces an older one. The older lines stay, as history.
 - A person's check counts over the gold set's, since the gold set can be wrong: it lists one file for a logo that has several.
-- `correct` is the right answer, given with an answer marked wrong: a name, a phone number in E.164 format, the logo's address, or profile addresses separated by spaces. On the review page, a logo can be given as its candidate number, like `#2`, and is saved as that candidate's address.
+- `correct` is the right answer, given with an answer marked wrong: a name, a phone number in E.164 format, an email address, the logo's address, or profile addresses separated by spaces. On the review page, a logo can be given as its candidate number, like `#2`, and is saved as that candidate's address.
 
 The right answers people confirm or give also count on later runs. When a run's answer has changed, it's scored against them the way the gold set scores answers, before the gold set itself. The review page says "Your earlier answers" for these.
 
@@ -78,6 +80,7 @@ The right answers people confirm or give also count on later runs. When a run's 
 - A person's check of an answer always counts before a draft of it, and drafts count before the gold set.
 - On the review page, a draft shows as "Drafted", with its note. Pressing Right or Wrong confirms or overrides it.
 - An answer that couldn't be verified has no draft, so it's left out of the scores rather than guessed.
+- **Emails:** the right answer is the business's general address, like info@ or customer service. When the pages show none, an address the business gives for reaching a store or a person is right too. An address for one purpose, like the press, jobs or fraud reports, is wrong, and "not found" is right when the pages show no other.
 
 ## The test set
 
@@ -93,6 +96,7 @@ uv run bi2 review bi2-results/test-set --gold eval/test-set.toml               #
 ```
 
 - Saved pages go in `eval/snapshots/`, which git ignores, since copies of other sites never go in the repository.
+- Each site's folder also holds the contact page its homepage links, in `pages/`. A run reads it when the homepage doesn't show a phone number or an email address that could be the business's general one, the same as a live run would.
 - A run on saved pages keeps the files it downloads beside the pages, so a rerun sees exactly the same pages and files, with no network.
 - Never change a rule because of a test-set site. Add a site like it to the gold set and work on that one, or the test set stops measuring sites the rules haven't seen.
 

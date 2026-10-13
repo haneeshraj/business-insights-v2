@@ -35,7 +35,7 @@ Tests that need network access and API keys are marked `live` and are skipped un
 
 ```
 uv run bi2 dev fetch https://example.com        # load a page, show what the browser captured
-uv run bi2 dev fetch --gold eval/gold.toml      # load every gold-set site and save the pages
+uv run bi2 dev fetch --gold eval/gold.toml      # load every gold-set site and save its pages, contact page included
 uv run bi2 dev evidence https://example.com     # show the evidence taken from a page
 uv run bi2 dev evidence --saved bi2-results/dev/fetch --gold eval/gold.toml
 ```

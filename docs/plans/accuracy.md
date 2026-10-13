@@ -20,11 +20,12 @@ On the 56 gold-set sites, with no AI:
 | Social links | 36 of 37 (97%) | 36 (97%) | |
 | Company name | 52 of 56 (93%) | 48 (86%) | Pages that block us; a name shown only inside the logo |
 | Logo | 41 of 48 (85%) | 35 (73%) | Logos the page reader misses; blurry screenshot crops |
-| Phone | 18 of 23 (78%) | 18 (78%) | Numbers shown only on the contact page |
+| Phone | 19 of 23 (83%) | 18 (78%) | Numbers on a page v2 doesn't open |
+| Email | 42 of 45 (93%) | 21 (47%) | Addresses for one purpose that their names don't give away; right ones left unsure |
 | Address, MCC | not built yet | | |
 
 - Logos, phones and social links count only the sites where the gold set or your checks say what the right answer is.
-- These figures come from one live run. They move a few points between runs, because sites change between visits and some block us only now and then.
+- These figures come from one live run, and the phone and email rows from a run on the saved pages on 2026-10-13. Live runs move a few points, because sites change between visits and some block us only now and then.
 
 ## 3. The pipeline
 
@@ -70,7 +71,7 @@ flowchart LR
   - 57 are mostly Canadian, from coffee chains and banks to crypto exchanges, a vape shop and profiles on platforms.
   - 64 are small businesses in 26 countries, with sites in their own languages.
 
-  Sites that time out or block the browser count as failures, since they're part of the sample too. Every answer is checked, either by you or by a drafted check against the site's own pages (see eval/README.md). The exception is 29 answers that couldn't be verified, mostly phones not shown anywhere on the site.
+  Sites that time out or block the browser count as failures, since they're part of the sample too. Every answer is checked, either by you or by a drafted check against the site's own pages (see eval/README.md). The exception is 40 answers that couldn't be verified, mostly phones and emails not shown on the pages v2 reads.
 - **The first score on the test set,** on 2026-10-13, with no AI:
 
   | Field | Right | Right and sure | Sure but wrong |
@@ -80,6 +81,22 @@ flowchart LR
   | Social links | 105 of 120 (88%) | 78% | 4 of 97 |
   | Phones | 55 of 93 (59%) | 53% | 0 of 49 |
 
+- **After step 1's phone and email work,** on 2026-10-13, with no AI. Names, logos and social links didn't change.
+
+  | Field | Right | Right and sure | Sure but wrong |
+  |---|---|---|---|
+  | Phones | 78 of 98 (80%), from 55 of 98 | 63%, from 50% | 1 of 63 |
+  | Emails, a new field | 95 of 105 (90%) | 51% | 0 of 54 |
+
+  - The phone figures before are counted the new way: 5 more answers are checked now, since their sites' contact pages showed numbers v2 had missed.
+  - Every phone and email still wrong is one of these:
+    - a page that blocked us, wouldn't load or was a country picker
+    - a platform profile that doesn't show it
+    - a number read as the wrong country's: Coffee Supreme's, where a product code looked like an Irish postcode
+    - an address for one purpose that its name doesn't give away: Drop Coffee's wholesale one, Wealthsimple's for group savings
+    - numbers on a page v2 doesn't open, or only in text the page hides (7 sites)
+  - **A caveat:** the email rules were written while looking at these sites' answers, since email was new and no site had a checked email yet. So the email scores show how well the rules fit these sites, not how they do on new ones. A third batch of new sites measures that.
+
 ## 5. Step 1: the rules, field by field
 
 | Field | Fix | Sites from the review it fixes |
@@ -87,7 +104,9 @@ flowchart LR
 | Logo | Save logos written as SVG code as that code, not as a screenshot crop | Red Cross (dimmed by a pop-up), Best Buy and Bellwoods (blurry) |
 | Logo | Find the logos the page reader misses: look at the header first, keep small images that link home, read CSS masks, wait for the header to appear, crop logos that are only styled text | Waterstones, Mejuri, Warby Parker, Air Canada, Uber |
 | Logo | Take the largest size of the logo the site offers | Bellwoods, and sharper logos in general |
-| Phone | When the homepage shows no number, load the contact page v2 already found | Get Well, Old Flame, Coinbase |
+| Phone | When the homepage shows no number, load the contact page v2 already found. Done on 2026-10-13, for emails too | Get Well, Old Flame, Coinbase |
+| Phone | Read numbers the way the site's country writes them, for more countries and for pages in a country's main language. Done on 2026-10-13 | Fritz (Korea), Hiiragiya (Japan) |
+| Email | A new field: the business's general address, from the homepage or its contact page, never one for one purpose. Done on 2026-10-13 | |
 | Phone | Handle sites that show a different number on each visit | Flight Centre |
 | Name | When the page never states the name, offer the words in the domain as an unsure name | The Only Cafe |
 | All | When a page blocks us, retry in a visible browser window. For big brands, look the business up on Wikidata, which is free and lists official names and logo files | Loblaws, Shoppers, Roots (blocked on some visits) |
