@@ -73,6 +73,18 @@ async def test_an_inline_logo_is_cut_out_of_the_screenshot() -> None:
     assert "example-cafe.ca/logo.png" in files.files
 
 
+async def test_an_svg_logo_is_saved_as_its_own_code() -> None:
+    code = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect/></svg>'
+    result, files = await _resolve(
+        [_candidate(1, 13, box=TOP_SPOT, in_header=True, links_home=True, svg=code)],
+        screenshot=screenshot_with_logo(20, 10, 160, 60),
+    )
+    assert result.value is not None
+    assert result.value.image_file == "example-cafe.ca/logo.svg"
+    assert files.files["example-cafe.ca/logo.svg"] == code.encode()
+    assert result.evidence[0] == "saved from the page's SVG code"
+
+
 async def test_the_declared_logo_file_goes_before_an_inline_image() -> None:
     declared = f"{URL}brand/logo.png"
     result, _ = await _resolve(

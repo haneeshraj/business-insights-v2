@@ -2,7 +2,8 @@
 
 The ranking in evidence/logos.py says which image looks most like the logo. This accepts it when
 it clearly leads, downloads it, and checks that the file is a real image of a logo's shape and
-size. An inline SVG logo has no file of its own, so it's cut out of the screenshot instead.
+size. An inline SVG logo is saved as its own code, which the page reader keeps. Only a logo with
+neither a file nor code, such as one drawn with CSS, is cut out of the screenshot.
 """
 
 from typing import Final
@@ -54,6 +55,12 @@ def _signs(candidate: LogoCandidate) -> str:
     return ", ".join(signs) or candidate.kind
 
 
+def _where(candidate: LogoCandidate) -> str:
+    if candidate.url:
+        return candidate.url
+    return "saved from the page's SVG code" if candidate.svg else "cut out of the screenshot"
+
+
 async def _logo_file(
     candidate: LogoCandidate, ev: Evidence, ctx: RunContext
 ) -> tuple[str | None, str]:
@@ -66,6 +73,8 @@ async def _logo_file(
             )
         except FetchError as exc:
             return None, f"couldn't be downloaded ({exc})"
+    elif candidate.svg:
+        data = candidate.svg.encode("utf-8")
     else:
         if ev.screenshot_file is None or candidate.box is None:
             return None, "has no file of its own and isn't on the screenshot"
@@ -102,7 +111,7 @@ async def logo_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | 
             value=Logo(url=candidate.url, image_file=saved, icon_url=icon),
             confidence=max(0.0, sure - _LESS_SURE_PER_TRY * tries),
             source=f"logo candidate {candidate.number} ({_signs(candidate)})",
-            evidence=(candidate.url or "cut out of the screenshot", *skipped),
+            evidence=(_where(candidate), *skipped),
         )
     return Escalate("no candidate checked out: " + "; ".join(skipped))
 

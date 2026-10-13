@@ -78,6 +78,22 @@ STUCK_CHECK_PAGE = b"""<!doctype html>
 # A block like Akamai's: an error page with no scripts, so nothing will move it on.
 DENIED_PAGE = b"<html><head><title>Access Denied</title></head><body>Access Denied</body></html>"
 
+# A header logo drawn as SVG code, colored by the page's stylesheet and borrowing a shape
+# from elsewhere on the page, with a script that must not be kept; and a profile picture drawn
+# inside an SVG, the way Facebook draws them.
+SVG_LOGO_PAGE = b"""<!doctype html>
+<html><head><title>Example Cafe</title><style>.brand { fill: rgb(200, 30, 40); }</style></head>
+<body>
+<svg style="display: none"><symbol id="cup" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></symbol></svg>
+<header>
+  <a href="/"><svg class="brand-logo" width="120" height="40" viewBox="0 0 120 40"
+     aria-label="Example Cafe" onload="window.loaded = true"><rect class="brand" width="80" height="40"/>
+     <use href="#cup" x="80" width="40" height="40"/><script>window.ran = true</script></svg></a>
+  <svg width="64" height="64" aria-label="Example Cafe on a platform">
+    <image href="/images/brand.png" width="64" height="64"/></svg>
+</header>
+<main>Coffee</main></body></html>"""
+
 # A page whose logo is given only to browsers, like sites that refuse separate downloads.
 BROWSER_ONLY_PAGE = b"""<!doctype html>
 <html><head><title>Example Cafe</title></head>
@@ -139,6 +155,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, "text/html", STUCK_CHECK_PAGE)
         elif path == "/denied":
             self._send(403, "text/html", DENIED_PAGE)
+        elif path == "/svg-logo":
+            self._send(200, "text/html", SVG_LOGO_PAGE)
         elif path == "/browser-only-logo":
             self._send(200, "text/html", BROWSER_ONLY_PAGE)
         elif path == "/images/browser-only.png":

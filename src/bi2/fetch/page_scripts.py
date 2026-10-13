@@ -81,6 +81,51 @@ READ = """
     kind, url, alt: alt || "", css_class: String(el.getAttribute("class") || ""),
     element_id: el.id || "", box: box(el), in_header: inHeader(el), links_home: linksHome(el),
   });
+  // An inline SVG's code, standalone: the page's styles are written into it, the shapes it
+  // borrows from elsewhere on the page are copied in, and scripts are left out, so it shows
+  // the same when saved as a file of its own.
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const STYLES = ["fill", "fill-opacity", "fill-rule", "stroke", "stroke-width",
+    "stroke-opacity", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit",
+    "stroke-dasharray", "opacity", "display", "visibility", "clip-rule", "font-family",
+    "font-size", "font-weight", "letter-spacing", "text-anchor"];
+  const standalone = (svg) => {
+    const clone = svg.cloneNode(true);
+    const originals = [svg, ...svg.querySelectorAll("*")];
+    const copies = [clone, ...clone.querySelectorAll("*")];
+    originals.forEach((el, i) => {
+      const style = getComputedStyle(el);
+      copies[i].setAttribute("style", STYLES.map((name) => name + ":" + style.getPropertyValue(name)).join(";"));
+      copies[i].removeAttribute("class");
+    });
+    const ids = new Set([...clone.querySelectorAll("[id]")].map((el) => el.id));
+    const defs = document.createElementNS(SVG_NS, "defs");
+    for (const use of clone.querySelectorAll("use")) {
+      const ref = use.getAttribute("href") || use.getAttribute("xlink:href") || "";
+      const shape = ref.startsWith("#") ? document.getElementById(ref.slice(1)) : null;
+      if (shape && !ids.has(shape.id)) {
+        defs.appendChild(shape.cloneNode(true));
+        ids.add(shape.id);
+      }
+    }
+    if (defs.childNodes.length) clone.insertBefore(defs, clone.firstChild);
+    for (const el of clone.querySelectorAll("script, foreignObject")) el.remove();
+    for (const el of [clone, ...clone.querySelectorAll("*")]) {
+      for (const attribute of [...el.attributes]) {
+        const value = attribute.value.trim().toLowerCase();
+        if (attribute.name.startsWith("on") || value.startsWith("javascript:")) {
+          el.removeAttribute(attribute.name);
+        }
+      }
+    }
+    const r = svg.getBoundingClientRect();
+    clone.setAttribute("xmlns", SVG_NS);
+    clone.setAttribute("width", String(Math.round(r.width)));
+    clone.setAttribute("height", String(Math.round(r.height)));
+    if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", "0 0 " + r.width + " " + r.height);
+    const code = new XMLSerializer().serializeToString(clone);
+    return code.length <= 300000 ? code : "";
+  };
   const found = [];
   for (const img of document.images) {
     let url = img.currentSrc || img.src || "";
@@ -91,11 +136,26 @@ READ = """
     }
     found.push(describe(img, "img", url, img.alt));
   }
+  let withCode = 0;
   for (const svg of document.querySelectorAll("svg")) {
     const r = svg.getBoundingClientRect();
     if (r.width < 24 || r.height < 12) continue;  // icons, not logos
     const title = svg.querySelector("title");
-    found.push(describe(svg, "svg", "", svg.getAttribute("aria-label") || (title ? title.textContent : "")));
+    const label = svg.getAttribute("aria-label") || (title ? title.textContent : "");
+    // A picture drawn inside an SVG, like a profile picture, is that picture's own file.
+    const picture = svg.querySelector("image");
+    const href = picture ? picture.getAttribute("href") || picture.getAttribute("xlink:href") || "" : "";
+    if (href && !href.startsWith("data:")) {
+      found.push(describe(svg, "img", absolute(href), label));
+      continue;
+    }
+    const image = describe(svg, "svg", "", label);
+    const named = /logo/i.test(label + " " + image.css_class + " " + image.element_id);
+    if (withCode < 8 && (image.in_header || image.links_home || named || image.box.y < 400)) {
+      image.svg = standalone(svg);
+      withCode += 1;
+    }
+    found.push(image);
   }
   for (const el of document.querySelectorAll("header *, nav *, [class*=logo i]")) {
     const match = getComputedStyle(el).backgroundImage.match(/url\\(["']?(.*?)["']?\\)/);

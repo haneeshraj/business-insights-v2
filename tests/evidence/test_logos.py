@@ -102,3 +102,10 @@ def test_inline_svgs_and_icons_count_but_placeholders_dont() -> None:
         ("icon", f"{BASE}touch.png"),
         ("icon", f"{BASE}favicon.ico"),
     ]
+
+
+def test_an_inline_svg_keeps_its_code() -> None:
+    svg = RenderedImage(
+        kind="svg", alt="Example Cafe", box=HEADER_SPOT, in_header=True, svg="<svg/>"
+    )
+    assert _rank([svg])[0].svg == "<svg/>"

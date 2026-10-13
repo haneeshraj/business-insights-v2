@@ -50,6 +50,7 @@ class _Scored(NamedTuple):
     in_header: bool
     links_home: bool
     declared: bool = False  # named as the logo by the structured data
+    svg: str = ""  # an inline SVG's own code
 
 
 def _words_of(names: Iterable[str]) -> set[str]:
@@ -197,6 +198,7 @@ def extract_logo_candidates(
                 image.box,
                 image.in_header,
                 image.links_home,
+                svg=image.svg,
             )
         )
     if profile is None:  # a platform's icons are its own
@@ -217,6 +219,7 @@ def extract_logo_candidates(
             links_home=candidate.links_home,
             declared=candidate.declared,
             points=candidate.points,
+            svg=candidate.svg,
         )
         for number, candidate in enumerate(ranked[:_KEEP], start=1)
     )

@@ -108,6 +108,21 @@ async def test_the_browser_keeps_copies_of_images_a_site_wont_give_out_again(
             await downloader.download(logo, max_bytes=1_000_000)
 
 
+async def test_an_svg_logo_keeps_its_own_code_with_the_page_styles_written_in(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    images = (await fetcher.fetch(f"{site}/svg-logo")).images
+    logo = _image(images, "Example Cafe")
+    assert logo.kind == "svg"
+    assert "fill:rgb(200, 30, 40)" in logo.svg  # from the stylesheet, which a file wouldn't have
+    assert '<symbol id="cup"' in logo.svg  # the shape it borrows is copied in
+    assert "<script" not in logo.svg
+    assert "onload" not in logo.svg
+    # A picture drawn inside an SVG is that picture's own file.
+    picture = _image(images, "Example Cafe on a platform")
+    assert (picture.kind, picture.url) == ("img", f"{site}/images/brand.png")
+
+
 async def test_redirects_are_followed(fetcher: BrowserFetcher, site: str) -> None:
     snapshot = await fetcher.fetch(f"{site}/redirect")
     assert snapshot.url == f"{site}/redirect"

@@ -247,6 +247,9 @@ class RenderedImage(_Frozen):
     box: Box | None = None
     in_header: bool = False
     links_home: bool = False  # sits inside a link to the site's home page
+    # For an inline SVG that may be the logo: its code, standalone, with the page's styles
+    # written in, so it can be saved as the logo's own file.
+    svg: str = ""
 
 
 class TextRegions(_Frozen):
@@ -291,6 +294,7 @@ class LogoCandidate(_Frozen):
     links_home: bool = False
     declared: bool = False  # the page's structured data names it as the logo
     points: int = 0  # how logo-like the ranking found it; candidates are numbered by it
+    svg: str = ""  # an inline SVG's own code, when the page reader kept it
 
 
 class PageMeta(_Frozen):
