@@ -196,7 +196,8 @@ def analyze(
     timeout: Timeout = 20.0,
     allow_private: AllowPrivate = False,
 ) -> None:
-    """Find each business's name, logo, phone number and social media links from its website."""
+    """Find each business's name, logo, phone number, email address and social media links from
+    its website."""
     if urls and saved is not None:
         typer.echo("error: give URLs or --saved, not both", err=True)
         raise typer.Exit(code=2)
