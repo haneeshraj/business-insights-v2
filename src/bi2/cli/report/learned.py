@@ -44,29 +44,30 @@ def _records(records: dict[str, tuple[Record, ...]]) -> str:
 
 
 def _notes(labels: list[Label]) -> str:
-    noted = [label for label in labels if label.by == "you" and label.note]
+    noted = [label for label in labels if label.by == "you" and (label.note or label.correct)]
     if not noted:
         return "<p class=muted>None yet. A note says what you saw, so the rules can learn it.</p>"
     body = "".join(
         f"<tr><td>{link(label.site)}</td><td>{e(FIELD_LABELS[label.field])}</td>"
-        f"<td>{'right' if label.right else 'wrong'}</td><td>{e(label.note)}</td></tr>"
+        f"<td>{'right' if label.right else 'wrong'}</td><td>{e(label.correct)}</td>"
+        f"<td>{e(label.note)}</td></tr>"
         for label in noted
     )
-    return (
-        f'<table class="notes"><tr><th>Site</th><th>Field</th><th>Your check</th><th>Note</th></tr>'
-        f"{body}</table>"
-    )
+    head = "<th>Site</th><th>Field</th><th>Your check</th><th>Right answer</th><th>Note</th>"
+    return f'<table class="notes"><tr>{head}</tr>{body}</table>'
 
 
 def learned_section(labels: list[Label], answers: int) -> str:
     """The summary, from the labels of every checked answer. `answers` is how many answers
     could be checked."""
-    yours = sum(label.by == "you" for label in labels)
+    by = Counter(label.by for label in labels)
+    earlier = by["your answers"]
+    from_earlier = f", {earlier} against right answers you gave before" if earlier else ""
     groups = _groups(tally(labels)) if labels else ""
     return f"""<section class="card" id="learned">
   <h2>What the checks teach</h2>
-  <p>{len(labels)} of {answers} answers checked: {yours} by you and {len(labels) - yours} by
-  the gold set. Where you and the gold set disagree, your check counts.</p>
+  <p>{len(labels)} of {answers} answers checked: {by["you"]} by you{from_earlier}, and
+  {by["gold set"]} by the gold set. Where you and the gold set disagree, yours counts.</p>
   <h3>The four groups</h3>
   <p class=muted>Kept: v2 marked the answer ok. Sent on: it needs review, or nothing was found;
   that's where an AI step would come in.</p>

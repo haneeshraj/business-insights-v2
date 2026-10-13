@@ -45,6 +45,13 @@ def _parse(raw: str, region: str) -> phonenumbers.PhoneNumber | None:
     return number if phonenumbers.is_valid_number(number) else None
 
 
+def normalize_phone(raw: str, region: str = "CA") -> str | None:
+    """A phone number as written by a person, in E.164 format, or None if it isn't a valid
+    number. `region` is the country to assume when the number has no country code."""
+    number = _parse(raw, region)
+    return phonenumbers.format_number(number, PhoneNumberFormat.E164) if number else None
+
+
 def find_phones(
     doc: Document, text: TextRegions, *, structured: str | None, region: str | None
 ) -> dict[str, list[str]]:

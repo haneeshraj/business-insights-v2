@@ -18,7 +18,7 @@ from urllib.parse import unquote, urlsplit
 
 from pydantic import ValidationError
 
-from bi2.cli.review.session import CheckRequest, NoSuchAnswer, ReviewSession
+from bi2.cli.review.session import BadAnswer, CheckRequest, NoSuchAnswer, ReviewSession
 
 _PICTURES: Final = {
     ".avif": "image/avif",
@@ -157,6 +157,9 @@ class _Handler(BaseHTTPRequestHandler):
             return
         except NoSuchAnswer as exc:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": str(exc)})
+            return
+        except BadAnswer as exc:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         except OSError as exc:
             error = f"the checks file couldn't be written: {exc.strerror or exc}"

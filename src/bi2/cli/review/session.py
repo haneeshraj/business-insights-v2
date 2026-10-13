@@ -1,6 +1,6 @@
 """What the review page works from: one run's results, the gold set and your checks. It labels
-every answer that can be checked, and saves each check you make, with its note, to the checks
-file (eval/verifications.jsonl by default).
+every answer that can be checked, and saves each check you make, with its note and, for an
+answer that's wrong, the right one, to the checks file (eval/verifications.jsonl by default).
 
 Nothing here changes how v2 decides. The checks are for learning how often it's right: which
 answers it keeps that are wrong, and which it sends on that were right.
@@ -27,10 +27,15 @@ from bi2.evaluation.verifications import (
     answer_text,
     load_verifications,
 )
+from bi2.evidence.contacts import normalize_phone
 
 
 class NoSuchAnswer(LookupError):
     """The page asked to check an answer the run doesn't have, or one that can't be checked."""
+
+
+class BadAnswer(ValueError):
+    """The right answer given can't be used, like a phone number that isn't one."""
 
 
 class CheckRequest(BaseModel):
@@ -42,6 +47,40 @@ class CheckRequest(BaseModel):
     field: str
     verdict: Literal["right", "wrong"]
     note: str = Field(default="", max_length=1000)
+    correct: str = Field(default="", max_length=2000)  # the right answer, with "wrong"
+
+
+def _web_address(text: str) -> bool:
+    return text.startswith(("http://", "https://")) and " " not in text
+
+
+def _correct(field: str, given: str, ev: Evidence | None) -> str:
+    """The right answer as a person typed it, written the way checks keep it. A logo can be
+    given as its candidate number, like "#2", and is kept as that candidate's address."""
+    given = given.strip()
+    if not given:
+        return ""
+    if field == "phone":
+        region = ev.countries[0] if ev is not None and ev.countries else "CA"
+        number = normalize_phone(given, region)
+        if number is None:
+            raise BadAnswer(f"{given} isn't a phone number")
+        return number
+    if field == "social_links":
+        profiles = given.replace(",", " ").split()
+        if not all(_web_address(profile) for profile in profiles):
+            raise BadAnswer("give the profiles' full addresses, starting with https://")
+        return " ".join(profiles)
+    if field == "logo":
+        if given.startswith("#") and given[1:].isdigit():
+            candidates = {c.number: c for c in ev.logo_candidates} if ev is not None else {}
+            candidate = candidates.get(int(given[1:]))
+            if candidate is None:
+                raise BadAnswer(f"there's no logo candidate {given} on this page")
+            return candidate.url or given  # an inline SVG has no address of its own
+        if not _web_address(given):
+            raise BadAnswer("give the logo's address, or its candidate number, like #2")
+    return given
 
 
 def _evidence(results_dir: Path, result: SiteResult) -> Evidence | None:
@@ -95,6 +134,9 @@ class ReviewSession:
             if result is None or not checkable(result, request.field):
                 raise NoSuchAnswer(f"there's no {request.field} answer to check for {request.site}")
             answer = result.field_results[request.field]
+            correct = ""
+            if request.verdict == "wrong":
+                correct = _correct(request.field, request.correct, self._evidence[request.site])
             check = Verification(
                 site=request.site,
                 field=request.field,
@@ -102,6 +144,7 @@ class ReviewSession:
                 shown=answer_text(request.field, answer),
                 verdict=request.verdict,
                 note=request.note.strip(),
+                correct=correct,
                 status=answer.status,
                 confidence=answer.confidence,
                 checked_at=datetime.now(UTC),
@@ -124,6 +167,7 @@ class ReviewSession:
                         "field": field,
                         "by": label.by if label is not None else "",
                         "verdict": ("right" if label.right else "wrong") if label and yours else "",
+                        "correct": label.correct if label and yours else "",
                         "label": label_html(label, found=found),
                     }
                 )

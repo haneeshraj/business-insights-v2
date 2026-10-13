@@ -81,9 +81,11 @@ input[type=search] { padding: 6px 10px; border: 1px solid var(--line); border-ra
                                                        border-color: var(--good); color: var(--card); }
 .check button[data-verdict=wrong][aria-pressed=true] { background: var(--bad);
                                                        border-color: var(--bad); color: var(--card); }
-.check .note { display: block; width: 100%; padding: 3px 6px; border: 1px solid var(--line);
+.check input { display: block; width: 100%; padding: 3px 6px; border: 1px solid var(--line);
                border-radius: 6px; background: var(--card); color: var(--text); font: inherit;
                font-size: 12px; }
+.check input + input { margin-top: 4px; }
+.check input[hidden] { display: none; }
 .check.saving { opacity: 0.5; }
 .check .label { margin-top: 4px; font-size: 12px; }
 .group { padding: 0 6px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
@@ -149,6 +151,9 @@ REVIEW_SCRIPT = """<script nonce="{nonce}" data-token="{token}">
       for (const button of cell.querySelectorAll("button")) {
         button.setAttribute("aria-pressed", String(button.dataset.verdict === answer.verdict));
       }
+      const correct = cell.querySelector(".correct");
+      correct.hidden = answer.verdict !== "wrong";
+      if (document.activeElement !== correct) correct.value = answer.correct;
       cell.querySelector(".label").innerHTML = answer.label;  // built and escaped by the server
       const site = cell.closest(".site");
       unchecked.set(site, (unchecked.get(site) ?? 0) + (answer.by === "" ? 1 : 0));
@@ -158,6 +163,7 @@ REVIEW_SCRIPT = """<script nonce="{nonce}" data-token="{token}">
 
   async function save(cell, verdict) {
     const label = cell.querySelector(".label");
+    const correct = cell.querySelector(".correct");
     cell.classList.add("saving");
     try {
       const response = await fetch("/checks", {
@@ -168,6 +174,7 @@ REVIEW_SCRIPT = """<script nonce="{nonce}" data-token="{token}">
           field: cell.dataset.field,
           verdict,
           note: cell.querySelector(".note").value,
+          correct: verdict === "wrong" ? correct.value : "",
         }),
       }).catch(() => { throw new Error("is bi2 review still running?"); });
       const data = await response.json();
@@ -175,6 +182,7 @@ REVIEW_SCRIPT = """<script nonce="{nonce}" data-token="{token}">
       show(data.answers);
       document.getElementById("learned").outerHTML = data.summary;
       filter();
+      if (verdict === "wrong" && correct.value === "") correct.focus();
     } catch (error) {
       label.textContent = "Not saved: " + error.message;
     } finally {
@@ -187,14 +195,14 @@ REVIEW_SCRIPT = """<script nonce="{nonce}" data-token="{token}">
     if (button !== null) save(button.closest("td.check"), button.dataset.verdict);
   });
   document.addEventListener("change", (event) => {
-    if (!event.target.matches("td.check .note")) return;
+    if (!event.target.matches("td.check input")) return;
     const cell = event.target.closest("td.check");
     const marked = cell.querySelector("button[aria-pressed=true]");
     if (marked !== null) save(cell, marked.dataset.verdict);
-    else cell.querySelector(".label").textContent = "Press Right or Wrong to save the note.";
+    else cell.querySelector(".label").textContent = "Press one of the buttons first, to save the note.";
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && event.target.matches("td.check .note")) event.target.blur();
+    if (event.key === "Enter" && event.target.matches("td.check input")) event.target.blur();
   });
 })();
 </script>"""

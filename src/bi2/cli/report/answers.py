@@ -27,6 +27,14 @@ _STATUS: Final = {
 # What right and wrong mean, as the buttons say it. When v2 found nothing, the question is
 # whether there's anything to find.
 _VERDICTS: Final = {True: ("Right", "Wrong"), False: ("Nothing to find", "Missed it")}
+_WHO: Final = {"you": "You", "your answers": "Your earlier answers", "gold set": "Gold set"}
+# What to type as the right answer, when an answer is wrong.
+_RIGHT_ANSWER: Final = {
+    "company_name": "The right name",
+    "logo": "The right logo: its address, or a candidate number like #2",
+    "phone": "The right phone number",
+    "social_links": "The right profile addresses, separated by spaces",
+}
 
 
 def _value(name: str, field: FieldResult[Any], page: Path, root: Path) -> str:
@@ -74,7 +82,7 @@ def label_html(label: Label | None, *, found: bool = True) -> str:
         return "<span class=muted>not checked yet</span>"
     outcome = label.outcome
     short = "".join(word[0] for word in outcome.term.split())  # "tp" for true positive
-    who = "You" if label.by == "you" else "Gold set"
+    who = _WHO.get(label.by, label.by)
     said = _VERDICTS[found][0 if label.right else 1].lower()
     return (
         f'<span class="by">{who}: {said}</span> '
@@ -83,9 +91,12 @@ def label_html(label: Label | None, *, found: bool = True) -> str:
 
 
 def _check(site: str, field: str, label: Label | None, *, found: bool) -> str:
-    """Your check of one answer, a note, and what's known about it so far."""
-    yours = label.right if label is not None and label.by == "you" else None
-    note = label.note if label is not None and label.by == "you" else ""
+    """Your check of one answer, a note, the right answer when it's wrong, and what's known
+    about it so far."""
+    mine = label is not None and label.by == "you"
+    yours = label.right if label is not None and mine else None
+    note = label.note if label is not None and mine else ""
+    correct = label.correct if label is not None and mine else ""
     right, wrong = _VERDICTS[found]
     buttons = "".join(
         f'<button type="button" data-verdict="{verdict}" aria-pressed="{str(on).lower()}">'
@@ -96,6 +107,9 @@ def _check(site: str, field: str, label: Label | None, *, found: bool) -> str:
         f'<td class="check" data-site="{e(site)}" data-field="{e(field)}">{buttons}'
         f'<input class="note" type="text" maxlength="1000" value="{e(note)}" '
         f'placeholder="Note: what you saw" aria-label="Note">'
+        f'<input class="correct" type="text" maxlength="2000" value="{e(correct)}" '
+        f'placeholder="{e(_RIGHT_ANSWER.get(field, "The right answer"))}" '
+        f'aria-label="The right answer"{"" if yours is False else " hidden"}>'
         f'<div class="label">{label_html(label, found=found)}</div></td>'
     )
 

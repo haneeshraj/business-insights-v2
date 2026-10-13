@@ -14,7 +14,7 @@ from typer.testing import CliRunner
 from bi2.cli.main import app
 from bi2.cli.review.server import ReviewServer
 from bi2.cli.review.session import ReviewSession
-from bi2.core.models import Evidence
+from bi2.core.models import Evidence, LogoCandidate
 from bi2.core.urls import site_folder
 from bi2.evaluation.gold import GoldSite, site_key
 from bi2.evaluation.verifications import load_verifications
@@ -47,7 +47,14 @@ def _run(tmp_path: Path) -> Path:
     failed = failed_result(DOWN, "the page didn't load", 1.0)
     lines = [result.model_dump_json(), failed.model_dump_json()]
     (out / "results.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    evidence = Evidence(page=result.page, screenshot_file=f"{site_folder(URL)}/screenshot.jpg")
+    evidence = Evidence(
+        page=result.page,
+        screenshot_file=f"{site_folder(URL)}/screenshot.jpg",
+        logo_candidates=(
+            LogoCandidate(number=1, kind="img", url=f"{URL}logo.png"),
+            LogoCandidate(number=2, kind="img", url=f"{URL}brand.svg"),
+        ),
+    )
     (folder / "evidence.json").write_text(evidence.model_dump_json(), encoding="utf-8")
     (folder / "screenshot.jpg").write_bytes(b"\xff\xd8\xff")
     (folder / "logo.png").write_bytes(b"\x89PNG")
@@ -133,6 +140,26 @@ def test_a_check_is_saved_with_its_note_and_the_page_learns_from_it(
     update = _check(server, site=URL, field="social_links", verdict="wrong")[1]
     social = next(answer for answer in update["answers"] if answer["field"] == "social_links")
     assert "You: missed it" in social["label"]
+
+
+def test_a_wrong_answer_can_be_given_the_right_one(server: ReviewServer) -> None:
+    def correct(field: str, given: str) -> str:
+        status, update = _check(server, site=URL, field=field, verdict="wrong", correct=given)
+        assert status == 200, update
+        return str(next(a for a in update["answers"] if a["field"] == field)["correct"])
+
+    assert correct("phone", "416-555-0123") == "+14165550123"  # written the standard way
+    assert correct("logo", "#2") == f"{URL}brand.svg"  # a candidate's number gives its address
+    page = _request(server, "GET", "/")[2].decode()
+    assert 'class="correct" type="text" maxlength="2000" value="+14165550123"' in page
+    assert ">+14165550123<" in page  # in the summary's notes
+    for field, given, problem in (
+        ("phone", "call us", "isn't a phone number"),
+        ("logo", "#9", "no logo candidate #9"),
+        ("social_links", "instagram", "full addresses"),
+    ):
+        status, update = _check(server, site=URL, field=field, verdict="wrong", correct=given)
+        assert (status, problem in update["error"]) == (400, True)
 
 
 def test_only_the_page_it_served_can_save_checks(server: ReviewServer, tmp_path: Path) -> None:
