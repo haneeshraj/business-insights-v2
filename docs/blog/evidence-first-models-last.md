@@ -131,7 +131,7 @@ On the test set: 166 sites the rules were never tuned on, from Canadian chains, 
 | Social links | 107 of 115 | 107 of 115 | 95 | 95 |
 | MCC | not built | **142 of 148** | | **128** |
 
-The models changed few answers but settled many: 46 more answers became sure across the five fields the rules already answered, each one an answer nobody has to look at. The MCC row is from drafted checks against each site's title and description, not yet confirmed by a person; ten answers too unclear to judge that way are left out. Of the six it gets wrong, three are sure: a jeweler filed as a wholesaler, a Colombian coffee roaster as a stationer, and a parked domain still filed as the cafe it used to be.
+The models changed few answers but settled many: 47 more answers became sure across the five fields the rules already answered, each one an answer nobody has to look at. The MCC row is from drafted checks against each site's title and description, not yet confirmed by a person; ten answers too unclear to judge that way are left out. Of the six it gets wrong, three are sure: a jeweler filed as a wholesaler, a Colombian coffee roaster as a stationer, and a parked domain still filed as the cafe it used to be.
 
 ### How far "sure" can be trusted
 
