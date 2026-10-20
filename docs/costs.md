@@ -80,6 +80,21 @@ On 24 live sites from the gold set, loaded in the browser with `--fast` (Jev alo
 | Cost at list price | $0.00039 |
 | Fields answered | names 23 of 24, logos 24, MCC 24 (22 sure), phones 19, emails 17, addresses 16 |
 
+### At scale: the 166-site test set, live
+
+All 166 test-set sites loaded live in the browser on 2026-10-20, with Jev alone (`--fast`), three at a time, every question new:
+
+| | |
+|---|---|
+| The whole run | 25.1 minutes: 9.1 seconds a site of wall-clock time |
+| Each site's own time | 26.6 s, the median; 45.0 s, the 90th percentile |
+| Sites that wouldn't load | 7 of 166, behind bot checks or timing out |
+| Jev calls | 2.9 a site; 480 in all |
+| Cost at list price | $0.066 for the run: $0.0004 a site |
+| Sure answers | names 152, logos 145, MCC 127, social links 140, phones 98, emails 85, addresses 42 |
+
+Three at a time kept the browser's memory low on a machine shared with other work; the default is one site for every two cores, up to 8.
+
 - **On the free tiers, the limits are the bottleneck.** Jev's calls wait for room in its 20 a minute when many sites run at once: on the 166-site test set, six at a time, a Jev call took 40 seconds, the median, almost all of it waiting for its turn, and a site took 61 seconds. A paid tier's higher limits remove the wait, and the page load is what's left.
 - **Gemini on its free tier is slower still.** A site that needs one Gemini call waits as long as the page took to load, or longer. `--fast` leaves Gemini out and keeps Jev.
 - **Several sites at once:** one site for every two cores, up to 8. On 2026-10-13, 45 live sites took 223 seconds at 8 at once, about 5 seconds a site of wall-clock time.

@@ -62,6 +62,10 @@ Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` 
 - Two logos became sure but count as wrong only because their inline SVG, saved from the page's code, has no address to compare with the checked one. They look right.
 - Addresses have no checked answers on the test set yet.
 
+## Live, all 166 test-set sites, Jev alone (`--fast`), three at a time
+
+25.1 minutes for the run, 9.1 seconds a site of wall-clock time; each site's own time 26.6 s, the median; 7 wouldn't load; 2.9 Jev calls and $0.0004 a site at list price. The run's wrapper was stopped once for low memory while idle; the run itself went on and finished, with a guard ready to stop it under 1 GB free.
+
 ## Live, 24 sites, Jev alone (`--fast`)
 
 16.7 seconds a site, the median, page load included; 2.8 Jev calls a site at 0.2 seconds each; $0.00039 a site at list price.
@@ -78,7 +82,6 @@ Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` 
 
 ## Next
 
-- When usage resets at 17:50: the 166-site live run (`bi2-results/live-test-fast-1`, started 15:30) gives the time a site takes at scale, for docs/costs.md.
 - Other ideas, not started: one Jev call per site for every field's question at once (Jev's fan-out pattern), which would double what the free tier's 20 calls a minute cover; and a website demo, build phase 4.
 
 ## Questions for you

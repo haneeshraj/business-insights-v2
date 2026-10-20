@@ -154,6 +154,8 @@ bi2's default, Jev for decisions and Gemini Flash-Lite for the rare generation, 
 
 On 24 live sites, loaded in a real browser, with Jev alone (`--fast`) and every question new: **16.7 seconds a site, the median**, most of it loading the page and its contact page. Jev's own calls took 0.2 seconds, the median, and 2.8 of them a site.
 
+All 166 test-set sites, live, three at a time, took **25 minutes: 9 seconds a site** of wall-clock time, for $0.066 at list price in all. Seven wouldn't load, behind bot checks.
+
 Two things slow a run on the free tiers: Jev's calls wait their turn in its 20 a minute when many sites run at once, and Gemini's free tier took 15 to 60 seconds a call. On the 166-site test set, six sites at a time, a site took a minute, the median, almost all of it waiting for a turn. On paid tiers that wait goes away, and the page load is what's left.
 
 ## Built to be trusted
