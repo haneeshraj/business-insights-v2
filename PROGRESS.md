@@ -62,6 +62,22 @@ Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` 
 - Two logos became sure but count as wrong only because their inline SVG, saved from the page's code, has no address to compare with the checked one. They look right.
 - Addresses have no checked answers on the test set yet.
 
+## How far "sure" can be trusted
+
+An answer v2 marks sure is one nobody checks, so a sure answer that's wrong is the costliest kind. Counted with `python eval/calibration.py`, against people's checks, drafted checks and the gold set:
+
+| Field | Sure, gold set | Sure but wrong | Sure, test set | Sure but wrong |
+|---|---|---|---|---|
+| Company name | 54 | 0 | 109 | 3 (2.8%) |
+| MCC | 51 | 0 | 128 | 2 (1.6%) |
+| Phone | 20 | 1 | 95 | 2 (2.1%) |
+| Email | 23 | 0 | 86 | 0 |
+| Social links | 37 | 0 | 99 | 4 (4.0%) |
+| Logo | 38 | 1 | 104 | 9 (8.7%) |
+| Address | 28 | 3 (10.7%) | not checked yet | |
+
+The logo's nine are mostly the same logo in another file: an SVG saved from the page's own code where the check names the PNG copy, or the white version the page shows over a photo. The address's three are head offices the gold set and the page disagree on. Both are the next things to tighten.
+
 ## Live, all 166 test-set sites, Jev alone (`--fast`), three at a time
 
 25.1 minutes for the run, 9.1 seconds a site of wall-clock time; each site's own time 26.6 s, the median; 7 wouldn't load; 2.9 Jev calls and $0.0004 a site at list price. The run's wrapper was stopped once for low memory while idle; the run itself went on and finished, with a guard ready to stop it under 1 GB free.

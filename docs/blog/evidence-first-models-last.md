@@ -133,6 +133,22 @@ On the test set: 166 sites the rules were never tuned on, from Canadian chains, 
 
 The models changed few answers but settled many: 37 more answers became sure across the five fields the rules already answered, each one an answer nobody has to look at. The MCC row is from drafted checks against each site's title and description, not yet confirmed by a person; ten answers too unclear to judge that way are left out. Of the six it gets wrong, three are sure: a jeweler filed as a wholesaler, a Colombian coffee roaster as a stationer, and a parked domain still filed as the cafe it used to be.
 
+### How far "sure" can be trusted
+
+An answer v2 marks sure is one nobody checks, so a sure answer that's wrong is the costliest kind. Counted with `python eval/calibration.py`, against people's checks, drafted checks and the gold set:
+
+| Field | Sure, gold set | Sure but wrong | Sure, test set | Sure but wrong |
+|---|---|---|---|---|
+| Company name | 54 | 0 | 109 | 3 (2.8%) |
+| MCC | 51 | 0 | 128 | 2 (1.6%) |
+| Phone | 20 | 1 | 95 | 2 (2.1%) |
+| Email | 23 | 0 | 86 | 0 |
+| Social links | 37 | 0 | 99 | 4 (4.0%) |
+| Logo | 38 | 1 | 104 | 9 (8.7%) |
+| Address | 28 | 3 (10.7%) | not checked yet | |
+
+The logo's nine are mostly the same logo in another file: an SVG saved from the page's own code where the check names the PNG copy, or the white version the page shows over a photo. The address's three are head offices the gold set and the page disagree on. Both are the next things to tighten.
+
 ### What a site costs
 
 The same calls priced on other providers' models, at list prices on 2026-10-20 (see [costs.md](../costs.md) for the method):
