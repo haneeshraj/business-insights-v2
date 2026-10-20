@@ -17,7 +17,7 @@ from bi2.core.models import Evidence, Logo, LogoCandidate, LogoResult
 from bi2.core.urls import site_folder
 from bi2.resolvers.asking import NO_MODEL, NO_SECOND, NONE, ask_decider, confidence, site_lines
 from bi2.resolvers.cascade import Escalate, Resolved, Step, run_cascade
-from bi2.resolvers.images import crop, inspect_image, logo_problem, number_boxes
+from bi2.resolvers.images import brand_colors, crop, inspect_image, logo_problem, number_boxes
 
 _MAX_LOGO_BYTES: Final = 5_000_000
 _TRIES: Final = 3  # candidates checked before giving up
@@ -294,4 +294,11 @@ async def resolve_logo(ev: Evidence, ctx: RunContext) -> LogoResult:
     """The business's logo: the page's most logo-like image, and when the rules aren't sure of
     it, the numbered candidate a model picks on the screenshot, then a second model's pick."""
     steps = [logo_from_the_page, logo_by_decider, logo_by_second_opinion, logo_from_known_file]
-    return await run_cascade(steps, ev, ctx)
+    result = await run_cascade(steps, ev, ctx)
+    if result.value is None or result.value.image_file is None:
+        return result
+    try:
+        colors = brand_colors(await ctx.files.read(result.value.image_file))
+    except OSError:
+        return result
+    return result.model_copy(update={"value": result.value.model_copy(update={"colors": colors})})

@@ -144,6 +144,8 @@ class Logo(_Frozen):
     url: WebUrl | None = None  # None when the logo is an inline SVG or a CSS image
     image_file: str | None = None  # saved copy, relative to the results folder
     icon_url: WebUrl | None = None  # the square app icon, for enrichment use
+    # The logo's own colors, as "#rrggbb", the most used first, leaving out its background.
+    colors: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def _has_an_image(self) -> Self:

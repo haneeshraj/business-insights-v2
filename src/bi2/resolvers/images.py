@@ -134,3 +134,63 @@ def number_boxes(screenshot: bytes, boxes: list[tuple[int, Box]]) -> tuple[bytes
     out = io.BytesIO()
     image.save(out, format="JPEG", quality=85)
     return out.getvalue(), drawn
+
+
+_HEX: Final = re.compile(rb"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b")
+_MOST_COLORS: Final = 4
+
+
+def _plain_hex(code: str) -> str:
+    code = code.lower()
+    return "#" + ("".join(ch * 2 for ch in code) if len(code) == 3 else code)
+
+
+def _is_background(red: int, green: int, blue: int) -> bool:
+    """Near white or near black, which is usually what a logo sits on."""
+    return min(red, green, blue) > 240 or max(red, green, blue) < 12
+
+
+def brand_colors(data: bytes) -> tuple[str, ...]:
+    """A logo's main colors, as "#rrggbb", the most used first. An SVG's are the colors its
+    code fills and strokes with; a picture's come from its pixels, leaving out transparent,
+    near-white and near-black ones."""
+    if _SVG.match(data):
+        found = [_plain_hex(match.decode()) for match in _HEX.findall(data)]
+        counted: dict[str, int] = {}
+        for color in found:
+            red, green, blue = (int(color[i : i + 2], 16) for i in (1, 3, 5))
+            if not _is_background(red, green, blue):
+                counted[color] = counted.get(color, 0) + 1
+        return tuple(sorted(counted, key=lambda c: -counted[c])[:_MOST_COLORS])
+    try:
+        with Image.open(io.BytesIO(data)) as opened:
+            picture = opened.convert("RGBA")
+    except _NOT_READABLE:
+        return ()
+    picture.thumbnail((96, 96))
+    raw = picture.tobytes()
+    shown = [(raw[i], raw[i + 1], raw[i + 2]) for i in range(0, len(raw), 4) if raw[i + 3] > 128]
+    # A logo drawn all in white or black, like one made for a dark header, keeps that color.
+    pixels = [p for p in shown if not _is_background(*p)] or shown
+    if not pixels:
+        return ()
+    solid = Image.new("RGB", (len(pixels), 1))
+    solid.frombytes(bytes(value for pixel in pixels for value in pixel))
+    palette = solid.quantize(colors=8, method=Image.Quantize.MEDIANCUT)
+    rgb = palette.getpalette() or []
+    merged: list[tuple[int, tuple[int, int, int]]] = []
+    for share, index in sorted(palette.getcolors() or [], reverse=True):
+        at = int(index) * 3  # type: ignore[call-overload]
+        shade = (rgb[at], rgb[at + 1], rgb[at + 2])
+        # Shades a few steps apart are one color, the way anti-aliased edges are.
+        near = next((i for i, (_, c) in enumerate(merged) if _distance(c, shade) < 48), None)
+        if near is None:
+            merged.append((share, shade))
+        else:
+            merged[near] = (merged[near][0] + share, merged[near][1])
+    colors = [rgb3 for share, rgb3 in sorted(merged, reverse=True) if share / len(pixels) >= 0.04]
+    return tuple(f"#{r:02x}{g:02x}{b:02x}" for r, g, b in colors[:_MOST_COLORS])
+
+
+def _distance(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
+    return float(sum((x - y) ** 2 for x, y in zip(a, b, strict=True)) ** 0.5)

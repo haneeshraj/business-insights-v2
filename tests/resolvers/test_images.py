@@ -41,3 +41,14 @@ def test_an_element_is_cut_out_of_the_screenshot() -> None:
     assert cut is not None
     assert inspect_image(cut) == ImageInfo("png", 160, 60)
     assert crop(screenshot, Box(x=20, y=900, width=160, height=60)) is None  # below the screen
+
+
+def test_a_logos_colors_leave_out_its_background() -> None:
+    from bi2.resolvers.images import brand_colors
+
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg"><path fill="#95BF47"/><path fill="#fff"/><path fill="#95bf47"/><path stroke="#5e8e3e"/></svg>'
+    assert brand_colors(svg) == ("#95bf47", "#5e8e3e")
+    assert brand_colors(picture(40, 20, color="#0052ff"))[0] == "#0052ff"
+    assert brand_colors(picture(40, 20, color="white")) == (
+        "#ffffff",
+    )  # an all-white logo keeps it

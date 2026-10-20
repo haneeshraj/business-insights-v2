@@ -11,6 +11,7 @@ import typer
 from bi2 import __version__
 from bi2.cli.analyze import analyze
 from bi2.cli.dev import dev_app
+from bi2.cli.doctor import doctor, keys_app
 from bi2.cli.evaluate import eval_app
 from bi2.cli.review import review
 
@@ -19,12 +20,14 @@ app.command()(analyze)
 app.command()(review)
 app.add_typer(eval_app, name="eval")
 app.add_typer(dev_app, name="dev")
+app.command()(doctor)
+app.add_typer(keys_app, name="keys")
 
 
 @app.command(name="mcp")
 def mcp_server() -> None:
-    """Run v2 as an MCP server over standard input and output, for AI assistants such as
-    Claude. Needs the mcp extra: pip install "business-insights[mcp]"."""
+    r"""Run v2 as an MCP server over standard input and output, for AI assistants such as
+    Claude. Needs the mcp extra: pip install "business-insights\[mcp]"."""
     try:
         from bi2.mcp.server import serve
     except ImportError as exc:

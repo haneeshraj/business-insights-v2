@@ -18,6 +18,7 @@ from bi2.adapters.local.answers import (
 )
 from bi2.adapters.local.downloads import KeptDownloads
 from bi2.adapters.local.files import LocalFiles
+from bi2.adapters.local.keys import with_keychain
 from bi2.adapters.local.lookups import KeptLookups, KeptPlaces
 from bi2.adapters.local.snapshots import SavedPages
 from bi2.core.context import RunContext
@@ -70,7 +71,7 @@ async def local_context(
     `usage_file`, so the free tiers' limits hold across runs. The browser closes when the
     block ends."""
     settings = settings or Settings()
-    keys = keys or keys_from_environment()
+    keys = keys or with_keychain(keys_from_environment())[0]
     async with AsyncExitStack() as stack:
         fetcher: Fetcher = SavedPages(saved_pages) if saved_pages is not None else _NoPages()
         if load_pages:
