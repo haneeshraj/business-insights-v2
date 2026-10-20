@@ -144,3 +144,17 @@ async def test_when_nothing_checks_out_the_logo_is_not_found() -> None:
     result, _ = await _resolve([_candidate(1, 14, f"{URL}gone.png"), _candidate(2, 3)])
     assert result.status is Status.NOT_FOUND
     assert "candidate 1 couldn't be downloaded" in (result.steps[0].detail or "")
+
+
+def test_color_versions_of_one_logo_file_are_the_same_logo() -> None:
+    from bi2.core.models import LogoCandidate
+    from bi2.resolvers.logo import same_logo
+
+    def candidate(number: int, url: str) -> LogoCandidate:
+        return LogoCandidate(number=number, kind="img", url=url)
+
+    brown = candidate(1, "https://granjaviader.cat/uploads/logo-brown-2.png")
+    white = candidate(2, "https://granjaviader.cat/uploads/logo-blanc-2.png")
+    partner = candidate(3, "https://granjaviader.cat/uploads/visa.png")
+    assert same_logo(brown, white)
+    assert not same_logo(brown, partner)

@@ -43,6 +43,65 @@ def _stem(url: str | None) -> str:
     return name
 
 
+# Words in a logo file's name that say which color version it is, in the languages of the sites
+# v2 reads: "cc-logo-light.svg" and "cc-logo.svg", or "logo-blanc-2.png" and
+# "logo-brown-2.png", are one logo.
+_COLOR_WORDS: Final = frozenset(
+    [
+        "white",
+        "black",
+        "dark",
+        "light",
+        "color",
+        "colour",
+        "colors",
+        "inverse",
+        "inverted",
+        "reversed",
+        "reverse",
+        "mono",
+        "negative",
+        "positive",
+        "blanc",
+        "blanche",
+        "noir",
+        "noire",
+        "blanco",
+        "negro",
+        "bianco",
+        "nero",
+        "weiss",
+        "schwarz",
+        "brown",
+        "red",
+        "blue",
+        "green",
+        "gold",
+        "grey",
+        "gray",
+    ]
+)
+
+
+def _logo_words(url: str | None) -> tuple[str, frozenset[str]]:
+    """A logo file's host, and the words of its name that aren't a color or a size."""
+    if not url:
+        return "", frozenset()
+    parts = urlsplit(url)
+    name = unquote(parts.path.rsplit("/", 1)[-1]).lower().rsplit(".", 1)[0]
+    words = {w for w in re.split(r"[^a-z0-9]+", name) if w and w not in _COLOR_WORDS}
+    words -= {w for w in words if re.fullmatch(r"\d+x|\d+w|\d+px", w)}
+    return parts.netloc, frozenset(words)
+
+
+def same_logo(a: LogoCandidate, b: LogoCandidate) -> bool:
+    """Whether two candidates are versions of one logo file: on the same host, with the same
+    name once its color and size words are left out."""
+    host_a, words_a = _logo_words(a.url)
+    host_b, words_b = _logo_words(b.url)
+    return bool(words_a) and host_a == host_b and words_a == words_b
+
+
 def _runner_up(ranked: list[LogoCandidate]) -> int:
     """The points of the best candidate that isn't another version of the top one's file."""
     top = _stem(ranked[0].url)
@@ -248,11 +307,15 @@ def _logo_by(*, second: bool) -> Step[Logo]:
             why = f"{decision.model} says no box is the logo ({probability:.2f})"
             return Escalate(why, cost=decision.cost)
         candidate = next(c for c in shown if str(c.number) == picked.choice)
+        rules = _in_order(list(ev.logo_candidates))
+        if rules and rules[0].number != candidate.number and same_logo(rules[0], candidate):
+            # Another version of the rules' logo, like its white copy over a dark photo: the
+            # rules' file is the one to keep, and the two methods agree on the logo.
+            candidate = rules[0]
         saved, problem = await _logo_file(candidate, ev, ctx)
         if saved is None:
             why = f"{decision.model} picked candidate {candidate.number}, which {problem}"
             return Escalate(why, cost=decision.cost)
-        rules = _in_order(list(ev.logo_candidates))
         agrees = bool(rules) and rules[0].number == candidate.number
         icon = next((c.url for c in ev.logo_candidates if c.kind == "icon" and c.url), None)
         how = ", as the rules ranked it" if agrees else ""
