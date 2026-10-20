@@ -15,8 +15,9 @@ from importlib.resources import files
 from typing import Any, Final
 
 from bi2 import __version__
+from bi2.core.asking import Ask, Decision, Generated, Prompt
 from bi2.core.context import RunContext
-from bi2.core.errors import FetchError, LookupUnavailable, UnsafeUrl
+from bi2.core.errors import BudgetUsedUp, FetchError, LookupUnavailable, UnsafeUrl
 from bi2.core.models import (
     FIELD_NAMES,
     Evidence,
@@ -29,7 +30,7 @@ from bi2.core.models import (
     StepRecord,
     Versions,
 )
-from bi2.core.ports import Downloader
+from bi2.core.ports import Decider, Downloader, LanguageModel
 from bi2.core.urls import site_folder
 from bi2.evidence.build import build_contact_page, build_evidence
 from bi2.resolvers import RESOLVERS
@@ -70,6 +71,59 @@ class _BrowserCopiesFirst:
         if copy is not None and len(copy) <= max_bytes:
             return copy
         return await self._downloader.download(url, max_bytes=max_bytes, referer=referer)
+
+
+class _SiteBudget:
+    """Counts one site's model calls, across every model, and refuses past the most a site
+    may make, so one strange site can't use up a free tier's day."""
+
+    def __init__(self, most: int) -> None:
+        self.most = most
+        self.made = 0
+
+    def take(self) -> None:
+        if self.made >= self.most:
+            raise BudgetUsedUp(f"this site has made the {self.most} model calls a site may make")
+        self.made += 1
+
+
+class _BudgetedDecider:
+    def __init__(self, decider: Decider, budget: _SiteBudget) -> None:
+        self._decider = decider
+        self._budget = budget
+
+    @property
+    def name(self) -> str:
+        return self._decider.name
+
+    async def decide(self, ask: Ask) -> Decision:
+        self._budget.take()
+        return await self._decider.decide(ask)
+
+
+class _BudgetedModel:
+    def __init__(self, llm: LanguageModel, budget: _SiteBudget) -> None:
+        self._llm = llm
+        self._budget = budget
+
+    @property
+    def name(self) -> str:
+        return self._llm.name
+
+    async def generate(self, prompt: Prompt) -> Generated:
+        self._budget.take()
+        return await self._llm.generate(prompt)
+
+
+def _within_budget(ctx: RunContext) -> RunContext:
+    """The context with every model behind one budget for this site."""
+    budget = _SiteBudget(ctx.settings.ai.calls_per_site)
+    return replace(
+        ctx,
+        decider=_BudgetedDecider(ctx.decider, budget) if ctx.decider else None,
+        llm=_BudgetedModel(ctx.llm, budget) if ctx.llm else None,
+        second=_BudgetedDecider(ctx.second, budget) if ctx.second else None,
+    )
 
 
 async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
@@ -153,6 +207,7 @@ async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[Sit
         return await analyze_unreadable(
             snapshot.url, why, ctx, final_url=snapshot.final_url, screenshot=snapshot.screenshot
         )
+    ctx = _within_budget(ctx)
     if snapshot.image_copies:
         ctx = replace(ctx, downloader=_BrowserCopiesFirst(snapshot.image_copies, ctx.downloader))
     ev = await _with_contact_page(build_evidence(snapshot), ctx)

@@ -1,16 +1,16 @@
 # The models v2 can call: what each costs, and the free tier's limits it stays under.
 #
 # Prices are US dollars per million tokens, at the providers' list prices, so a run can say what
-# it would cost on a paid key. On a free tier nothing is charged. They were copied on 2026-10-20
-# from third-party price lists, since the providers' own pages couldn't be read then; check
-# https://ai.google.dev/gemini-api/docs/pricing before relying on them.
+# it would cost on a paid key. On a free tier nothing is charged. Gemini's are from
+# https://ai.google.dev/gemini-api/docs/pricing on 2026-10-20; Jev's from third-party price
+# lists, since TypeSafe publishes none.
 #
 # Limits are requests per minute and per day, and how many may run at once. Google's free-tier
 # numbers are set per project and per model and change often, so these are kept below the ones
 # published earlier in 2026. When a provider says a daily quota is used up, v2 stops asking that
 # model until the quota resets (midnight Pacific time for Gemini).
 
-version = 2
+version = 3
 
 [jev."jev-latest"]
 input_per_million = 0.042
@@ -26,9 +26,9 @@ per_minute = 20
 per_day = 2000
 at_once = 2
 
-[gemini."gemini-3.5-flash"]
-input_per_million = 1.50
-output_per_million = 9.00
+[gemini."gemini-3.5-flash"]  # Google serves it as gemini-3.6-flash
+input_per_million = 0.75  # until 2026-12-31; $1.50 from 2027
+output_per_million = 3.75  # until 2026-12-31; $7.50 from 2027
 per_minute = 5
 per_day = 20  # the free tier's daily quota, as Gemini reported it on 2026-10-20
 at_once = 2

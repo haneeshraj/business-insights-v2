@@ -147,3 +147,33 @@ async def test_a_refused_page_is_looked_up_rather_than_read() -> None:
     result, ev = await analyze_snapshot(snapshot, fake_context(knowledge=known))
     assert result.company_name.value == "No Frills"
     assert "refused the page (403)" in (ev.unreadable or "")
+
+
+async def test_a_site_makes_no_more_model_calls_than_it_may() -> None:
+    from dataclasses import replace as replaced
+
+    from bi2.core.asking import Answer, Ask, Decision, Picked
+    from bi2.core.settings import AiSettings, Settings
+
+    class Counting:
+        name = "fake"
+        calls = 0
+
+        async def decide(self, ask: Ask) -> Decision:
+            Counting.calls += 1
+            answers: dict[str, Answer] = {
+                name: Picked(choice="none", confidence=0.9, probabilities={"none": 0.9})
+                for name in ask.questions
+            }
+            return Decision(answers=answers, model="fake")
+
+    ctx = replaced(
+        fake_context(), decider=Counting(), settings=Settings(ai=AiSettings(calls_per_site=0))
+    )
+    result, _ = await analyze_snapshot(page_snapshot(PAGE), ctx)
+    assert Counting.calls == 0  # the first call is already past the budget
+    assert any(
+        "model calls a site may make" in step.detail
+        for field in result.field_results.values()
+        for step in field.steps
+    )
