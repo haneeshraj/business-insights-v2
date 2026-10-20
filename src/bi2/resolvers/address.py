@@ -47,9 +47,11 @@ _MOST_CANDIDATES: Final = 6
 _STREET: Final = re.compile(
     r"\b(?:street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr|lane|ln|way|place|pl|court|"
     r"ct|square|sq|crescent|cres|parkway|pkwy|highway|hwy|terrace|circle|suite|unit|"
-    r"rue|chemin|allée|quai|strasse|straße|str|weg|platz|gasse|allee|via|viale|piazza|corso|"
-    r"calle|avenida|plaza|carrer|rua|praça|straat|laan|plein|gracht|gatan|vägen|gade|vej|"
-    r"gate|veien|katu|tie|ulica|ul|utca|út)\b\.?",
+    r"rue|chemin|allée|quai|via|viale|piazza|corso|calle|avenida|plaza|carrer|rua|praça|"
+    r"ulica|ul|utca|út|str)\b\.?"
+    # Germanic, Nordic and Finnish street words end compounds, like Hauptstraße or Storgatan.
+    r"|(?:straße|strasse|weg|gasse|platz|allee|straat|laan|plein|gracht|gatan|vägen|gade|"
+    r"vej|gate|veien|katu|tie)\b",
     re.I,
 )
 _NUMBER: Final = re.compile(r"\b\d{1,5}[A-Za-z]?\b")
