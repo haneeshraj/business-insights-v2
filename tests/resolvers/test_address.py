@@ -116,3 +116,11 @@ async def test_the_legal_page_gives_the_head_office_when_no_other_page_does() ->
     assert result.value is not None
     assert result.value.postal_code == "N0B 2N0"
     assert result.source == "legal page"
+
+
+def test_an_address_in_a_sentence_starts_after_its_preposition() -> None:
+    text = "write to our Privacy Officer at Indigo Books & Music Inc., 620 King Street West, Toronto, Ontario, M5V 1M6 or by email"
+    assert (
+        address_lines(text)[0][0]
+        == "Indigo Books & Music Inc., 620 King Street West, Toronto, Ontario, M5V 1M6"
+    )

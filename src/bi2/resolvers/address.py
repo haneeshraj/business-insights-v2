@@ -41,6 +41,8 @@ _BEFORE, _AFTER = 110, 40  # characters of text kept around a postcode
 # Where an address line likely starts or ends: a line break, or what pages put between an
 # address and their other details.
 _EDGE: Final = re.compile(r"\n|\s[|•·]\s|\b(?:Tel|Phone|Call|Email|E-mail|Fax|Hours|Open)\b", re.I)
+_SENTENCE_START: Final = re.compile(r":\s|\s(?:at|to)\s")  # lowercase, as in a sentence
+_SENTENCE_END: Final = re.compile(r"\s(?:or|and)\s")
 _MOST_CANDIDATES: Final = 6
 # Words that name a street, in the languages of the sites v2 reads, for address lines whose
 # postcodes the rules don't know.
@@ -64,8 +66,14 @@ def _line_around(text: str, start: int, end: int) -> str:
     after = text[end : end + _AFTER]
     if edges := list(_EDGE.finditer(before)):
         before = before[edges[-1].end() :]
+    # In a sentence, the address starts after its label or its preposition: "Head office:
+    # 34 Henry St.", "write to us at Indigo Books & Music Inc., 620 King Street West".
+    if starts := list(_SENTENCE_START.finditer(before)):
+        before = before[starts[-1].end() :]
     if edge := _EDGE.search(after):
         after = after[: edge.start()]
+    if end_of := _SENTENCE_END.search(after):
+        after = after[: end_of.start()]
     # Keep a short country name or region code after the postcode, but not the next sentence.
     after = re.split(r"(?<=[A-Za-z]{2})[.;]\s|\s{2,}", after, maxsplit=1)[0]
     return clean_space(f"{before}{text[start:end]}{after}").strip(" ,;-")

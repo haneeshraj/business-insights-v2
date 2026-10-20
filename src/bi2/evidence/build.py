@@ -118,7 +118,10 @@ def build_contact_page(snapshot: PageSnapshot) -> ContactPage:
     structured = extract_structured_data(doc, snapshot.final_url)
     text = extract_text_regions(snapshot, doc)
     contacts, _ = _contacts_and_countries(doc, snapshot.final_url, structured, text)
-    page_text = "\n".join(part for part in (text.main[:6000], text.footer[-2000:]) if part)
+    # A long page, like a privacy policy, gives its company's address near its end, under
+    # "Contact us", so the end of its main text is kept as well as its start.
+    main = text.main if len(text.main) <= 8000 else f"{text.main[:4000]}\n{text.main[-4000:]}"
+    page_text = "\n".join(part for part in (main, text.footer[-2000:]) if part)
     return ContactPage(url=snapshot.final_url, contacts=contacts, text=page_text)
 
 
