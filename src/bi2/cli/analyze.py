@@ -13,6 +13,7 @@ from rich.table import Table
 from bi2.adapters.local.answers import CallLog
 from bi2.adapters.local.snapshots import load_snapshot, saved_folders
 from bi2.cli.options import DEFAULT_CONCURRENCY, AllowPrivate, Browser, Timeout
+from bi2.cli.output import results_csv
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable
 from bi2.core.models import FIELD_NAMES, Evidence, SiteResult, Status
@@ -168,6 +169,13 @@ def _print_model_calls(log: CallLog, console: Console) -> None:
     )
 
 
+def urls_in_file(path: Path) -> list[str]:
+    """The site addresses in a text file, one a line; blank lines and lines starting with #
+    are left out."""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
+
+
 def _sources(
     urls: list[str] | None, gold: Path | None, saved: Path | None
 ) -> list[str] | list[Path]:
@@ -207,6 +215,15 @@ def _report_site(site: _Analyzed, out: Path, gold: dict[str, GoldSite]) -> Repor
 
 def analyze(
     urls: Annotated[list[str] | None, typer.Argument(help="The pages to analyze.")] = None,
+    file: Annotated[
+        Path | None,
+        typer.Option(
+            "--file",
+            help="Analyze the site addresses in this text file, one a line.",
+            exists=True,
+            dir_okay=False,
+        ),
+    ] = None,
     gold: Annotated[
         Path | None,
         typer.Option(
@@ -261,6 +278,8 @@ def analyze(
 ) -> None:
     """Find each business's name, logo, MCC, address, phone number, email address and social
     media links from its website."""
+    if file is not None:
+        urls = [*(urls or []), *urls_in_file(file)]
     if urls and saved is not None:
         typer.echo("error: give URLs or --saved, not both", err=True)
         raise typer.Exit(code=2)
@@ -287,6 +306,7 @@ def analyze(
     out.mkdir(parents=True, exist_ok=True)
     lines = (result.model_dump_json() for result in results)
     (out / "results.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / "results.csv").write_text(results_csv(results), encoding="utf-8")
     _totals(results, console)
     entries = {site_key(entry.url): entry for entry in load_gold_set(gold).sites} if gold else {}
     sites = [_report_site(site, out, entries) for site in analyzed]
@@ -305,6 +325,9 @@ def analyze(
     )
     _print_model_calls(log, console)
     console.print(f"Results: {(out / 'results.jsonl').resolve()}", markup=False, highlight=False)
+    console.print(
+        f"For spreadsheets: {(out / 'results.csv').resolve()}", markup=False, highlight=False
+    )
     console.print(f"Report: {report.resolve()}", markup=False, highlight=False)
     if open_report:
         typer.launch(str(report.resolve()))
