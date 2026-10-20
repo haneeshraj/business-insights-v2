@@ -82,3 +82,28 @@ async def test_a_chain_is_filed_under_its_own_code() -> None:
     assert result.value is not None
     assert result.value.code == "3009"
     assert "3009" in jev.asked[1].questions["mcc"].options  # type: ignore[union-attr]
+
+
+class Decisive:
+    """A first round that settles the code: one list sure of it, the other sure of none."""
+
+    name = "jev"
+
+    def __init__(self) -> None:
+        self.asked: list[str] = []
+
+    async def decide(self, ask: Ask) -> Decision:
+        self.asked.append(ask.task)
+        answers: dict[str, Answer] = {
+            "low": Picked(choice=NONE, confidence=0.95, probabilities={NONE: 0.95}),
+            "high": Picked(choice="5813", confidence=0.95, probabilities={"5813": 0.95}),
+        }
+        return Decision(answers=answers, model="jev-test")
+
+
+async def test_a_decisive_first_round_needs_no_final_round() -> None:
+    jev = Decisive()
+    result = await resolve_mcc(EV, replace(fake_context(), decider=jev))
+    assert jev.asked == ["mcc_round_1"]
+    assert result.value is not None
+    assert (result.value.code, result.status.value) == ("5813", "ok")

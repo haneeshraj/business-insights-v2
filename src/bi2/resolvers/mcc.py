@@ -140,6 +140,23 @@ def _leaders(decision: Decision) -> list[str]:
     return [code for _, code in sorted(leaders, reverse=True)]
 
 
+_DECISIVE: Final = 0.9  # a first-round pick this likely, with the other list fitting none
+
+
+def _decided_in_round_one(decision: Decision) -> tuple[str, float] | None:
+    """The code the first round already settles, with no final round needed: one list's pick
+    at 0.9 or more, and the other list fitting none at 0.9 or more."""
+    low, high = decision.picked("low"), decision.picked("high")
+    for mine, other in ((low, high), (high, low)):
+        if (
+            mine.choice != NONE
+            and mine.probability(mine.choice) >= _DECISIVE
+            and other.probability(NONE) >= _DECISIVE
+        ):
+            return mine.choice, mine.probability(mine.choice)
+    return None
+
+
 def _final_round(state: str, codes: list[str], *, reversed_order: bool = False) -> Ask:
     """The final round. Reversed, the same question with the options in the other order: Jev
     leans toward the first option, so the same pick both ways is a sure one."""
@@ -171,6 +188,16 @@ async def mcc_by_decider(ev: Evidence, ctx: RunContext) -> Resolved[Mcc] | Escal
     finalists = _leaders(first) + chains
     if not finalists:
         return Escalate(f"{first.model} found no code that fits", cost=first.cost)
+    if (decided := _decided_in_round_one(first)) is not None and not chains:
+        code, probability = decided
+        return Resolved(
+            value=Mcc(code=code, description=mcc_codes()[code]),
+            confidence=_sure(probability, hinted=code in hinted_codes(ev)),
+            source=f"{first.model}: picked in the first round ({probability:.2f}), the other "
+            "list fitting none",
+            evidence=tuple(f"{c} {mcc_codes()[c]}" for c in sorted(set(finalists))),
+            cost=first.cost,
+        )
     final_round = _final_round(state, finalists)
     final = await ask_decider(final_round, ctx)
     if isinstance(final, str):
