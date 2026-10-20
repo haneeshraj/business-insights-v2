@@ -125,13 +125,13 @@ On the test set: 166 sites the rules were never tuned on, from Canadian chains, 
 | Field | Rules only | With Jev and Gemini | Right and sure, rules | Right and sure, with models |
 |---|---|---|---|---|
 | Company name | 110 of 116 | 110 of 116 | 94 | **106** |
-| Logo | 99 of 116 | 100 of 116 | 86 | **95** |
-| Phone | 115 of 133 | 115 of 133 | 83 | **93** |
-| Email | 139 of 145 | 138 of 145 | 80 | **86** |
+| Logo | 99 of 116 | 101 of 116 | 86 | **96** |
+| Phone | 115 of 133 | 115 of 133 | 83 | **99** |
+| Email | 139 of 145 | 139 of 145 | 80 | **89** |
 | Social links | 107 of 115 | 107 of 115 | 95 | 95 |
-| MCC | not built | **143 of 149** | | **126** |
+| MCC | not built | **142 of 148** | | **128** |
 
-The models changed few answers but settled many: 37 more answers became sure across the five fields the rules already answered, each one an answer nobody has to look at. The MCC row is from drafted checks against each site's title and description, not yet confirmed by a person; ten answers too unclear to judge that way are left out. Of the six it gets wrong, three are sure: a jeweler filed as a wholesaler, a Colombian coffee roaster as a stationer, and a parked domain still filed as the cafe it used to be.
+The models changed few answers but settled many: 46 more answers became sure across the five fields the rules already answered, each one an answer nobody has to look at. The MCC row is from drafted checks against each site's title and description, not yet confirmed by a person; ten answers too unclear to judge that way are left out. Of the six it gets wrong, three are sure: a jeweler filed as a wholesaler, a Colombian coffee roaster as a stationer, and a parked domain still filed as the cafe it used to be.
 
 ### How far "sure" can be trusted
 
@@ -140,14 +140,14 @@ An answer v2 marks sure is one nobody checks, so a sure answer that's wrong is t
 | Field | Sure, gold set | Sure but wrong | Sure, test set | Sure but wrong |
 |---|---|---|---|---|
 | Company name | 54 | 0 | 109 | 3 (2.8%) |
-| MCC | 51 | 0 | 128 | 2 (1.6%) |
-| Phone | 20 | 1 | 95 | 2 (2.1%) |
-| Email | 23 | 0 | 86 | 0 |
+| MCC | 51 | 0 | 130 | 2 (1.5%) |
+| Phone | 20 | 1 | 102 | 3 (2.9%) |
+| Email | 23 | 0 | 89 | 0 |
 | Social links | 37 | 0 | 99 | 4 (4.0%) |
-| Logo | 38 | 1 | 104 | 9 (8.7%) |
+| Logo | 38 | 1 | 104 | 8 (7.7%) |
 | Address | 28 | 3 (10.7%) | not checked yet | |
 
-The logo's nine are mostly the same logo in another file: an SVG saved from the page's own code where the check names the PNG copy, or the white version the page shows over a photo. The address's three are head offices the gold set and the page disagree on. Both are the next things to tighten.
+The logo's eight are mostly the same logo in another file: an SVG saved from the page's own code where the check names the PNG copy, or the white version the page shows over a photo. The address's three are head offices the gold set and the page disagree on. Both are the next things to tighten.
 
 ### What a site costs
 

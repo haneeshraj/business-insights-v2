@@ -46,16 +46,16 @@ On the 56 gold sites' saved pages (the same pages every run, so only the code ch
 
 ## Test set, 166 sites no rule was tuned on
 
-Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` against `bi2-results/test-ai-1`):
+Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` against `bi2-results/test-ai-5`, with fan-out; Jev's day ran out at v2's cap partway through, and Gemini answered the last 18 sites' questions as its backup):
 
 | Field | Rules only | With Jev and Gemini | Right and sure, rules | With Jev and Gemini |
 |---|---|---|---|---|
 | Company name | 110 of 116 | 110 of 116 | 94 | 106 |
-| Logo | 99 of 116 | 100 of 116 | 86 | 95 |
-| Phone | 115 of 133 | 115 of 133 | 83 | 93 |
-| Email | 139 of 145 | 138 of 145 | 80 | 86 |
+| Logo | 99 of 116 | 101 of 116 | 86 | 96 |
+| Phone | 115 of 133 | 115 of 133 | 83 | 99 |
+| Email | 139 of 145 | 139 of 145 | 80 | 89 |
 | Social links | 107 of 115 | 107 of 115 | 95 | 95 |
-| MCC | not built | 143 of 149 | | 126 |
+| MCC | not built | 142 of 148 | | 128 |
 
 - The MCC row counts my drafted checks, judged from each site's title and description, in `eval/drafted-checks.jsonl`. Please confirm or correct them on the review page (`bi2 review bi2-results/test-ai-4 --gold eval/test-set.toml`).
 - 3.9 model calls a site on average, 7 at most; $0.00066 a site at list price, $0.11 for the whole run.
@@ -69,14 +69,14 @@ An answer v2 marks sure is one nobody checks, so a sure answer that's wrong is t
 | Field | Sure, gold set | Sure but wrong | Sure, test set | Sure but wrong |
 |---|---|---|---|---|
 | Company name | 54 | 0 | 109 | 3 (2.8%) |
-| MCC | 51 | 0 | 128 | 2 (1.6%) |
-| Phone | 20 | 1 | 95 | 2 (2.1%) |
-| Email | 23 | 0 | 86 | 0 |
+| MCC | 51 | 0 | 130 | 2 (1.5%) |
+| Phone | 20 | 1 | 102 | 3 (2.9%) |
+| Email | 23 | 0 | 89 | 0 |
 | Social links | 37 | 0 | 99 | 4 (4.0%) |
-| Logo | 38 | 1 | 104 | 9 (8.7%) |
+| Logo | 38 | 1 | 104 | 8 (7.7%) |
 | Address | 28 | 3 (10.7%) | not checked yet | |
 
-The logo's nine are mostly the same logo in another file: an SVG saved from the page's own code where the check names the PNG copy, or the white version the page shows over a photo. The address's three are head offices the gold set and the page disagree on. Both are the next things to tighten.
+The logo's eight are mostly the same logo in another file: an SVG saved from the page's own code where the check names the PNG copy, or the white version the page shows over a photo. The address's three are head offices the gold set and the page disagree on. Both are the next things to tighten.
 
 ## Live, all 166 test-set sites, Jev alone (`--fast`), three at a time
 
