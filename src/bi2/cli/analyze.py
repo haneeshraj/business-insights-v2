@@ -56,6 +56,7 @@ class _Run(NamedTuple):
     allow_private: bool
     saved: Path | None = None  # the folder of saved pages, when the run uses them
     ai: bool = True  # whether models are asked about the answers the rules aren't sure of
+    fast: bool = False  # Jev alone, without Gemini
 
 
 def app_folder() -> Path:
@@ -78,7 +79,7 @@ async def _analyze_all(
 ) -> list[_Analyzed]:
     """Analyze every source, a few at a time, in the order given."""
     saved = bool(sources) and isinstance(sources[0], Path)
-    settings = Settings() if run.ai else Settings(ai=AiSettings(enabled=False))
+    settings = Settings(ai=AiSettings(enabled=run.ai, gemini=not run.fast))
     # Runs on saved pages keep model answers beside the pages, like downloads, so reruns ask
     # no model; live runs keep them in v2's own folder.
     answers = run.saved / "answers" if run.saved is not None else app_folder() / "answers"
@@ -238,6 +239,14 @@ def analyze(
             "are set (JEV_API_KEY, GEMINI_API_KEY). --no-ai uses the rules alone.",
         ),
     ] = True,
+    fast: Annotated[
+        bool,
+        typer.Option(
+            "--fast",
+            help="Ask Jev alone, never Gemini: a second or two a site instead of up to a minute "
+            "on Gemini's free tier, with a few more answers left to review.",
+        ),
+    ] = False,
 ) -> None:
     """Find each business's name, logo, MCC, address, phone number, email address and social
     media links from its website."""
@@ -252,7 +261,7 @@ def analyze(
         typer.echo("error: there are no pages to analyze", err=True)
         raise typer.Exit(code=1)
     console = Console()
-    run = _Run(out, browser, timeout, concurrency, allow_private, saved, ai)
+    run = _Run(out, browser, timeout, concurrency, allow_private, saved, ai, fast)
     out.mkdir(parents=True, exist_ok=True)
     (out / "model-calls.jsonl").unlink(missing_ok=True)
     log = CallLog(out / "model-calls.jsonl")

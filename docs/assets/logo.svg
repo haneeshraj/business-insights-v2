@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="title">
+  <title id="title">Business Insights v2</title>
+  <!-- A shopfront under a striped awning, read through a lens: a business, looked into. -->
+  <rect width="128" height="128" rx="28" fill="#0b1f3a"/>
+  <path d="M24 44h80v42a8 8 0 0 1-8 8H32a8 8 0 0 1-8-8z" fill="#f8fafc"/>
+  <rect x="36" y="58" width="22" height="36" rx="3" fill="#0b1f3a"/>
+  <path d="M20 30h88l-4 16H24z" fill="#22d3ee"/>
+  <path d="M20 46a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0" fill="#22d3ee"/>
+  <path d="M42 30h11l-1 16a8 8 0 0 1-12 0zM64 30h11l1 16a8 8 0 0 1-12 0zM86 30h11l3 16a8 8 0 0 1-13 0z" fill="#f8fafc" opacity="0.92"/>
+  <circle cx="84" cy="76" r="15" fill="#0b1f3a" fill-opacity="0.08" stroke="#fbbf24" stroke-width="7"/>
+  <path d="M95 87l13 13" stroke="#fbbf24" stroke-width="9" stroke-linecap="round"/>
+</svg>

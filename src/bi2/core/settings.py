@@ -36,6 +36,9 @@ class AiSettings(BaseModel):
     # is asked first.
     llm_model: str = "gemini-flash-lite-latest"
     backup_model: str = "gemini-3.5-flash"
+    # Whether Gemini is asked at all. Without it, only Jev is: much faster on Gemini's free
+    # tier, which takes 15 to 60 seconds a call, for a few more answers left to review.
+    gemini: bool = True
     jev_images: bool = True  # whether Jev is shown screenshots, like the numbered logo boxes
     # Whether a field the pages don't answer, like a chain's head-office address, may be looked
     # up with a web search, through Gemini's Google Search grounding.

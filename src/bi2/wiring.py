@@ -119,7 +119,7 @@ async def _models(
         return None, None, None
     limits = FreeTier(usage_file, share=ai.daily_share)
     llm: LanguageModel | None = None
-    if keys.gemini is not None:
+    if keys.gemini is not None and ai.gemini:
         gemini = Gemini(
             keys.gemini.get_secret_value(),
             limits=limits,
