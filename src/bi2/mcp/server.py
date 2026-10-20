@@ -7,6 +7,7 @@ asking about the same site twice asks no model twice.
 """
 
 import json
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -161,5 +162,7 @@ def model_usage(context: Context[Any, Any]) -> str:
 
 
 def serve() -> None:
-    """Run the server over standard input and output, the way MCP clients start servers."""
+    """Run the server over standard input and output, the way MCP clients start servers. The
+    HTTP client's log of every request stays out of the client's server log."""
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     mcp.run()
