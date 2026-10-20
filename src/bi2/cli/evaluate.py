@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from bi2.cli.check import check
 from bi2.evaluation.compare import Comparison, Totals, compare_runs
 from bi2.evaluation.gold import load_gold_set, site_key
 from bi2.evaluation.report import Report, build_report, load_results
@@ -208,3 +209,6 @@ def compare(
         console.print("No answers changed.")
     if comparison.worse:
         raise typer.Exit(code=1)
+
+
+eval_app.command()(check)
