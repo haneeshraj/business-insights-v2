@@ -78,9 +78,8 @@ Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` 
 
 ## Next
 
-- Measure on the 166-site test set (running), and time live runs on a sample.
-- Docs: the architecture with the agents, a blog article, a logo, diagrams, and what a site costs on each provider's models.
-- `bi2 doctor` and `bi2 keys`; brand colors; the answer checker.
+- When usage resets at 17:50: the 166-site live run (`bi2-results/live-test-fast-1`, started 15:30) gives the time a site takes at scale, for docs/costs.md.
+- Other ideas, not started: one Jev call per site for every field's question at once (Jev's fan-out pattern), which would double what the free tier's 20 calls a minute cover; and a website demo, build phase 4.
 
 ## Questions for you
 

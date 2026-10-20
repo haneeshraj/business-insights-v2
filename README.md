@@ -73,6 +73,7 @@ Free keys work. bi2 keeps every model under its free tier's limits per minute an
 
 | Command | Does |
 |---|---|
+| `bi2` | At a terminal, an interactive session: paste addresses, then `/show`, `/why`, `/export` |
 | `bi2 analyze <url> [<url>...]` | Analyze sites; results (JSON Lines and CSV), logos and an HTML report go to `bi2-results/analyze` |
 | `bi2 analyze --file sites.txt` | Analyze a list of sites, one a line |
 | `bi2 analyze --gold eval/gold.toml` | Analyze the gold set and score it |
