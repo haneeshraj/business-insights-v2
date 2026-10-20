@@ -7,10 +7,19 @@ Find a business's name, logo, merchant category code (MCC), head-office address 
 Every answer comes with a status (`ok`, `needs_review`, `not_found` or `error`), a confidence, its source and the evidence it rests on, so an analyst can check it. Nothing is guessed.
 
 ```
-$ bi2 analyze https://www.bellwoodsbrewery.com/
-[1/1] https://www.bellwoodsbrewery.com/  name ok  logo ok  mcc ok  address ok  phone ok  email ok  social ok  21.4 s
-Model calls: 3 (0 from kept answers, 0 failed), 9,412 tokens in, 31 out, $0.0004 at list price
+$ bi2 analyze https://bellwoodsbrewery.com/ https://www.barvolo.com/ ... --fast
+[5/24] https://bellwoodsbrewery.com/  name ok  logo ok  mcc ok  address ok  phone ok  email ok  social ok  7.1 s
 ```
+
+| Field | Answer, from a live run on 2026-10-20 |
+|---|---|
+| Name | Bellwoods Brewery |
+| Logo | its SVG wordmark, saved from the page's code; brand color #ee412f |
+| MCC | 5921, Package Stores: Beer, Wine and Liquor |
+| Address | 124 Ossington Ave, Toronto, ON M6J 2Z5, with its map coordinates |
+| Phone | +14165354586 |
+| Email | info@bellwoodsbrewery.com |
+| Cost | 2 Jev calls, $0.00037 at list price |
 
 ## How it works
 

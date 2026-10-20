@@ -1,6 +1,6 @@
 # Codebase guide
 
-Status: draft, 2026-10-09. This is the companion to [architecture.md](architecture.md). That doc says what v2 does and why; this one says where code goes and how to write it.
+Status: updated 2026-10-20, with the model layer, the MCC, the address and the MCP server built. This is the companion to [architecture.md](architecture.md). That doc says what v2 does and why; this one says where code goes and how to write it.
 
 ## Goals
 
@@ -57,6 +57,8 @@ Why it matters:
 src/bi2/
 ├── core/                   building blocks; imports nothing else from bi2
 │   ├── models.py           Status, FieldResult, SiteResult, PageSnapshot, Evidence and its parts
+│   ├── asking.py           what v2 asks models and what they answer: typed questions (Choice,
+│   │                       YesNo, Levels, Locate) and their answers, and JSON prompts
 │   ├── ports.py            interfaces for everything that does I/O
 │   ├── errors.py           exception types, and the field status each one maps to
 │   ├── settings.py         the config schema and loader; the only file that reads env vars
@@ -72,20 +74,26 @@ src/bi2/
 ├── data/                   shipped data files (see "Data files")
 ├── prompts/                one folder per prompt (see "Prompts")
 ├── evidence/               extract_* functions: page snapshot → Evidence
-├── resolvers/              cascade.py, plus name.py, logo.py, mcc.py, address.py
+├── resolvers/              cascade.py, asking.py (what model steps share), and one module per
+│                           field: name, logo, mcc, address, phone, email, social; known.py
+│                           (Wikidata's answers) and checking.py (the checker)
 ├── agent/                  the investigator and its read-only tools
 ├── pipeline.py             fetch → evidence → resolvers → SiteResult, emitting events
 ├── fetch/                  Playwright and plain-HTTP fetchers, with the DNS safety check
-├── llm/                    the gateway, provider adapters (gemini, openai, anthropic), prompt loader
-├── decide/                 JevDecider and LLMDecider
-├── retrieval/              local embedding model and MCC vector search
-├── services/               search (SerpAPI) and geocoding (Nominatim)
+├── llm/                    gemini.py (the LanguageModel), limits.py (free-tier limits), registry.py
+│                           (data/models.toml)
+├── decide/                 jev.py (the Decider), llm.py (an LLM standing in for Jev, and a
+│                           Decider with a backup)
+├── retrieval/              unused: the MCC is picked by Jev, with no embedding search
+├── services/               wikidata.py (the knowledge base), nominatim.py (the geocoder)
 ├── adapters/
 │   ├── local/              files, in-memory cache and rate limiter, keys from env or keychain
 │   └── hosted/             Postgres store, Redis cache, limiter and queue, encrypted keys
 ├── wiring.py               builds a RunContext from real implementations: local and hosted
-├── cli/                    Typer commands, the interactive session, Rich display, output writers
-└── server/                 FastAPI app, accounts, worker (installed with the `server` extra)
+├── cli/                    Typer commands: analyze, review, eval (score, compare, check), doctor,
+│                           keys, mcp, dev
+├── mcp/                    the MCP server (installed with the `mcp` extra)
+└── server/                 FastAPI app, accounts, worker (later, with the `server` extra)
 ```
 
 Each package's `__init__.py` starts with a docstring saying what belongs in it and what doesn't, so the answer to "where does this go?" is in the code itself.
