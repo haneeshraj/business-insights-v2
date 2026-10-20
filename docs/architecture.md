@@ -286,7 +286,7 @@ Built on 2026-10-20, with Jev rather than the planned embedding search: Jev read
 - **Chains:** a code from 3000 to 3999 joins the final round only when the business's name matches the chain's, like Air Canada's 3009. When Jev picks the chain's family, like any airline (4511), the chain's own code replaces it.
 - **A free hint:** the schema.org type (`data/schema_types.toml`), like `BarOrPub` for 5813. An answer that agrees with it is surer.
 - **Unsure picks are asked again with the options reversed,** since Jev leans toward the first option. The same pick both ways is sure; a different one leaves the field for review.
-- On the gold set: 53 of 56 right.
+- On the gold set: 55 of 56 right, 51 of them sure, including Loblaws and Shoppers Drug Mart, which block bots: their codes come from Wikidata's one-line descriptions.
 
 ### Address
 

@@ -31,7 +31,7 @@ On the 56 gold sites' saved pages (the same pages every run, so only the code ch
 | Phone | 19 of 23 | 19 of 23 | 18 | 18 |
 | Email | 42 of 45 | 42 of 45 | 21 | 22 |
 | Social links | 37 of 37 | 37 of 37 | 37 | 37 |
-| MCC | not built | 53 of 56 | | 49 |
+| MCC | not built | 55 of 56 | | 51 |
 | Address | not built | 31 of 47 | | 14 |
 
 - About 3 to 4 model calls a site, almost all to Jev. A whole gold-set run cost $0.04 at list price, under a tenth of a cent a site; on the free tiers it costs nothing.
