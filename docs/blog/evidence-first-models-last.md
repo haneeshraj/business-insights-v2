@@ -117,19 +117,42 @@ On the 56 gold sites' saved pages, so every run sees the same pages and only the
 
 "Right and sure" matters as much as "right": every unsure answer costs a person's attention later. The models' main contribution is turning right-but-unsure answers into sure ones.
 
-{{TEST_SET_SECTION}}
+On the test set: 166 sites the rules were never tuned on, from Canadian chains, banks and crypto exchanges to small businesses in 26 countries, in their own languages. These count the answers a person or a drafted check against the site's own pages has verified:
+
+| Field | Rules only | With Jev and Gemini | Right and sure, rules | Right and sure, with models |
+|---|---|---|---|---|
+| Company name | 110 of 116 | 110 of 116 | 94 | **106** |
+| Logo | 99 of 116 | 100 of 116 | 86 | **95** |
+| Phone | 115 of 133 | 115 of 133 | 83 | **93** |
+| Email | 139 of 145 | 138 of 145 | 80 | **86** |
+| Social links | 107 of 115 | 107 of 115 | 95 | 95 |
+
+The models changed few answers but settled many: 37 more answers became sure across the five fields, each one an answer nobody has to look at. MCC and address have no checked answers on the test set yet; v2 marked 133 of its 166 MCC codes sure.
 
 ### What a site costs
 
 The same calls priced on other providers' models, at list prices on 2026-10-20 (see [costs.md](../costs.md) for the method):
 
-{{COST_TABLE}}
+| Models | Per site, gold set | Per site, test set | Per 1,000 sites |
+|---|---|---|---|
+| **Jev + Gemini 3.5 Flash-Lite** (default) | **$0.00073** | **$0.00067** | **$0.67 to $0.73** |
+| Gemini 3.5 Flash-Lite alone | $0.00347 | $0.00397 | $3.47 to $3.97 |
+| Jev + Claude Haiku 5.5 | $0.00048 | $0.00050 | $0.48 to $0.50 |
+| Claude Haiku 5.5 alone | $0.00111 | $0.00126 | $1.11 to $1.26 |
+| Jev + GPT-5.4 nano | $0.00059 | $0.00057 | $0.57 to $0.59 |
+| GPT-5.4 nano alone | $0.00225 | $0.00257 | $2.25 to $2.57 |
+| Gemini 3.6 Flash alone | $0.00832 | $0.00945 | $8.32 to $9.45 |
+| Claude Sonnet 5.5 alone | $0.02218 | $0.02521 | $22.18 to $25.21 |
+| Claude Opus 5.5 alone | $0.04437 | $0.05041 | $44.37 to $50.41 |
+| v1, estimated: page HTML in every call | about $0.04 | | about $40 |
 
 bi2's default, Jev for decisions and Gemini Flash-Lite for the rare generation, costs **under a tenth of a cent a site**. Asking an LLM to make the decisions too costs 2 to 10 times more, for answers that come without probabilities. On the free tiers it costs nothing.
 
 ### How long a site takes
 
-{{TIME_SECTION}}
+On 24 live sites, loaded in a real browser, with Jev alone (`--fast`) and every question new: **16.7 seconds a site, the median**, most of it loading the page and its contact page. Jev's own calls took 0.2 seconds, the median, and 2.8 of them a site.
+
+Two things slow a run on the free tiers: Jev's calls wait their turn in its 20 a minute when many sites run at once, and Gemini's free tier took 15 to 60 seconds a call. On the 166-site test set, six sites at a time, a site took a minute, the median, almost all of it waiting for a turn. On paid tiers that wait goes away, and the page load is what's left.
 
 ## Built to be trusted
 
