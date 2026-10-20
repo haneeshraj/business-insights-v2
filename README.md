@@ -48,6 +48,8 @@ On the 56 gold sites, with Jev and Gemini, on the same saved pages every run:
 | Email | 42 of 45 | 42 |
 | Social links | 37 of 37 | 37 |
 
+On the 166-site test set, which no rule was tuned on, MCC codes were right 143 times of 149, by drafted checks against each site's own title and description.
+
 About 3 model calls a site, almost all to Jev: under a tenth of a cent a site at list prices, and nothing on the free tiers.
 
 ## Install

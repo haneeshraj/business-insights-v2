@@ -127,8 +127,9 @@ On the test set: 166 sites the rules were never tuned on, from Canadian chains, 
 | Phone | 115 of 133 | 115 of 133 | 83 | **93** |
 | Email | 139 of 145 | 138 of 145 | 80 | **86** |
 | Social links | 107 of 115 | 107 of 115 | 95 | 95 |
+| MCC | not built | **143 of 149** | | **126** |
 
-The models changed few answers but settled many: 37 more answers became sure across the five fields, each one an answer nobody has to look at. MCC and address have no checked answers on the test set yet; v2 marked 133 of its 166 MCC codes sure.
+The models changed few answers but settled many: 37 more answers became sure across the five fields the rules already answered, each one an answer nobody has to look at. The MCC row is from drafted checks against each site's title and description, not yet confirmed by a person; ten answers too unclear to judge that way are left out. Of the six it gets wrong, three are sure: a jeweler filed as a wholesaler, a Colombian coffee roaster as a stationer, and a parked domain still filed as the cafe it used to be.
 
 ### What a site costs
 

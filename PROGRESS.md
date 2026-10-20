@@ -55,10 +55,12 @@ Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` 
 | Phone | 115 of 133 | 115 of 133 | 83 | 93 |
 | Email | 139 of 145 | 138 of 145 | 80 | 86 |
 | Social links | 107 of 115 | 107 of 115 | 95 | 95 |
+| MCC | not built | 143 of 149 | | 126 |
 
+- The MCC row counts my drafted checks, judged from each site's title and description, in `eval/drafted-checks.jsonl`. Please confirm or correct them on the review page (`bi2 review bi2-results/test-ai-4 --gold eval/test-set.toml`).
 - 3.9 model calls a site on average, 7 at most; $0.00066 a site at list price, $0.11 for the whole run.
 - Two logos became sure but count as wrong only because their inline SVG, saved from the page's code, has no address to compare with the checked one. They look right.
-- MCC and address have no checked answers on the test set yet: 133 of 166 MCC codes are marked sure.
+- Addresses have no checked answers on the test set yet.
 
 ## Live, 24 sites, Jev alone (`--fast`)
 
