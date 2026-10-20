@@ -109,14 +109,14 @@ On the 56 gold sites' saved pages, so every run sees the same pages and only the
 | Field | Rules only | With Jev and Gemini | Right and sure, rules | Right and sure, with models |
 |---|---|---|---|---|
 | Company name | 54 of 56 | **56 of 56** | 50 | **55** |
-| Logo | 36 of 46 | 36 of 46 | 33 | **36** |
+| Logo | 36 of 46 | 36 of 43 | 33 | **36** |
 | MCC | not built | **55 of 56** | | 51 |
 | Head-office address | not built | **31 of 47** | | 25 |
 | Phone | 19 of 23 | 19 of 23 | 18 | 18 |
 | Email | 42 of 45 | 42 of 45 | 21 | 22 |
 | Social links | 37 of 37 | 37 of 37 | 37 | 37 |
 
-"Right and sure" matters as much as "right": every unsure answer costs a person's attention later. The models' main contribution is turning right-but-unsure answers into sure ones.
+The logo counts differ because three answers changed to other files of the same logo that nobody has checked yet. "Right and sure" matters as much as "right": every unsure answer costs a person's attention later. The models' main contribution is turning right-but-unsure answers into sure ones.
 
 On the test set: 166 sites the rules were never tuned on, from Canadian chains, banks and crypto exchanges to small businesses in 26 countries, in their own languages. These count the answers a person or a drafted check against the site's own pages has verified:
 
@@ -160,7 +160,7 @@ Two things slow a run on the free tiers: Jev's calls wait their turn in its 20 a
 
 - **Layers checked by a tool.** Core types import nothing; logic never imports infrastructure; providers sit behind ports. import-linter fails CI when that breaks.
 - **Typed everywhere.** mypy in strict mode, Pydantic models that reject unknown keys, and results that can't carry a value for a field marked not found.
-- **Tests that need no keys.** Every model in the tests is a stand-in, so pull requests from forks, which get no secrets, run the same 378 tests.
+- **Tests that need no keys.** Every model in the tests is a stand-in, so pull requests from forks, which get no secrets, run the same 385 tests.
 - **A nightly live eval.** CI runs the gold set against the live sites and models, and fails when a field's accuracy drops below its floor or a site costs more than half a cent.
 - **An MCP server.** `bi2 mcp` lets an AI assistant like Claude analyze a website, ask how any field was decided, and look up MCC codes, on the user's own machine and keys.
 
