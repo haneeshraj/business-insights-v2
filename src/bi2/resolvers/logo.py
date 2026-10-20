@@ -15,7 +15,7 @@ from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import Evidence, Logo, LogoCandidate, LogoResult
 from bi2.core.urls import site_folder
-from bi2.resolvers.asking import NONE, ask_decider, confidence, site_lines
+from bi2.resolvers.asking import NO_MODEL, NO_SECOND, NONE, ask_decider, confidence, site_lines
 from bi2.resolvers.cascade import Escalate, Resolved, Step, run_cascade
 from bi2.resolvers.images import crop, inspect_image, logo_problem, number_boxes
 
@@ -233,6 +233,8 @@ def _logo_by(*, second: bool) -> Step[Logo]:
     the second model, for a second opinion."""
 
     async def ask(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | Escalate:
+        if (ctx.second if second else ctx.decider) is None:
+            return Escalate(NO_SECOND if second else NO_MODEL)
         numbered = await _numbered_screenshot(ev, ctx)
         if isinstance(numbered, str):
             return Escalate(numbered)
@@ -267,6 +269,23 @@ def _logo_by(*, second: bool) -> Step[Logo]:
     return ask
 
 
+async def logo_from_known_file(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | Escalate:
+    """The logo file Wikidata names for a big business, when the page's own images didn't
+    settle it: a programmatic source that needs no page at all."""
+    known = ev.known
+    if known is None or known.logo_url is None:
+        return Escalate("Wikidata names no logo file for this website")
+    saved, problem = await save_logo_file(known.logo_url, ev, ctx)
+    if saved is None:
+        return Escalate(f"the logo file Wikidata names {problem}")
+    return Resolved(
+        value=Logo(url=known.logo_url, image_file=saved),
+        confidence=0.8,
+        source=f"{known.source}: its logo file",
+        evidence=(known.logo_url,),
+    )
+
+
 logo_by_decider = _logo_by(second=False)
 logo_by_second_opinion = _logo_by(second=True)
 
@@ -274,5 +293,5 @@ logo_by_second_opinion = _logo_by(second=True)
 async def resolve_logo(ev: Evidence, ctx: RunContext) -> LogoResult:
     """The business's logo: the page's most logo-like image, and when the rules aren't sure of
     it, the numbered candidate a model picks on the screenshot, then a second model's pick."""
-    steps = [logo_from_the_page, logo_by_decider, logo_by_second_opinion]
+    steps = [logo_from_the_page, logo_by_decider, logo_by_second_opinion, logo_from_known_file]
     return await run_cascade(steps, ev, ctx)

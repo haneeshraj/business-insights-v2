@@ -117,7 +117,9 @@ async def test_without_a_model_the_ai_steps_pass() -> None:
     assert [step.detail for step in result.steps[1:]] == [
         NO_MODEL,
         "no second model to ask: it takes both a Jev and a Gemini key",
+        "Wikidata names no logo file for this website",
     ]
+    assert "example-cafe.ca/logo-candidates.jpg" not in no_model.files.files
 
 
 def test_boxes_in_the_same_place_are_numbered_once() -> None:

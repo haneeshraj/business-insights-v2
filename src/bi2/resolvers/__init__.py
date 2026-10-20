@@ -13,8 +13,10 @@ from typing import Any, Final
 
 from bi2.core.context import RunContext
 from bi2.core.models import Evidence, FieldResult
+from bi2.resolvers.address import resolve_address
 from bi2.resolvers.email import resolve_email
 from bi2.resolvers.logo import resolve_logo
+from bi2.resolvers.mcc import resolve_mcc
 from bi2.resolvers.name import resolve_name
 from bi2.resolvers.phone import resolve_phone
 from bi2.resolvers.social import resolve_social_links
@@ -26,6 +28,8 @@ type Resolver = Callable[[Evidence, RunContext], Awaitable[FieldResult[Any]]]
 RESOLVERS: Final[dict[str, Resolver]] = {
     "company_name": resolve_name,
     "logo": resolve_logo,
+    "mcc": resolve_mcc,
+    "address": resolve_address,
     "phone": resolve_phone,
     "email": resolve_email,
     "social_links": resolve_social_links,

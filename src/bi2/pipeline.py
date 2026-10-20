@@ -33,6 +33,7 @@ from bi2.core.ports import Downloader
 from bi2.core.urls import site_folder
 from bi2.evidence.build import build_contact_page, build_evidence
 from bi2.resolvers import RESOLVERS
+from bi2.resolvers.address import address_lines
 from bi2.resolvers.cascade import Escalate, Resolved, Step, not_built_yet, run_cascade
 from bi2.resolvers.email import shows_an_email
 from bi2.resolvers.known import KNOWN_STEPS
@@ -46,7 +47,7 @@ _REFUSED: Final = frozenset({401, 403, 429})
 def _data_versions() -> dict[str, str]:
     """The version of each data file the evidence is built with."""
     versions = {}
-    for name in ("countries", "platforms"):
+    for name in ("countries", "platforms", "schema_types", "mcc_synonyms", "models"):
         text = files("bi2.data").joinpath(f"{name}.toml").read_text(encoding="utf-8")
         versions[name] = str(tomllib.loads(text)["version"])
     return versions
@@ -72,11 +73,14 @@ class _BrowserCopiesFirst:
 
 
 async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
-    """The evidence with the contact page's details too, when the homepage doesn't show both a
-    phone number and an email address that could be the business's general one, and links a
-    contact page. A contact page that won't load is left out, and the homepage's evidence
-    stands on its own."""
-    if (ev.contacts.phones and shows_an_email(ev)) or not ev.contact_pages:
+    """The evidence with the contact page's details too, when the homepage doesn't show a
+    phone number, an email address that could be the business's general one and a street
+    address, and links a contact page. A contact page that won't load is left out, and the
+    homepage's evidence stands on its own."""
+    has_address = ev.structured.address is not None or bool(
+        address_lines(ev.text.footer) or address_lines(ev.text.main)
+    )
+    if (ev.contacts.phones and shows_an_email(ev) and has_address) or not ev.contact_pages:
         return ev
     try:
         snapshot = await ctx.fetcher.fetch(ev.contact_pages[0])
@@ -152,6 +156,14 @@ async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[Sit
     if snapshot.image_copies:
         ctx = replace(ctx, downloader=_BrowserCopiesFirst(snapshot.image_copies, ctx.downloader))
     ev = await _with_contact_page(build_evidence(snapshot), ctx)
+    # What Wikidata knows about the business: free facts, like a big brand's head office and
+    # logo file, for when the page doesn't give them.
+    try:
+        known = await ctx.knowledge.business_with_website(snapshot.final_url or snapshot.url)
+    except LookupUnavailable:
+        known = None
+    if known is not None:
+        ev = ev.model_copy(update={"known": known})
     folder = site_folder(snapshot.url)
     if snapshot.screenshot:
         saved = await ctx.files.save(f"{folder}/screenshot.jpg", snapshot.screenshot)

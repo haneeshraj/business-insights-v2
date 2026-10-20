@@ -23,6 +23,9 @@ _COMMONS_FILE: Final = "https://commons.wikimedia.org/wiki/Special:FilePath/"
 _HEADERS: Final = {"User-Agent": USER_AGENT}
 # Wikidata's properties for an official website, a logo image, a phone number and an email.
 _WEBSITE, _LOGO, _PHONE, _EMAIL = "P856", "P154", "P1329", "P968"
+# Its properties for a head office, a street address and a postcode. A head office's street
+# address and postcode are often qualifiers of the head office, like Rogers'.
+_HEAD_OFFICE, _STREET, _POSTCODE = "P159", "P6375", "P281"
 # Its properties for accounts on platforms, and each account's address.
 _ACCOUNTS: Final = {
     "P2002": ("x", "https://x.com/{}"),
@@ -60,6 +63,30 @@ def _first(claims: dict[str, Any], prop: str) -> str:
     return next((value for value in _values(claims, prop) if isinstance(value, str)), "")
 
 
+def _qualifier(claim: dict[str, Any], prop: str) -> str:
+    for snak in claim.get("qualifiers", {}).get(prop, []):
+        value = snak.get("datavalue", {}).get("value")
+        text = value.get("text") if isinstance(value, dict) else value
+        if isinstance(text, str) and text.strip():
+            return text.strip()
+    return ""
+
+
+def _head_office(claims: dict[str, Any]) -> tuple[str, str, str]:
+    """The head office's street address, postcode and city item, from its qualifiers or else
+    the business's own street address and postcode."""
+    offices = [c for c in claims.get(_HEAD_OFFICE, []) if c.get("rank") != "deprecated"]
+    office = offices[0] if offices else {}
+    city = office.get("mainsnak", {}).get("datavalue", {}).get("value", {})
+    city_item = city.get("id", "") if isinstance(city, dict) else ""
+    street = _qualifier(office, _STREET)
+    postcode = _qualifier(office, _POSTCODE)
+    if not street:
+        texts = [v.get("text", "") for v in _values(claims, _STREET) if isinstance(v, dict)]
+        street = next((text for text in texts if text), "")
+    return street, postcode or _first(claims, _POSTCODE), city_item
+
+
 def _business(item: str, entity: dict[str, Any]) -> KnownBusiness:
     claims = entity.get("claims", {})
     labels = entity.get("labels", {})
@@ -74,6 +101,7 @@ def _business(item: str, entity: dict[str, Any]) -> KnownBusiness:
         for value in _values(claims, prop)[:1]
         if isinstance(value, str) and value
     ]
+    street, postcode, _ = _head_office(claims)
     return KnownBusiness(
         item=item,
         name=name,
@@ -81,6 +109,8 @@ def _business(item: str, entity: dict[str, Any]) -> KnownBusiness:
         phone=_first(claims, _PHONE),
         email=_first(claims, _EMAIL).removeprefix("mailto:"),
         social_links=tuple(accounts),
+        head_office=street,
+        head_office_postcode=postcode,
     )
 
 
@@ -156,5 +186,18 @@ class Wikidata:
             entity = entities.get(item, {})
             listed = _values(entity.get("claims", {}), _WEBSITE)
             if any(registrable_domain(site) == domain for site in listed if isinstance(site, str)):
-                return _business(item, entity)
+                return await self._with_city(_business(item, entity), entity)
         return None
+
+    async def _with_city(self, business: KnownBusiness, entity: dict[str, Any]) -> KnownBusiness:
+        """The business with its head office's city named, which takes one more request, made
+        only when Wikidata gives the head office's street."""
+        _, _, city_item = _head_office(entity.get("claims", {}))
+        if not business.head_office or not city_item:
+            return business
+        found = await self._get(
+            {"action": "wbgetentities", "ids": city_item, "props": "labels", "languages": "en|fr"}
+        )
+        labels = found.get("entities", {}).get(city_item, {}).get("labels", {})
+        city = next((labels[lang]["value"] for lang in ("en", "fr") if lang in labels), "")
+        return business.model_copy(update={"head_office_city": city})

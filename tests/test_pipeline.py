@@ -2,6 +2,7 @@
 
 from bi2.core.models import Box, KnownBusiness, RenderedImage, Status
 from bi2.pipeline import analyze_snapshot, analyze_url
+from bi2.resolvers.asking import NO_MODEL
 from tests.factories import page_snapshot
 from tests.fakes import FakeKnowledge, MemoryFiles, fake_context
 from tests.resolvers.images import picture, screenshot_with_logo
@@ -43,7 +44,7 @@ async def test_a_page_is_analyzed_into_a_result_with_its_files_saved() -> None:
     }
     assert result.company_name.value == "Example Cafe"
     assert result.phone.value == "+14165550123"
-    assert result.mcc.steps[0].detail == "this field isn't built yet"
+    assert result.mcc.steps[0].detail == NO_MODEL  # the MCC takes a model
     assert ev.screenshot_file == "example-cafe.ca/screenshot.jpg"
     folder = {path for path in files.files if path.startswith("example-cafe.ca/")}
     assert folder == {
@@ -52,7 +53,13 @@ async def test_a_page_is_analyzed_into_a_result_with_its_files_saved() -> None:
         "example-cafe.ca/evidence.json",
         "example-cafe.ca/result.json",
     }
-    assert set(result.versions.data) == {"countries", "platforms"}
+    assert set(result.versions.data) == {
+        "countries",
+        "platforms",
+        "schema_types",
+        "mcc_synonyms",
+        "models",
+    }
 
 
 async def test_the_logo_comes_from_the_browsers_copy_when_a_download_is_refused() -> None:

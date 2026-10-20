@@ -7,9 +7,11 @@ from bi2.core.ports import (
     Downloader,
     Fetcher,
     FileStore,
+    Geocoder,
     KnowledgeBase,
     KnowsNothing,
     LanguageModel,
+    NoMap,
 )
 from bi2.core.settings import Settings
 
@@ -18,7 +20,7 @@ from bi2.core.settings import Settings
 class RunContext:
     """Everything a run needs from the outside world. Entry points build it from real
     implementations (bi2/wiring.py), and tests build it from fakes. More ports join as the
-    fields that need them are built: search and geocoding."""
+    fields that need them are built, like search."""
 
     settings: Settings
     fetcher: Fetcher
@@ -26,6 +28,7 @@ class RunContext:
     files: FileStore
     # Facts about big businesses by their websites, for pages that block us.
     knowledge: KnowledgeBase = field(default_factory=KnowsNothing)
+    geocoder: Geocoder = field(default_factory=NoMap)  # places addresses on the map
     # Models, for the answers the rules aren't sure of. None when there's no key for one, or
     # model calls are turned off; the steps that need them then pass.
     decider: Decider | None = None  # Jev, or an LLM standing in for it

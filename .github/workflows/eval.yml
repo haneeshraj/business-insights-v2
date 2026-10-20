@@ -1,0 +1,57 @@
+name: Live eval
+
+# The gold set, against the live sites and the real models, with the project's own keys. It
+# runs every night on main, and on demand, like for a pull request that changes a prompt, a
+# model or a threshold, since recorded answers no longer apply to those. It publishes scores
+# only, never copies of the sites' pages.
+
+on:
+  schedule:
+    - cron: "17 7 * * *"  # 07:17 UTC, after Gemini's free daily quota resets at 08:00 UTC the day before
+  workflow_dispatch:
+    inputs:
+      ai:
+        description: "Ask Jev and Gemini about unsure answers"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-eval
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    name: Gold set, live
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: eval  # holds GEMINI_API_KEY and JEV_API_KEY; maintainers approve runs
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run playwright install --with-deps chromium
+      - name: Analyze the gold set
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
+        run: >
+          uv run bi2 analyze --gold eval/gold.toml --out results --concurrency 4
+          ${{ (github.event_name == 'workflow_dispatch' && !inputs.ai) && '--no-ai' || '' }}
+      - name: Score it
+        run: uv run bi2 eval score eval/gold.toml results/results.jsonl --json scores.json
+      - name: Fail on a drop in accuracy
+        run: uv run python eval/check_scores.py scores.json results/model-calls.jsonl
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: scores
+          path: |
+            scores.json
+            results/results.jsonl
+            results/model-calls.jsonl
+          retention-days: 90

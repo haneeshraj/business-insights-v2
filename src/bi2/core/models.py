@@ -180,6 +180,17 @@ class Address(_Frozen):
     multiple_locations: bool = False  # the business has more than one location
 
 
+class GeocodedPlace(_Frozen):
+    """Where a map service puts an address, and the parts it gives it."""
+
+    coordinates: Coordinates
+    postal_code: str | None = None
+    city: str | None = None
+    region: str | None = None
+    country: CountryCode | None = None
+    source: str = ""  # who placed it, and how it names the place
+
+
 class SocialProfile(_Frozen):
     """One of the business's profiles on a social platform."""
 
@@ -353,11 +364,12 @@ class Contacts(_Frozen):
 
 
 class ContactPage(_Frozen):
-    """The site's contact page, read when its homepage doesn't show both a phone number and an
-    email address."""
+    """The site's contact page, read when its homepage doesn't show a phone number, an email
+    address and a street address."""
 
     url: WebUrl
     contacts: Contacts = Field(default_factory=Contacts)
+    text: str = ""  # its main text and footer, shortened, where addresses are looked for
 
 
 class KnownBusiness(_Frozen):
@@ -370,6 +382,10 @@ class KnownBusiness(_Frozen):
     phone: str = ""
     email: str = ""
     social_links: tuple[SocialProfile, ...] = ()
+    # Its head office's street address, postcode and city, when Wikidata gives them.
+    head_office: str = ""
+    head_office_postcode: str = ""
+    head_office_city: str = ""
 
     @property
     def source(self) -> str:

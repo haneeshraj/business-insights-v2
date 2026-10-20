@@ -65,6 +65,11 @@ dependencies = [
 [project.scripts]
 bi2 = "bi2.cli.main:app"  # command name still to be confirmed
 
+[project.optional-dependencies]
+mcp = [
+    "mcp>=1.20",
+]
+
 [dependency-groups]
 dev = [
     "ruff>=0.17",

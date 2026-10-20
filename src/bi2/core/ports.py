@@ -4,7 +4,7 @@ them; entry points choose which implementation to use."""
 from typing import Protocol
 
 from bi2.core.asking import Ask, Decision, Generated, Prompt
-from bi2.core.models import KnownBusiness, PageSnapshot
+from bi2.core.models import Address, GeocodedPlace, KnownBusiness, PageSnapshot
 
 
 class Fetcher(Protocol):
@@ -51,6 +51,22 @@ class KnowsNothing:
     """The knowledge base for runs and tests that use none."""
 
     async def business_with_website(self, url: str) -> KnownBusiness | None:
+        return None
+
+
+class Geocoder(Protocol):
+    """A map service that places addresses, like OpenStreetMap's Nominatim."""
+
+    async def locate(self, address: Address) -> GeocodedPlace | None:
+        """Where the address is, or None when the map doesn't know it. Raises
+        LookupUnavailable when the service can't be reached."""
+        ...
+
+
+class NoMap:
+    """The geocoder for runs and tests that use none."""
+
+    async def locate(self, address: Address) -> GeocodedPlace | None:
         return None
 
 

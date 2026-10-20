@@ -1,0 +1,10 @@
+.git
+.venv
+.mypy_cache
+.ruff_cache
+.pytest_cache
+.import_linter_cache
+bi2-results
+eval/snapshots
+**/__pycache__
+dist

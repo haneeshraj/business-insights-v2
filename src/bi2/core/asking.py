@@ -164,6 +164,9 @@ class Prompt(_Frozen):
     images: tuple[bytes, ...] = ()  # PNG or JPEG, shown after the evidence
     answer_schema: dict[str, Any]  # a JSON schema the answer must match
     max_output_tokens: int = Field(default=1024, ge=16, le=16384)
+    # Whether the model may search the web for the answer. Its answer then names the pages it
+    # rests on, in Generated.sources.
+    search: bool = False
 
 
 class Generated(_Frozen):
@@ -173,3 +176,4 @@ class Generated(_Frozen):
     model: str
     cost: Cost = Field(default_factory=Cost)
     cached: bool = False
+    sources: tuple[str, ...] = ()  # the web pages a searched answer rests on

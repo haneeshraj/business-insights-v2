@@ -32,9 +32,14 @@ class AiSettings(BaseModel):
     jev_model: str = "jev-latest"
     # Gemini models, by their IDs in data/models.toml: the one asked first, and the one asked
     # when it's busy or its free tier is used up for the day.
-    llm_model: str = "gemini-3.5-flash"
-    backup_model: str = "gemini-flash-lite-latest"
+    # Gemini's free tier gives Flash 20 requests a day and Flash-Lite many more, so Flash-Lite
+    # is asked first.
+    llm_model: str = "gemini-flash-lite-latest"
+    backup_model: str = "gemini-3.5-flash"
     jev_images: bool = True  # whether Jev is shown screenshots, like the numbered logo boxes
+    # Whether a field the pages don't answer, like a chain's head-office address, may be looked
+    # up with a web search, through Gemini's Google Search grounding.
+    search: bool = True
     # The most model calls one site may make, so one strange site can't use up a day's budget.
     calls_per_site: int = Field(default=12, ge=0)
     # The share of each free tier's daily requests v2 may use, leaving the rest for the key's

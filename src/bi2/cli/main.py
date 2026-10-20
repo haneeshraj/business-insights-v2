@@ -21,6 +21,21 @@ app.add_typer(eval_app, name="eval")
 app.add_typer(dev_app, name="dev")
 
 
+@app.command(name="mcp")
+def mcp_server() -> None:
+    """Run v2 as an MCP server over standard input and output, for AI assistants such as
+    Claude. Needs the mcp extra: pip install "business-insights[mcp]"."""
+    try:
+        from bi2.mcp.server import serve
+    except ImportError as exc:
+        typer.echo(
+            'error: the MCP server needs the mcp extra: pip install "business-insights[mcp]"',
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc
+    serve()
+
+
 def _show_version(value: bool) -> None:
     if value:
         typer.echo(f"bi2 {__version__}")
@@ -39,4 +54,5 @@ def main(
         ),
     ] = False,
 ) -> None:
-    """Find a business's name, logo, MCC and headquarters address from its website."""
+    """Find a business's name, logo, MCC, headquarters address, phone, email and social links
+    from its website."""

@@ -118,7 +118,8 @@ def build_contact_page(snapshot: PageSnapshot) -> ContactPage:
     structured = extract_structured_data(doc, snapshot.final_url)
     text = extract_text_regions(snapshot, doc)
     contacts, _ = _contacts_and_countries(doc, snapshot.final_url, structured, text)
-    return ContactPage(url=snapshot.final_url, contacts=contacts)
+    page_text = "\n".join(part for part in (text.main[:6000], text.footer[-2000:]) if part)
+    return ContactPage(url=snapshot.final_url, contacts=contacts, text=page_text)
 
 
 def build_evidence(snapshot: PageSnapshot) -> Evidence:

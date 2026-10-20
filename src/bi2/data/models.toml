@@ -10,7 +10,7 @@
 # published earlier in 2026. When a provider says a daily quota is used up, v2 stops asking that
 # model until the quota resets (midnight Pacific time for Gemini).
 
-version = 1
+version = 2
 
 [jev."jev-latest"]
 input_per_million = 0.042
@@ -29,8 +29,8 @@ at_once = 2
 [gemini."gemini-3.5-flash"]
 input_per_million = 1.50
 output_per_million = 9.00
-per_minute = 8
-per_day = 200
+per_minute = 5
+per_day = 20  # the free tier's daily quota, as Gemini reported it on 2026-10-20
 at_once = 2
 thinking = "minimal"  # these tasks need no reasoning, and thinking costs time and tokens
 

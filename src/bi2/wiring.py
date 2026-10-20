@@ -18,12 +18,12 @@ from bi2.adapters.local.answers import (
 )
 from bi2.adapters.local.downloads import KeptDownloads
 from bi2.adapters.local.files import LocalFiles
-from bi2.adapters.local.lookups import KeptLookups
+from bi2.adapters.local.lookups import KeptLookups, KeptPlaces
 from bi2.adapters.local.snapshots import SavedPages
 from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import PageSnapshot
-from bi2.core.ports import Decider, Downloader, Fetcher, KnowledgeBase, LanguageModel
+from bi2.core.ports import Decider, Downloader, Fetcher, Geocoder, KnowledgeBase, LanguageModel
 from bi2.core.settings import Keys, Settings, keys_from_environment
 from bi2.decide.jev import Jev
 from bi2.decide.llm import LlmDecider, WithBackup
@@ -31,6 +31,7 @@ from bi2.fetch.browser import BrowserChoice, BrowserFetcher
 from bi2.fetch.http import HttpDownloader
 from bi2.llm.gemini import Gemini
 from bi2.llm.limits import FreeTier
+from bi2.services.nominatim import Nominatim
 from bi2.services.wikidata import Wikidata
 
 
@@ -82,8 +83,10 @@ async def local_context(
         if kept_downloads is not None:
             downloader = KeptDownloads(downloader, kept_downloads)
         knowledge: KnowledgeBase = await stack.enter_async_context(Wikidata())
+        geocoder: Geocoder = await stack.enter_async_context(Nominatim())
         if kept_lookups is not None:
             knowledge = KeptLookups(knowledge, kept_lookups)
+            geocoder = KeptPlaces(geocoder, kept_lookups / "places")
         decider, llm, second = await _models(
             stack, settings, keys, kept_answers, usage_file, call_log
         )
@@ -93,6 +96,7 @@ async def local_context(
             downloader=downloader,
             files=LocalFiles(out),
             knowledge=knowledge,
+            geocoder=geocoder,
             decider=decider,
             llm=llm,
             second=second,

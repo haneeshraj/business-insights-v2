@@ -1,0 +1,17 @@
+# Plain words for codes whose official descriptions don't say what businesses they cover today,
+# shown to the model beside the description. Add a line when a kind of business keeps getting
+# the wrong code, then run the eval.
+
+version = 1
+
+[codes]
+"5812" = "sit-down restaurants with table service"
+"5813" = "bars, pubs, taprooms and brewpubs that serve drinks on site"
+"5814" = "fast food and quick-service restaurants, coffee shop chains, counter service"
+"5921" = "shops selling beer, wine or spirits to take away, including a brewery's or winery's own shop"
+"6051" = "includes buying and selling cryptocurrency, crypto exchanges and wallets"
+"5993" = "includes vape shops and e-cigarettes"
+"7995" = "includes online betting and casino sites"
+"5734" = "includes software sold to download or as a service"
+"5817" = "apps and digital goods, not games"
+"8398" = "charities and non-profit fundraising"

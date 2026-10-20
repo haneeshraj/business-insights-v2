@@ -41,19 +41,28 @@ def _body(prompt: Prompt, info: ModelInfo) -> dict[str, Any]:
         {"inline_data": {"mime_type": media_type(image), "data": base64.b64encode(image).decode()}}
         for image in prompt.images
     ]
-    config: dict[str, Any] = {
-        "temperature": 0,
-        "maxOutputTokens": prompt.max_output_tokens,
-        "responseMimeType": "application/json",
-        "responseJsonSchema": prompt.answer_schema,
-    }
+    config: dict[str, Any] = {"temperature": 0, "maxOutputTokens": prompt.max_output_tokens}
+    instructions = prompt.instructions
+    if prompt.search:
+        # Google Search grounding doesn't take a response schema, so the schema goes in the
+        # instructions, and the answer is read out of the text.
+        schema = json.dumps(prompt.answer_schema)
+        instructions += f"\n\nAnswer with only a JSON object matching this schema: {schema}"
+    else:
+        config |= {
+            "responseMimeType": "application/json",
+            "responseJsonSchema": prompt.answer_schema,
+        }
     if info.thinking:
         config["thinkingConfig"] = {"thinkingLevel": info.thinking}
-    return {
-        "systemInstruction": {"parts": [{"text": prompt.instructions}]},
+    body: dict[str, Any] = {
+        "systemInstruction": {"parts": [{"text": instructions}]},
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": config,
     }
+    if prompt.search:
+        body["tools"] = [{"google_search": {}}]
+    return body
 
 
 def _retry_delay(error: dict[str, Any]) -> float | None:
@@ -74,6 +83,28 @@ def _daily_quota(error: dict[str, Any]) -> bool:
     )
 
 
+def _json_part(text: str) -> str:
+    """The JSON object in an answer's text, without the code fence or words a searched answer
+    can come with."""
+    start, end = text.find("{"), text.rfind("}")
+    return text[start : end + 1] if 0 <= start < end else text
+
+
+def _sources(data: dict[str, Any]) -> tuple[str, ...]:
+    """The web pages a searched answer rests on, from its grounding metadata."""
+    candidates = data.get("candidates") or [{}]
+    chunks = candidates[0].get("groundingMetadata", {}).get("groundingChunks", [])
+    found = [str(chunk.get("web", {}).get("uri", "")) for chunk in chunks]
+    titles = [str(chunk.get("web", {}).get("title", "")) for chunk in chunks]
+    # Grounding gives redirect links, and each link's title is the page's site, like
+    # "indigo.ca", which is what an analyst needs to judge the source.
+    return tuple(
+        dict.fromkeys(
+            f"{title} {uri}".strip() for title, uri in zip(titles, found, strict=True) if uri
+        )
+    )
+
+
 def _answer(data: dict[str, Any], model: str) -> tuple[dict[str, Any], str]:
     """The JSON answer in a response, and the model version that gave it."""
     candidates = data.get("candidates") or []
@@ -87,7 +118,7 @@ def _answer(data: dict[str, Any], model: str) -> tuple[dict[str, Any], str]:
     parts = candidate.get("content", {}).get("parts", [])
     text = "".join(part.get("text", "") for part in parts if not part.get("thought"))
     try:
-        answer = json.loads(text)
+        answer = json.loads(_json_part(text))
     except ValueError as exc:
         raise ModelUnavailable(f"{model}'s answer wasn't JSON") from exc
     if not isinstance(answer, dict):
@@ -116,6 +147,9 @@ class Gemini:
         self._timeout_s = timeout_s
         self._transport = transport  # for tests, which answer without the network
         self._client: httpx.AsyncClient | None = None
+        # Set when Google refuses a web search on this key, as it does on some free tiers, so
+        # no later search is asked for in vain.
+        self._no_search = ""
 
     async def __aenter__(self) -> Self:
         self._client = httpx.AsyncClient(timeout=self._timeout_s, transport=self._transport)
@@ -133,6 +167,8 @@ class Gemini:
     async def generate(self, prompt: Prompt) -> Generated:
         """The first model's answer that comes. Raises ModelUnavailable when none answers, and
         BudgetUsedUp when that's because every model's free quota is used up."""
+        if prompt.search and self._no_search:
+            raise BudgetUsedUp(self._no_search)
         problems: list[ModelUnavailable] = []
         for info in self._models:
             try:
@@ -168,6 +204,10 @@ class Gemini:
             if response.status_code == 200:
                 return self._generated(response, info)
             error = _error(response)
+            if response.status_code == 429 and prompt.search:
+                # A refused search isn't retried: on a free tier it stays refused all day.
+                self._no_search = f"Google Search grounding is refused on this key: {str(error.get('message', ''))[:120]}"
+                raise BudgetUsedUp(self._no_search)
             if response.status_code == 429 and _daily_quota(error):
                 await self._limits.used_up_for_today(info.model)
                 raise BudgetUsedUp(f"{info.model}'s free quota is used up for today")
@@ -187,7 +227,7 @@ class Gemini:
         usage = data.get("usageMetadata", {})
         output = int(usage.get("candidatesTokenCount", 0)) + int(usage.get("thoughtsTokenCount", 0))
         cost = info.cost(int(usage.get("promptTokenCount", 0)), output)
-        return Generated(data=answer, model=version, cost=cost)
+        return Generated(data=answer, model=version, cost=cost, sources=_sources(data))
 
 
 def _error(response: httpx.Response) -> dict[str, Any]:
