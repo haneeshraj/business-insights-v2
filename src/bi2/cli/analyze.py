@@ -74,8 +74,10 @@ async def _analyze_all(
         browser=run.browser,
         timeout_s=run.timeout,
         allow_private=run.allow_private,
-        # Runs on saved pages keep what they download beside the pages, so reruns match.
+        # Runs on saved pages keep what they download and look up beside the pages, so reruns
+        # match.
         kept_downloads=run.saved / "downloads" if run.saved is not None else None,
+        kept_lookups=run.saved / "lookups" if run.saved is not None else None,
         saved_pages=run.saved,
     ) as ctx:
         limit = asyncio.Semaphore(run.concurrency)

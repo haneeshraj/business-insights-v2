@@ -1,9 +1,9 @@
 """Tests for the per-site workflow, with stand-ins for the browser, downloads and files."""
 
-from bi2.core.models import Box, RenderedImage, Status
+from bi2.core.models import Box, KnownBusiness, RenderedImage, Status
 from bi2.pipeline import analyze_snapshot, analyze_url
 from tests.factories import page_snapshot
-from tests.fakes import MemoryFiles, fake_context
+from tests.fakes import FakeKnowledge, MemoryFiles, fake_context
 from tests.resolvers.images import picture, screenshot_with_logo
 
 URL = "https://example-cafe.ca/"
@@ -109,3 +109,34 @@ async def test_a_contact_page_that_wont_load_leaves_the_homepage_to_stand_alone(
     assert ev.contact_page is None
     assert result.phone.status is Status.NOT_FOUND
     assert result.phone.steps[-1].detail == "no contact page was read"
+
+
+NO_FRILLS_URL = "https://www.nofrills.ca/"
+
+
+async def test_a_page_that_wont_load_is_answered_from_what_wikidata_knows() -> None:
+    known = KnownBusiness(item="Q3342407", name="No Frills", phone="+1 866-987-6453")
+    ctx = fake_context(knowledge=FakeKnowledge({"nofrills.ca": known}))
+    result, ev = await analyze_url(NO_FRILLS_URL, ctx)  # the fake fetcher has no pages
+    assert result.error is None
+    assert ev is not None
+    assert ev.unreadable
+    assert (result.company_name.value, result.company_name.status) == ("No Frills", Status.OK)
+    assert result.phone.status is Status.NEEDS_REVIEW
+    # What Wikidata doesn't know stays an error that says why the page couldn't be read.
+    assert result.logo.status is Status.ERROR
+    assert result.logo.steps[0].step == "load_page"
+
+
+async def test_a_page_that_wont_load_and_isnt_known_fails_as_a_whole() -> None:
+    result, ev = await analyze_url(NO_FRILLS_URL, fake_context(knowledge=FakeKnowledge()))
+    assert result.error is not None
+    assert ev is None
+
+
+async def test_a_refused_page_is_looked_up_rather_than_read() -> None:
+    known = FakeKnowledge({"nofrills.ca": KnownBusiness(item="Q3342407", name="No Frills")})
+    snapshot = page_snapshot("<title>Access Denied</title>", url=NO_FRILLS_URL, status_code=403)
+    result, ev = await analyze_snapshot(snapshot, fake_context(knowledge=known))
+    assert result.company_name.value == "No Frills"
+    assert "refused the page (403)" in (ev.unreadable or "")

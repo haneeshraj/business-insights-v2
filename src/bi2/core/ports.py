@@ -3,7 +3,7 @@ them; entry points choose which implementation to use."""
 
 from typing import Protocol
 
-from bi2.core.models import PageSnapshot
+from bi2.core.models import KnownBusiness, PageSnapshot
 
 
 class Fetcher(Protocol):
@@ -35,3 +35,19 @@ class FileStore(Protocol):
     async def read(self, path: str) -> bytes:
         """Read a file saved earlier."""
         ...
+
+
+class KnowledgeBase(Protocol):
+    """A public knowledge base, like Wikidata, that knows big businesses by their websites."""
+
+    async def business_with_website(self, url: str) -> KnownBusiness | None:
+        """The business whose official website this is, or None when the knowledge base has
+        none. Raises LookupUnavailable when it can't be reached."""
+        ...
+
+
+class KnowsNothing:
+    """The knowledge base for runs and tests that use none."""
+
+    async def business_with_website(self, url: str) -> KnownBusiness | None:
+        return None

@@ -25,3 +25,7 @@ class WrongCertificateName(FetchError):
 
 class BrowserUnavailable(Bi2Error):
     """No browser could be started."""
+
+
+class LookupUnavailable(Bi2Error):
+    """A knowledge base, like Wikidata, couldn't be reached."""

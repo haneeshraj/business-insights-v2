@@ -6,8 +6,9 @@ from urllib.parse import urljoin
 
 import httpx
 
-from bi2 import __version__
+from bi2 import USER_AGENT, __version__
 from bi2.core.errors import FetchError
+from bi2.core.urls import registrable_domain
 from bi2.fetch.safety import Resolver, ensure_public_url, system_resolver
 
 _MAX_REDIRECTS: Final = 5
@@ -19,6 +20,9 @@ _HEADERS: Final = {
     ),
     "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
 }
+# Wikimedia refuses browser-like clients that aren't browsers, so its files, like logos on
+# Wikimedia Commons, are downloaded as v2 says it is.
+_WIKIMEDIA: Final = frozenset({"wikimedia.org", "wikipedia.org", "wikidata.org"})
 
 
 class HttpDownloader:
@@ -66,8 +70,9 @@ class HttpDownloader:
         for _ in range(_MAX_REDIRECTS + 1):
             if not self._allow_private:
                 await ensure_public_url(url, self._resolver)
+            who = {"User-Agent": USER_AGENT} if registrable_domain(url) in _WIKIMEDIA else {}
             try:
-                async with self._client.stream("GET", url, headers=headers) as response:
+                async with self._client.stream("GET", url, headers=headers | who) as response:
                     location = response.headers.get("location")
                     if response.status_code in _REDIRECTS and location:
                         url = urljoin(url, location)

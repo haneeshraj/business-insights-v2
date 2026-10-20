@@ -1,8 +1,8 @@
 """RunContext: the settings and ports a run needs, handed to the pipeline and the resolvers."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from bi2.core.ports import Downloader, Fetcher, FileStore
+from bi2.core.ports import Downloader, Fetcher, FileStore, KnowledgeBase, KnowsNothing
 from bi2.core.settings import Settings
 
 
@@ -16,3 +16,5 @@ class RunContext:
     fetcher: Fetcher
     downloader: Downloader
     files: FileStore
+    # Facts about big businesses by their websites, for pages that block us.
+    knowledge: KnowledgeBase = field(default_factory=KnowsNothing)

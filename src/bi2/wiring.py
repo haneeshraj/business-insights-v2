@@ -11,14 +11,16 @@ from pathlib import Path
 
 from bi2.adapters.local.downloads import KeptDownloads
 from bi2.adapters.local.files import LocalFiles
+from bi2.adapters.local.lookups import KeptLookups
 from bi2.adapters.local.snapshots import SavedPages
 from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import PageSnapshot
-from bi2.core.ports import Downloader, Fetcher
+from bi2.core.ports import Downloader, Fetcher, KnowledgeBase
 from bi2.core.settings import Settings
 from bi2.fetch.browser import BrowserChoice, BrowserFetcher
 from bi2.fetch.http import HttpDownloader
+from bi2.services.wikidata import Wikidata
 
 
 class _NoPages:
@@ -38,11 +40,13 @@ async def local_context(
     allow_private: bool = False,  # only for tests that serve pages from this machine
     kept_downloads: Path | None = None,
     saved_pages: Path | None = None,
+    kept_lookups: Path | None = None,
 ) -> AsyncIterator[RunContext]:
-    """A RunContext for the terminal app: a browser, a downloader, and files under `out`.
-    With `saved_pages` instead of loading pages, the pages saved in that folder are read, such
-    as each site's contact page. With `kept_downloads`, every file downloaded is kept in that
-    folder and reused on later runs. The browser closes when the block ends."""
+    """A RunContext for the terminal app: a browser, a downloader, Wikidata, and files under
+    `out`. With `saved_pages` instead of loading pages, the pages saved in that folder are read,
+    such as each site's contact page. With `kept_downloads`, every file downloaded is kept in
+    that folder and reused on later runs, and with `kept_lookups`, every Wikidata answer. The
+    browser closes when the block ends."""
     async with AsyncExitStack() as stack:
         fetcher: Fetcher = SavedPages(saved_pages) if saved_pages is not None else _NoPages()
         if load_pages:
@@ -54,6 +58,13 @@ async def local_context(
         )
         if kept_downloads is not None:
             downloader = KeptDownloads(downloader, kept_downloads)
+        knowledge: KnowledgeBase = await stack.enter_async_context(Wikidata())
+        if kept_lookups is not None:
+            knowledge = KeptLookups(knowledge, kept_lookups)
         yield RunContext(
-            settings=Settings(), fetcher=fetcher, downloader=downloader, files=LocalFiles(out)
+            settings=Settings(),
+            fetcher=fetcher,
+            downloader=downloader,
+            files=LocalFiles(out),
+            knowledge=knowledge,
         )

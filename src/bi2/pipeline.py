@@ -12,11 +12,11 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from functools import cache
 from importlib.resources import files
-from typing import Any
+from typing import Any, Final
 
 from bi2 import __version__
 from bi2.core.context import RunContext
-from bi2.core.errors import FetchError
+from bi2.core.errors import FetchError, LookupUnavailable, UnsafeUrl
 from bi2.core.models import (
     FIELD_NAMES,
     Evidence,
@@ -33,8 +33,13 @@ from bi2.core.ports import Downloader
 from bi2.core.urls import site_folder
 from bi2.evidence.build import build_contact_page, build_evidence
 from bi2.resolvers import RESOLVERS
-from bi2.resolvers.cascade import not_built_yet
+from bi2.resolvers.cascade import Escalate, Resolved, Step, not_built_yet, run_cascade
 from bi2.resolvers.email import shows_an_email
+from bi2.resolvers.known import KNOWN_STEPS
+
+# Statuses a site answers with when it won't give its page, like a bot check's "Access
+# denied". A missing page (404) can still show the site's own header and footer.
+_REFUSED: Final = frozenset({401, 403, 429})
 
 
 @cache
@@ -81,10 +86,69 @@ async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
     return ev.model_copy(update={"contact_page": page, "extra_pages": (*ev.extra_pages, page.url)})
 
 
+def _page_couldnt_be_read(why: str) -> Step[Any]:
+    """A first step that fails with why the page couldn't be read, for the audit trail."""
+
+    async def load_page(ev: Evidence, ctx: RunContext) -> Resolved[Any] | Escalate:
+        raise FetchError(why)
+
+    return load_page
+
+
+async def analyze_unreadable(
+    url: str,
+    why: str,
+    ctx: RunContext,
+    *,
+    final_url: str | None = None,
+    screenshot: bytes | None = None,
+) -> tuple[SiteResult, Evidence]:
+    """The result for a page that couldn't be read, like one behind a bot check.
+
+    Each field comes from what Wikidata knows about the business, when it knows it, and is
+    otherwise an error that says why the page couldn't be read. A site Wikidata doesn't know
+    fails as a whole."""
+    started = time.monotonic()
+    try:
+        known = await ctx.knowledge.business_with_website(final_url or url)
+    except LookupUnavailable:
+        known = None
+    ev = Evidence(page=PageInfo(url=url, final_url=final_url), unreadable=why, known=known)
+    folder = site_folder(url)
+    if screenshot:
+        saved = await ctx.files.save(f"{folder}/screenshot.jpg", screenshot)
+        ev = ev.model_copy(update={"screenshot_file": saved})
+    first = _page_couldnt_be_read(why)
+    fields: dict[str, FieldResult[Any]] = {}
+    for name in FIELD_NAMES:
+        steps = [first, KNOWN_STEPS[name]] if known and name in KNOWN_STEPS else [first]
+        fields[name] = await run_cascade(steps, ev, ctx)
+    if all(field.status is Status.ERROR for field in fields.values()):
+        return failed_result(url, why, time.monotonic() - started), ev
+    result = SiteResult.model_validate(
+        {
+            "page": ev.page,
+            "analyzed_at": datetime.now(UTC),
+            "seconds": round(time.monotonic() - started, 2),
+            **fields,
+            "versions": _versions(),
+        }
+    )
+    await ctx.files.save(f"{folder}/evidence.json", ev.model_dump_json(indent=2).encode())
+    await ctx.files.save(f"{folder}/result.json", result.model_dump_json(indent=2).encode())
+    return result, ev
+
+
 async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[SiteResult, Evidence]:
     """Everything v2 can tell about a loaded page. Saves the screenshot, the evidence and the
-    result in the site's folder, along with the logo when one is found."""
+    result in the site's folder, along with the logo when one is found. A page the site
+    refused, like a bot check's "Access denied", is analyzed as one that couldn't be read."""
     started = time.monotonic()
+    if snapshot.status_code in _REFUSED:
+        why = f"the site refused the page ({snapshot.status_code}), likely a bot check"
+        return await analyze_unreadable(
+            snapshot.url, why, ctx, final_url=snapshot.final_url, screenshot=snapshot.screenshot
+        )
     if snapshot.image_copies:
         ctx = replace(ctx, downloader=_BrowserCopiesFirst(snapshot.image_copies, ctx.downloader))
     ev = await _with_contact_page(build_evidence(snapshot), ctx)
@@ -129,11 +193,16 @@ def failed_result(url: str, error: str, seconds: float) -> SiteResult:
 
 
 async def analyze_url(url: str, ctx: RunContext) -> tuple[SiteResult, Evidence | None]:
-    """Load a page and analyze it. A page that can't be loaded gives a failed result."""
+    """Load a page and analyze it. A page that can't be loaded is analyzed as one that couldn't
+    be read: from what Wikidata knows, or else as a failed result."""
     started = time.monotonic()
     try:
         snapshot = await ctx.fetcher.fetch(url)
-    except FetchError as exc:
+    except UnsafeUrl as exc:  # nothing v2 refuses to visit is looked up either
         return failed_result(url, str(exc), time.monotonic() - started), None
+    except FetchError as exc:
+        result, ev = await analyze_unreadable(url, str(exc), ctx)
+        seconds = round(time.monotonic() - started, 2)
+        return result.model_copy(update={"seconds": seconds}), None if result.error else ev
     result, ev = await analyze_snapshot(snapshot, ctx)
     return result.model_copy(update={"seconds": round(time.monotonic() - started, 2)}), ev

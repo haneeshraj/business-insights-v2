@@ -1,8 +1,9 @@
 """Stand-ins for the ports, so logic can be tested without a browser, the network or a disk."""
 
 from bi2.core.context import RunContext
-from bi2.core.errors import FetchError
-from bi2.core.models import PageSnapshot
+from bi2.core.errors import FetchError, LookupUnavailable
+from bi2.core.models import KnownBusiness, PageSnapshot
+from bi2.core.ports import KnowledgeBase, KnowsNothing
 from bi2.core.settings import Settings, Thresholds
 
 
@@ -50,12 +51,31 @@ class MemoryFiles:
         return self.files[path]
 
 
+class FakeKnowledge:
+    """Knows the businesses it's given, by their domains, and remembers what was asked. With
+    `reachable=False`, it can't be reached at all."""
+
+    def __init__(
+        self, known: dict[str, KnownBusiness] | None = None, *, reachable: bool = True
+    ) -> None:
+        self.known = known or {}
+        self.reachable = reachable
+        self.asked: list[str] = []
+
+    async def business_with_website(self, url: str) -> KnownBusiness | None:
+        self.asked.append(url)
+        if not self.reachable:
+            raise LookupUnavailable("the knowledge base couldn't be reached")
+        return next((b for domain, b in self.known.items() if domain in url), None)
+
+
 def fake_context(
     *,
     pages: dict[str, PageSnapshot] | None = None,
     downloads: dict[str, bytes] | None = None,
     files: MemoryFiles | None = None,
     accept: float = 0.85,
+    knowledge: KnowledgeBase | None = None,
 ) -> RunContext:
     """A RunContext built from the stand-ins above."""
     return RunContext(
@@ -63,4 +83,5 @@ def fake_context(
         fetcher=FakeFetcher(pages),
         downloader=FakeDownloader(downloads),
         files=files or MemoryFiles(),
+        knowledge=knowledge or KnowsNothing(),
     )

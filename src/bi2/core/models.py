@@ -360,6 +360,23 @@ class ContactPage(_Frozen):
     contacts: Contacts = Field(default_factory=Contacts)
 
 
+class KnownBusiness(_Frozen):
+    """What Wikidata, a free public knowledge base, says about the business whose official
+    website the site is. Big brands are there; most small businesses aren't."""
+
+    item: str = Field(pattern=r"^Q\d+$")  # its Wikidata ID, like "Q3342407"
+    name: str = ""
+    logo_url: WebUrl | None = None  # the logo's file on Wikimedia Commons
+    phone: str = ""
+    email: str = ""
+    social_links: tuple[SocialProfile, ...] = ()
+
+    @property
+    def source(self) -> str:
+        """Where it came from, for an answer's source."""
+        return f"Wikidata {self.item}"
+
+
 class Evidence(_Frozen):
     """Everything collected from a site before any model runs. Models only ever see this."""
 
@@ -375,6 +392,10 @@ class Evidence(_Frozen):
     contact_pages: tuple[WebUrl, ...] = ()  # the site's own pages likely to hold contact details
     extra_pages: tuple[WebUrl, ...] = ()  # contact and about pages that were also read
     contact_page: ContactPage | None = None  # the contact details on the contact page, if read
+    # Why the page couldn't be read, like a bot check, when it couldn't. Its fields then come
+    # only from what Wikidata knows about the business, in `known`.
+    unreadable: str | None = None
+    known: KnownBusiness | None = None
 
     @model_validator(mode="after")
     def _candidate_numbers_are_unique(self) -> Self:
