@@ -94,6 +94,27 @@ SVG_LOGO_PAGE = b"""<!doctype html>
 </header>
 <main>Coffee</main></body></html>"""
 
+# Logos that are hard to find: an SVG after a header full of icons, in a link labeled as the
+# logo; a CSS mask; a background drawn before an element; an image in a shadow root, the way
+# web components keep their parts; and a logo that's only styled text in a link home.
+HARD_LOGOS_PAGE = b"""<!doctype html>
+<html><head><title>Example Cafe</title><style>
+.mask { display: inline-block; width: 160px; height: 40px; background: #222;
+  mask-image: url(/images/mask-logo.svg); }
+.sprite::before { content: ""; display: inline-block; width: 120px; height: 30px;
+  background-image: url(/images/sprite-logo.png); }
+</style></head>
+<body><header>
+  <nav><a href="/shop/0"><svg width="24" height="24" aria-label="icon 0"><rect width="24" height="24"/></svg></a><a href="/shop/1"><svg width="24" height="24" aria-label="icon 1"><rect width="24" height="24"/></svg></a><a href="/shop/2"><svg width="24" height="24" aria-label="icon 2"><rect width="24" height="24"/></svg></a><a href="/shop/3"><svg width="24" height="24" aria-label="icon 3"><rect width="24" height="24"/></svg></a><a href="/shop/4"><svg width="24" height="24" aria-label="icon 4"><rect width="24" height="24"/></svg></a><a href="/shop/5"><svg width="24" height="24" aria-label="icon 5"><rect width="24" height="24"/></svg></a><a href="/shop/6"><svg width="24" height="24" aria-label="icon 6"><rect width="24" height="24"/></svg></a><a href="/shop/7"><svg width="24" height="24" aria-label="icon 7"><rect width="24" height="24"/></svg></a><a href="/shop/8"><svg width="24" height="24" aria-label="icon 8"><rect width="24" height="24"/></svg></a></nav>
+  <a href="/" aria-label="Example Cafe logo"><svg width="150" height="40" viewBox="0 0 150 40">
+    <rect width="150" height="40"/></svg></a>
+  <a href="/" class="masked-logo"><span class="mask"></span></a>
+  <a href="/" class="sprite-home"><span class="sprite"></span></a>
+  <div><template shadowrootmode="open"><a href="/"><img src="/images/brand.png" alt="Shadow logo"
+    width="160" height="60"></a></template></div>
+  <a href="/" data-testid="navigation-logo" style="font: bold 32px serif">Example Cafe</a>
+</header><main>Coffee</main></body></html>"""
+
 # A page whose logo is given only to browsers, like sites that refuse separate downloads.
 BROWSER_ONLY_PAGE = b"""<!doctype html>
 <html><head><title>Example Cafe</title></head>
@@ -161,6 +182,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(403, "text/html", DENIED_PAGE)
         elif path == "/svg-logo":
             self._send(200, "text/html", SVG_LOGO_PAGE)
+        elif path == "/hard-logos":
+            self._send(200, "text/html", HARD_LOGOS_PAGE)
         elif path == "/browser-only-logo":
             self._send(200, "text/html", BROWSER_ONLY_PAGE)
         elif path == "/images/browser-only.png":

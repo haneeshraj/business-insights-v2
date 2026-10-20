@@ -123,6 +123,23 @@ async def test_an_svg_logo_keeps_its_own_code_with_the_page_styles_written_in(
     assert (picture.kind, picture.url) == ("img", f"{site}/images/brand.png")
 
 
+async def test_logos_that_are_hard_to_find_become_candidates(
+    fetcher: BrowserFetcher, site: str
+) -> None:
+    images = (await fetcher.fetch(f"{site}/hard-logos")).images
+    # The SVG in the link labeled as the logo keeps its code, though nine icons come first.
+    logo = next(image for image in images if image.link_label == "Example Cafe logo")
+    assert (logo.kind, logo.links_home) == ("svg", True)
+    assert logo.svg
+    found = {(image.kind, image.url) for image in images}
+    assert ("background", f"{site}/images/mask-logo.svg") in found  # a CSS mask
+    assert ("background", f"{site}/images/sprite-logo.png") in found  # drawn before an element
+    shadow = _image(images, "Shadow logo")  # in a shadow root
+    assert (shadow.links_home, shadow.in_header) == (True, True)
+    text = _image(images, "Example Cafe")  # styled text, to be cut from the screenshot
+    assert (text.kind, text.url, text.links_home) == ("text", "", True)
+
+
 async def test_redirects_are_followed(fetcher: BrowserFetcher, site: str) -> None:
     snapshot = await fetcher.fetch(f"{site}/redirect")
     assert snapshot.url == f"{site}/redirect"

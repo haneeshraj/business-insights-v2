@@ -99,6 +99,39 @@ async def test_the_declared_logo_file_goes_before_an_inline_image() -> None:
     assert result.value.url == declared
 
 
+async def test_an_svg_logos_own_code_goes_before_the_declared_file() -> None:
+    declared = f"{URL}brand/monogram.png"
+    code = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect/></svg>'
+    wordmark = _candidate(1, 13, box=TOP_SPOT, in_header=True, links_home=True, svg=code)
+    result, _ = await _resolve(
+        [
+            wordmark,
+            _candidate(2, 6, declared, kind="structured_data", declared=True),
+        ],
+        downloads={declared: picture(300, 300)},
+    )
+    assert result.value is not None
+    assert result.value.url is None  # saved from the page's code, not the declared file
+
+
+async def test_other_versions_of_the_logo_file_dont_make_it_a_close_call() -> None:
+    top = f"{URL}images/cafe-logo-desktop.svg"
+    result, _ = await _resolve(
+        [_candidate(1, 12, top), _candidate(2, 11, f"{URL}images/cafe-logo.svg")],
+        downloads={top: picture(120, 40)},
+    )
+    assert result.status is Status.OK
+
+
+async def test_a_row_of_numbered_images_is_still_a_close_call() -> None:
+    first = f"{URL}images/partner-logos_01.jpg"
+    result, _ = await _resolve(
+        [_candidate(1, 9, first), _candidate(2, 9, f"{URL}images/partner-logos_05.jpg")],
+        downloads={first: picture(200, 200)},
+    )
+    assert result.status is Status.NEEDS_REVIEW
+
+
 async def test_a_close_call_needs_review() -> None:
     result, _ = await _resolve(
         [_candidate(1, 6, f"{URL}a.png"), _candidate(2, 5, f"{URL}b.png")],

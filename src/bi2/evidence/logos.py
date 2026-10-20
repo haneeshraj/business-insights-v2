@@ -22,7 +22,8 @@ _NOT_LOGO: Final = re.compile(
     r"facebook|instagram|twitter|tiktok|youtube|linkedin|pinterest|whatsapp|social|"
     r"payment|visa|mastercard|amex|paypal|klarna|afterpay|"
     r"cart|basket|search|hamburger|menu-icon|close|arrow|chevron|caret|flag|avatar|"
-    r"spinner|placeholder|award|trustpilot|app-?store|google-?play"
+    r"spinner|placeholder|award|trustpilot|app-?store|google-?play|"
+    r"texture|grain|pattern|noise"  # a fill behind or inside the logo, like paper grain
 )
 
 # Stand-ins a site shows when an image is missing, like Waterstones' hidden "default image",
@@ -36,13 +37,16 @@ _STAND_IN: Final = re.compile(
 # Points for each sign that an image is the logo, or isn't.
 _LINKS_HOME, _IN_HEADER, _SAYS_LOGO, _SAYS_NAME = 4, 3, 3, 2
 _DECLARED, _SEEN_AGAIN = 3, 1  # named as the logo by structured data; drawn more than once
+# A logo drawn as styled text can only be cut out of the screenshot, so a file of the logo, or
+# its code, counts for more.
+_ONLY_TEXT = 3
 _PROFILE_PICTURE = 3  # on a platform's page, the business's profile picture is its logo
 
 
 class _Scored(NamedTuple):
     points: int
     order: int  # page order, which settles ties
-    kind: Literal["img", "svg", "background", "structured_data", "icon"]
+    kind: Literal["img", "svg", "background", "text", "structured_data", "icon"]
     url: str | None
     alt: str
     css_class: str
@@ -74,13 +78,14 @@ def _words(image: RenderedImage) -> str:
     return fold(f"{image.alt} {image.css_class} {image.element_id} {_file_name(image.url)}")
 
 
-def _size_points(box: Box | None) -> int:
-    """Points for where an image was drawn and how big it was."""
+def _size_points(box: Box | None, *, in_logo_link: bool = False) -> int:
+    """Points for where an image was drawn and how big it was. A small image in a link labeled
+    as the logo is a slim logo, like Mejuri's wordmark, not an icon."""
     if box is None:
         return 0
     if box.width == 0 or box.height == 0:
         return -1  # not shown, often the logo for another screen size
-    if box.width < 16 or box.height < 10:
+    if (box.width < 16 or box.height < 10) and not in_logo_link:
         return -3  # an icon
     if box.width > 900 or box.height > 500:
         return -3  # a photo
@@ -96,7 +101,7 @@ def _points(image: RenderedImage, brand: set[str]) -> int:
     points += _SAYS_LOGO * ("logo" in words) + _SAYS_NAME * any(word in words for word in brand)
     if _NOT_LOGO.search(words):
         points -= 4
-    return points + _size_points(image.box)
+    return points + _size_points(image.box, in_logo_link="logo" in fold(image.link_label))
 
 
 def _platforms_own(image: RenderedImage, platform_name: str) -> bool:
@@ -160,7 +165,10 @@ def extract_logo_candidates(
     else:
         brand = _words_of((profile_name or "", profile.handle.lstrip("@")))
     found: list[_Scored] = []
-    if structured.logo_url:
+    if structured.logo_url and _file_name(structured.logo_url).lower().endswith(".ico"):
+        # A browser tab's icon, which some sites name as their logo, like Warby Parker.
+        found.append(_Scored(0, 0, "icon", structured.logo_url, "", "", None, False, False))
+    elif structured.logo_url:
         found.append(
             _Scored(
                 _DECLARED,
@@ -177,12 +185,12 @@ def extract_logo_candidates(
         )
     for order, image in enumerate(images, start=1):
         url = image.url if image.url.startswith(("http://", "https://")) else None
-        if url is None and image.kind != "svg":
+        if url is None and image.kind not in ("svg", "text"):
             continue  # a placeholder or an inline data image, with no address to use
         if _STAND_IN.search(_words(image)):
             continue
         if profile is None:
-            points = _points(image, brand)
+            points = _points(image, brand) - _ONLY_TEXT * (image.kind == "text")
         elif _platforms_own(image, platforms()[profile.platform].name):
             continue
         else:

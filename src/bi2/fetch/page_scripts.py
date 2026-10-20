@@ -64,15 +64,39 @@ READ = """
   // Home pages live at "/", at a language's home such as "/en", "/en-ca" or "/ca/en", or at a
   // home or index page under either: "/home", "/en/home.html", "/ca/en/homepage".
   const homePath = /^\\/(?:[a-z]{2}(?:[-_][a-z]{2})?(?:\\/[a-z]{2})?\\/?)?(?:(?:home(?:page)?|index)(?:\\.[a-z]{3,4})?\\/?)?$/i;
+  // Pages built from web components keep parts of themselves, like Air Canada's header, in
+  // shadow roots, which a plain search of the page doesn't reach. These search them too.
+  const roots = [document];
+  for (let i = 0; i < roots.length; i += 1) {
+    for (const el of roots[i].querySelectorAll("*")) if (el.shadowRoot) roots.push(el.shadowRoot);
+  }
+  const all = (selector) => roots.flatMap((root) => [...root.querySelectorAll(selector)]);
+  const closest = (el, selector) => {
+    for (let node = el; node; ) {
+      const found = node.closest(selector);
+      if (found) return found;
+      const root = node.getRootNode();
+      node = root instanceof ShadowRoot ? root.host : null;
+    }
+    return null;
+  };
   const linksHome = (el) => {
-    const link = el.closest("a[href]");
+    const link = closest(el, "a[href]");
     if (!link) return false;
     try {
       const target = new URL(link.href, location.href);
       return target.origin === location.origin && homePath.test(target.pathname);
     } catch { return false; }
   };
-  const inHeader = (el) => !!el.closest("header, nav, [role=banner], [class*=header i], [id*=header i]");
+  const inHeader = (el) => !!closest(el, "header, nav, [role=banner], [class*=header i], [id*=header i]");
+  // What an element says about itself, and what the link around an image says about it, like
+  // "Mejuri logo" or "wcb3-navigation-logo".
+  const labelOf = (el) => ["aria-label", "title", "class", "id", "data-testid"]
+    .map((name) => el.getAttribute(name) || "").join(" ").replace(/\\s+/g, " ").trim();
+  const linkLabel = (el) => {
+    const link = closest(el, "a[href]");
+    return link ? labelOf(link).slice(0, 300) : "";
+  };
   const box = (el) => {
     const r = el.getBoundingClientRect();
     return { x: r.x + window.scrollX, y: r.y + window.scrollY, width: r.width, height: r.height };
@@ -80,6 +104,7 @@ READ = """
   const describe = (el, kind, url, alt) => ({
     kind, url, alt: alt || "", css_class: String(el.getAttribute("class") || ""),
     element_id: el.id || "", box: box(el), in_header: inHeader(el), links_home: linksHome(el),
+    link_label: linkLabel(el),
   });
   // An inline SVG's code, standalone: the page's styles are written into it, the shapes it
   // borrows from elsewhere on the page are copied in, and scripts are left out, so it shows
@@ -127,47 +152,84 @@ READ = """
     return code.length <= 300000 ? code : "";
   };
   const found = [];
-  for (const img of document.images) {
+  const drawnBy = [];  // the element each found image is drawn by
+  const add = (el, image) => { found.push(image); drawnBy.push(el); return image; };
+  for (const img of all("img")) {
     let url = img.currentSrc || img.src || "";
     if (url === location.href) url = "";  // an empty src makes the browser report the page itself
     if (!url || url.startsWith("data:")) {
       const lazy = img.dataset.src || img.dataset.lazySrc || img.getAttribute("data-original");
       if (lazy) url = absolute(lazy);
     }
-    found.push(describe(img, "img", url, img.alt));
+    add(img, describe(img, "img", url, img.alt));
   }
-  let withCode = 0;
-  for (const svg of document.querySelectorAll("svg")) {
+  // Inline SVGs. The code of the 8 likeliest to be the logo is kept, likeliest first, so a
+  // header's icons don't use up the room before the logo.
+  const drawings = [];
+  for (const svg of all("svg")) {
     const r = svg.getBoundingClientRect();
-    if (r.width < 24 || r.height < 12) continue;  // icons, not logos
     const title = svg.querySelector("title");
     const label = svg.getAttribute("aria-label") || (title ? title.textContent : "");
+    // Icons aren't logos, but a small drawing labeled as the logo, or in a link that is, like
+    // Mejuri's slim wordmark, can be.
+    const labeled = /logo/i.test([label, labelOf(svg), linkLabel(svg)].join(" "));
+    if (labeled ? r.width < 16 || r.height < 6 : r.width < 24 || r.height < 12) continue;
     // A picture drawn inside an SVG, like a profile picture, is that picture's own file.
     const picture = svg.querySelector("image");
     const href = picture ? picture.getAttribute("href") || picture.getAttribute("xlink:href") || "" : "";
     if (href && !href.startsWith("data:")) {
-      found.push(describe(svg, "img", absolute(href), label));
+      add(svg, describe(svg, "img", absolute(href), label));
       continue;
     }
-    const image = describe(svg, "svg", "", label);
-    const named = /logo/i.test(label + " " + image.css_class + " " + image.element_id);
-    if (withCode < 8 && (image.in_header || image.links_home || named || image.box.y < 400)) {
-      image.svg = standalone(svg);
-      withCode += 1;
+    const image = add(svg, describe(svg, "svg", "", label));
+    const named = /logo/i.test([label, image.css_class, image.element_id, image.link_label].join(" "));
+    const near = image.box.y < 400;
+    const likely = 4 * named + 4 * image.links_home + 3 * (image.in_header && near) + near;
+    if (likely) drawings.push([likely, svg, image]);
+  }
+  drawings.sort((a, b) => b[0] - a[0]);  // the sort is stable, so page order settles ties
+  for (const [, svg, image] of drawings.slice(0, 8)) image.svg = standalone(svg);
+  // Pictures set by CSS: backgrounds and masks, like Warby Parker's logo, on an element or
+  // drawn before or after it.
+  const urlOf = (value) => {
+    const match = (value || "").match(/url\\(["']?(.*?)["']?\\)/);
+    // url(#shape) points to a shape on the page itself, not to a picture.
+    return match && !match[1].startsWith("#") ? absolute(match[1]) : "";
+  };
+  const styled = "header *, nav *, [class*=logo i], [class*=logo i] *, [aria-label*=logo i] *, [data-testid*=logo i] *";
+  for (const el of all(styled)) {
+    const urls = new Set();
+    for (const pseudo of [null, "::before", "::after"]) {
+      const style = getComputedStyle(el, pseudo);
+      for (const value of [style.backgroundImage, style.maskImage, style.webkitMaskImage]) {
+        const url = urlOf(value);
+        if (url) urls.add(url);
+      }
     }
-    found.push(image);
+    for (const url of urls) add(el, describe(el, "background", url, el.getAttribute("aria-label")));
   }
-  for (const el of document.querySelectorAll("header *, nav *, [class*=logo i]")) {
-    const match = getComputedStyle(el).backgroundImage.match(/url\\(["']?(.*?)["']?\\)/);
-    if (match) found.push(describe(el, "background", absolute(match[1]), el.getAttribute("aria-label")));
+  // A logo drawn as styled text, like Uber's, has no picture of its own. A link home near the
+  // top that says it's the logo or the home page, with no picture inside, is cut out of the
+  // screenshot instead.
+  for (const link of all("a[href]")) {
+    if (!linksHome(link) || !/logo|home/i.test(labelOf(link))) continue;
+    const r = link.getBoundingClientRect();
+    if (r.width < 24 || r.height < 12 || r.y + window.scrollY > 300) continue;
+    if (drawnBy.some((el) => el === link || link.contains(el))) continue;
+    add(link, describe(link, "text", "", (link.textContent || "").replace(/\\s+/g, " ").trim().slice(0, 100)));
   }
+  // At most 200, keeping the ones that could be the logo before the rest of the page's
+  // pictures, in page order.
+  const promising = (image) => image.kind !== "img" || image.links_home || image.in_header
+    || /logo/i.test([image.alt, image.css_class, image.link_label].join(" "));
+  const kept = new Set([...new Set([...found.filter(promising), ...found])].slice(0, 200));
   const doctype = document.doctype ? new XMLSerializer().serializeToString(document.doctype) : "";
   return {
     page: performance.timeOrigin,  // different for every page the tab shows
     url: location.href,
     status: performance.getEntriesByType("navigation")[0]?.responseStatus ?? 0,
     html: doctype + (document.documentElement ? document.documentElement.outerHTML : ""),
-    images: found.slice(0, 200),
+    images: found.filter((image) => kept.has(image)),
     text: REGION_TEXT,
     challenge: !!document.querySelector(CHALLENGE),  // still a bot check's page
   };

@@ -60,6 +60,35 @@ def test_images_far_down_in_a_header_menu_dont_count_as_header_images() -> None:
     assert candidates[0].url == f"{BASE}brand.svg"
 
 
+def test_a_logo_drawn_as_text_is_a_candidate_but_a_file_comes_first() -> None:
+    text = RenderedImage(
+        kind="text", alt="Example Cafe", box=HEADER_SPOT, links_home=True, in_header=True
+    )
+    (alone,) = _rank([text])
+    assert (alone.kind, alone.url, alone.box) == ("text", None, HEADER_SPOT)
+    footer_logo = _image(
+        f"{BASE}images/logo.webp",
+        alt="Example Cafe",
+        links_home=True,
+        box=Box(x=30, y=4000, width=160, height=56),
+    )
+    assert _rank([text, footer_logo])[0].url == f"{BASE}images/logo.webp"
+
+
+def test_a_slim_image_in_a_link_labeled_as_the_logo_isnt_an_icon() -> None:
+    slim = Box(x=32, y=62, width=40, height=8)
+    wordmark = _image(f"{BASE}w.svg", in_header=True, links_home=True, box=slim, link_label="logo")
+    icon = _image(f"{BASE}i.svg", in_header=True, links_home=True, box=slim)
+    assert [c.url for c in _rank([icon, wordmark])] == [f"{BASE}w.svg", f"{BASE}i.svg"]
+
+
+def test_a_browser_tab_icon_named_as_the_logo_isnt_taken_for_it() -> None:
+    structured = StructuredData(logo_url=f"{BASE}favicon.ico")
+    candidates = _rank([_image(f"{BASE}images/logo.png", in_header=True)], structured=structured)
+    assert candidates[0].url == f"{BASE}images/logo.png"
+    assert not any(candidate.declared for candidate in candidates)
+
+
 def test_copies_of_one_image_become_one_candidate() -> None:
     candidates = _rank(
         [

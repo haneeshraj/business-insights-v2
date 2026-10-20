@@ -6,7 +6,9 @@ size. An inline SVG logo is saved as its own code, which the page reader keeps. 
 neither a file nor code, such as one drawn with CSS, is cut out of the screenshot.
 """
 
+import re
 from typing import Final
+from urllib.parse import unquote, urlsplit
 
 from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
@@ -20,6 +22,34 @@ _TRIES: Final = 3  # candidates checked before giving up
 _LESS_SURE_PER_TRY: Final = 0.15  # each candidate that had to be skipped lowers the confidence
 
 
+# Words that name a version of a logo file rather than another image: mec-logo-desktop.svg
+# and mec-logo-mobile.svg are the same logo as mec-logo.svg. Numbers don't: logos-01.jpg and
+# logos-05.jpg are usually a row of partners' logos.
+_VERSION = re.compile(
+    r"[-_.@](?:desktop|mobile|tablet|white|black|dark|light|colou?r|reversed?|inverse|alt|"
+    r"header|footer|small|large|sm|lg|retina|\d+x)$"
+)
+
+
+def _stem(url: str | None) -> str:
+    """A logo file's name without its type and version words, to tell versions of one logo."""
+    if not url:
+        return ""
+    name = unquote(urlsplit(url).path.rsplit("/", 1)[-1]).lower().rsplit(".", 1)[0]
+    while (shorter := _VERSION.sub("", name)) != name:
+        name = shorter
+    return name
+
+
+def _runner_up(ranked: list[LogoCandidate]) -> int:
+    """The points of the best candidate that isn't another version of the top one's file."""
+    top = _stem(ranked[0].url)
+    if top == "logo":
+        top = ""  # too common a name to tell, like a partner's logo.png
+    others = (c.points for c in ranked[1:] if not (top and _stem(c.url) == top))
+    return next(others, 0)
+
+
 def _confidence(top: LogoCandidate, runner_up: int) -> float:
     """How sure the ranking is: the top candidate's points, and its lead over the next."""
     lead = top.points - runner_up
@@ -31,12 +61,13 @@ def _confidence(top: LogoCandidate, runner_up: int) -> float:
 
 
 def _in_order(ranked: list[LogoCandidate]) -> list[LogoCandidate]:
-    """The candidates to check, best first. When the best is an inline image with no file of
-    its own, the logo file the structured data names goes first: the business's own file for
-    the logo its page shows."""
+    """The candidates to check, best first. When the best has neither a file nor code of its
+    own, so it would be cut out of the screenshot, the logo file the structured data names goes
+    first: the business's own file. An inline SVG's own code stays first, since the declared
+    file can be another mark, like Mejuri's monogram for its wordmark."""
     order = [candidate for candidate in ranked if candidate.kind != "icon"]
     declared = next((c for c in order if c.declared and c.url), None)
-    if order and order[0].url is None and declared is not None:
+    if order and order[0].url is None and not order[0].svg and declared is not None:
         order.remove(declared)
         order.insert(0, declared)
     return order
@@ -93,13 +124,20 @@ async def _logo_file(
     return await ctx.files.save(f"{folder}/logo.{info.extension}", data), ""
 
 
+async def save_logo_file(url: str, ev: Evidence, ctx: RunContext) -> tuple[str | None, str]:
+    """Download a logo file the business names as its own, check that it's a logo, and save
+    it: its path, or None and why it can't be the logo."""
+    named = LogoCandidate(number=1, kind="structured_data", url=url, declared=True)
+    return await _logo_file(named, ev, ctx)
+
+
 async def logo_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | Escalate:
     """The page's most logo-like image that checks out as one."""
     ranked = list(ev.logo_candidates)
     order = _in_order(ranked)
     if not order:
         return Escalate("no image on the page looks like a logo")
-    sure = _confidence(ranked[0], ranked[1].points if len(ranked) > 1 else 0)
+    sure = _confidence(ranked[0], _runner_up(ranked))
     icon = next((c.url for c in ranked if c.kind == "icon" and c.url), None)
     skipped: list[str] = []
     for tries, candidate in enumerate(order[:_TRIES]):

@@ -249,14 +249,19 @@ class Box(_Frozen):
 class RenderedImage(_Frozen):
     """An image-like element as the browser drew it, before any judgment about what it is."""
 
-    kind: Literal["img", "svg", "background"]
-    url: str = ""  # the resolved URL; may be a data: placeholder; empty for inline SVG
+    # "text": a link home labeled as the logo with no picture inside, like a logo drawn as
+    # styled text, to be cut out of the screenshot.
+    kind: Literal["img", "svg", "background", "text"]
+    url: str = ""  # the resolved URL; may be a data: placeholder; empty for inline SVG and text
     alt: str = ""  # for SVG, its aria-label or <title>
     css_class: str = ""
     element_id: str = ""
     box: Box | None = None
     in_header: bool = False
     links_home: bool = False  # sits inside a link to the site's home page
+    # What the link around it says about it: its label, title, class, id and test ID, like
+    # "Mejuri logo - Click to return to the homepage".
+    link_label: str = ""
     # For an inline SVG that may be the logo: its code, standalone, with the page's styles
     # written in, so it can be saved as the logo's own file.
     svg: str = ""
@@ -295,8 +300,8 @@ class LogoCandidate(_Frozen):
     """An image on the page that might be the logo."""
 
     number: int = Field(ge=1)  # drawn on the screenshot, so a model can answer "which number?"
-    kind: Literal["img", "svg", "background", "structured_data", "icon"]
-    url: WebUrl | None = None  # None for inline SVG
+    kind: Literal["img", "svg", "background", "text", "structured_data", "icon"]
+    url: WebUrl | None = None  # None for inline SVG and text
     alt: str = ""
     css_class: str = ""
     box: Box | None = None  # None for images that aren't drawn on the page
