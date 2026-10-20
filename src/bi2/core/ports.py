@@ -3,6 +3,7 @@ them; entry points choose which implementation to use."""
 
 from typing import Protocol
 
+from bi2.core.asking import Ask, Decision, Generated, Prompt
 from bi2.core.models import KnownBusiness, PageSnapshot
 
 
@@ -51,3 +52,31 @@ class KnowsNothing:
 
     async def business_with_website(self, url: str) -> KnownBusiness | None:
         return None
+
+
+class Decider(Protocol):
+    """Answers typed questions about evidence: pick one, yes or no, rate, or find in an image.
+    Jev, or an LLM standing in for it."""
+
+    @property
+    def name(self) -> str:
+        """Who answers, like "jev" or "gemini", for the audit trail."""
+        ...
+
+    async def decide(self, ask: Ask) -> Decision:
+        """Answer every question in the Ask. Raises ModelUnavailable when the model can't
+        answer: its provider failed, or its free-tier budget is used up."""
+        ...
+
+
+class LanguageModel(Protocol):
+    """An LLM that answers a Prompt with JSON of the shape it asks for."""
+
+    @property
+    def name(self) -> str:
+        """Who answers, like "gemini", for the audit trail."""
+        ...
+
+    async def generate(self, prompt: Prompt) -> Generated:
+        """Answer the prompt. Raises ModelUnavailable when the model can't answer."""
+        ...

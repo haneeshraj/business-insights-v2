@@ -9,6 +9,13 @@ from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 
+from bi2.adapters.local.answers import (
+    CallLog,
+    KeptDecisions,
+    KeptGenerations,
+    LoggedDecider,
+    LoggedModel,
+)
 from bi2.adapters.local.downloads import KeptDownloads
 from bi2.adapters.local.files import LocalFiles
 from bi2.adapters.local.lookups import KeptLookups
@@ -16,10 +23,14 @@ from bi2.adapters.local.snapshots import SavedPages
 from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import PageSnapshot
-from bi2.core.ports import Downloader, Fetcher, KnowledgeBase
-from bi2.core.settings import Settings
+from bi2.core.ports import Decider, Downloader, Fetcher, KnowledgeBase, LanguageModel
+from bi2.core.settings import Keys, Settings, keys_from_environment
+from bi2.decide.jev import Jev
+from bi2.decide.llm import LlmDecider, WithBackup
 from bi2.fetch.browser import BrowserChoice, BrowserFetcher
 from bi2.fetch.http import HttpDownloader
+from bi2.llm.gemini import Gemini
+from bi2.llm.limits import FreeTier
 from bi2.services.wikidata import Wikidata
 
 
@@ -41,12 +52,24 @@ async def local_context(
     kept_downloads: Path | None = None,
     saved_pages: Path | None = None,
     kept_lookups: Path | None = None,
+    kept_answers: Path | None = None,
+    usage_file: Path | None = None,
+    call_log: CallLog | None = None,
+    keys: Keys | None = None,
+    settings: Settings | None = None,
 ) -> AsyncIterator[RunContext]:
     """A RunContext for the terminal app: a browser, a downloader, Wikidata, and files under
     `out`. With `saved_pages` instead of loading pages, the pages saved in that folder are read,
     such as each site's contact page. With `kept_downloads`, every file downloaded is kept in
-    that folder and reused on later runs, and with `kept_lookups`, every Wikidata answer. The
-    browser closes when the block ends."""
+    that folder and reused on later runs, and with `kept_lookups`, every Wikidata answer.
+
+    Models join when there's a key for them and model calls aren't turned off: Jev as the
+    Decider, with Gemini as its backup, or Gemini alone. Their answers are kept in
+    `kept_answers`, their calls logged in `call_log`, and their day's requests counted in
+    `usage_file`, so the free tiers' limits hold across runs. The browser closes when the
+    block ends."""
+    settings = settings or Settings()
+    keys = keys or keys_from_environment()
     async with AsyncExitStack() as stack:
         fetcher: Fetcher = SavedPages(saved_pages) if saved_pages is not None else _NoPages()
         if load_pages:
@@ -61,10 +84,53 @@ async def local_context(
         knowledge: KnowledgeBase = await stack.enter_async_context(Wikidata())
         if kept_lookups is not None:
             knowledge = KeptLookups(knowledge, kept_lookups)
+        decider, llm = await _models(stack, settings, keys, kept_answers, usage_file, call_log)
         yield RunContext(
-            settings=Settings(),
+            settings=settings,
             fetcher=fetcher,
             downloader=downloader,
             files=LocalFiles(out),
             knowledge=knowledge,
+            decider=decider,
+            llm=llm,
         )
+
+
+async def _models(
+    stack: AsyncExitStack,
+    settings: Settings,
+    keys: Keys,
+    kept: Path | None,
+    usage_file: Path | None,
+    log: CallLog | None,
+) -> tuple[Decider | None, LanguageModel | None]:
+    """The Decider and the LLM a run uses, from the keys it has."""
+    ai = settings.ai
+    if not ai.enabled:
+        return None, None
+    limits = FreeTier(usage_file, share=ai.daily_share)
+    llm: LanguageModel | None = None
+    if keys.gemini is not None:
+        gemini = Gemini(
+            keys.gemini.get_secret_value(),
+            limits=limits,
+            model=ai.llm_model,
+            backup=ai.backup_model,
+        )
+        llm = await stack.enter_async_context(gemini)
+        if kept is not None:
+            llm = KeptGenerations(llm, kept / "gemini", model=ai.llm_model)
+        if log is not None:
+            llm = LoggedModel(llm, log)
+    decider: Decider | None = None
+    if keys.jev is not None:
+        jev = Jev(keys.jev.get_secret_value(), limits=limits, model=ai.jev_model)
+        decider = await stack.enter_async_context(jev)
+        if kept is not None:
+            decider = KeptDecisions(decider, kept / "jev", model=ai.jev_model)
+        if log is not None:
+            decider = LoggedDecider(decider, log)
+    if llm is not None:
+        backup = LlmDecider(llm)
+        decider = backup if decider is None else WithBackup(decider, backup)
+    return decider, llm

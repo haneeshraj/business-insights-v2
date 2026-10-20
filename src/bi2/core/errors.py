@@ -29,3 +29,13 @@ class BrowserUnavailable(Bi2Error):
 
 class LookupUnavailable(Bi2Error):
     """A knowledge base, like Wikidata, couldn't be reached."""
+
+
+class ModelUnavailable(Bi2Error):
+    """A model couldn't answer: its provider failed or refused the request, or its answer
+    wasn't of the shape asked for."""
+
+
+class BudgetUsedUp(ModelUnavailable):
+    """A model's budget is used up for now, like a free tier's requests for the day, or the
+    model calls one site may make."""
