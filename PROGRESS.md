@@ -111,6 +111,8 @@ The logo's eight are mostly the same logo in another file: an SVG saved from the
 
 ## Notes
 
+- **Stopped at 18:47 at 97% usage.** A background code review of tonight's changes, started at 18:20 at 12%, used up the session in under half an hour. I stopped it before it reported, and stopped working, since the limit resets at 22:50, after the run's end. Nothing it found was applied; running it again with a smaller scope is a good first step next session.
+
 - **Stopped for low memory, at about 14:50:** the background usage watcher and a background live run, while the session sat idle. The note that came with it says not to restart them without being asked, so the watcher is still off; usage has been checked by hand at each step since, with `check-usage.ps1`. The live run had finished on its own. Free memory was back to 4 GB right after.
 
 - One test, `tests/cli/test_review.py::test_only_the_page_it_served_can_save_checks`, fails now and then on Windows with a dropped local connection when the machine is busy, and passes when run again. It did before tonight's changes too.
