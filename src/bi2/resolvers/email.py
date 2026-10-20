@@ -25,9 +25,11 @@ too.
 import re
 from typing import Final, NamedTuple
 
+from bi2.core.asking import Ask, Choice, YesNo
 from bi2.core.context import RunContext
 from bi2.core.models import Contacts, EmailAddress, EmailResult, Evidence, PageKind
 from bi2.core.urls import domain_name, registrable_domain
+from bi2.resolvers.asking import NONE, around, ask_decider, confidence, site_lines, sure_of_one
 from bi2.resolvers.cascade import Escalate, Resolved, run_cascade
 
 # How sure an address is, by the most telling place it was found in.
@@ -245,6 +247,88 @@ async def email_from_the_contact_page(
     return _answer(ev.contact_page.contacts, ev, "the contact page", " either")
 
 
+_JUDGE_VERSION: Final = "1"
+_GENERAL: Final = (
+    "the business's general email address, the one its customers write to, like info@ or "
+    "hello@ or customer service: not one for a single purpose (the press, jobs, privacy, "
+    "wholesale, partnerships, investors, fraud reports), not a no-reply address, and not a "
+    "person's own unless the pages give no other"
+)
+_MOST_ADDRESSES: Final = 8
+
+
+def _addresses(ev: Evidence) -> list[_Candidate]:
+    found = {c.email: c for c in _candidates(ev.contacts, ev)}
+    if ev.contact_page is not None:
+        for c in _candidates(ev.contact_page.contacts, ev):
+            if c.email not in found:
+                found[c.email] = c._replace(places=tuple(f"contact page {p}" for p in c.places))
+    return list(found.values())[:_MOST_ADDRESSES]
+
+
+async def email_by_decider(ev: Evidence, ctx: RunContext) -> Resolved[EmailAddress] | Escalate:
+    """The address a model judges the business's general one, when the rules aren't sure."""
+    addresses = _addresses(ev)
+    if not addresses:
+        return Escalate("no address for a model to judge")
+    text = "\n".join((ev.text.header, ev.text.main, ev.text.footer))
+    lines = site_lines(ev)
+    for c in addresses:
+        shown = around(text, re.escape(c.email))
+        lines.append(
+            f"{c.email}: found in {', '.join(c.places) or 'the page'}"
+            + "".join(f'\n  shown as: "{s}"' for s in shown)
+        )
+    if len(addresses) == 1:
+        question: Choice | YesNo = YesNo(instructions=f"Is {addresses[0].email} {_GENERAL}?")
+    else:
+        options = {
+            c.email: f"{c.email}, found in {', '.join(c.places) or 'the page'}" for c in addresses
+        }
+        options[NONE] = "None of these is the business's general address"
+        question = Choice(instructions=f"Which of these is {_GENERAL}?", options=options)
+    ask = Ask(
+        task="email_pick",
+        version=_JUDGE_VERSION,
+        state="\n".join(lines),
+        questions={"email": question},
+    )
+    decision = await ask_decider(ask, ctx)
+    if isinstance(decision, str):
+        return Escalate(decision)
+    if isinstance(question, YesNo):
+        probability = decision.agreed("email").probability
+        sure = sure_of_one(probability)
+        if sure is None:
+            return Escalate(
+                f"{decision.model} doubts it's the general address ({probability:.2f})",
+                cost=decision.cost,
+            )
+        chosen = addresses[0]
+    else:
+        picked = decision.picked("email")
+        probability = picked.probability(picked.choice)
+        if picked.choice == NONE:
+            return Escalate(
+                f"{decision.model} says none is the general address ({probability:.2f})",
+                cost=decision.cost,
+            )
+        chosen = next(c for c in addresses if c.email == picked.choice)
+        rules = _best(_candidates(ev.contacts, ev)) or (
+            _best(_candidates(ev.contact_page.contacts, ev)) if ev.contact_page else None
+        )
+        sure = confidence(probability, agrees=rules is not None and rules.email == chosen.email)
+    return Resolved(
+        value=chosen.email,
+        confidence=sure,
+        source=f"{decision.model}: judged the general address ({probability:.2f})",
+        evidence=tuple(f"{place}: {chosen.email}" for place in chosen.places),
+        cost=decision.cost,
+    )
+
+
 async def resolve_email(ev: Evidence, ctx: RunContext) -> EmailResult:
-    """The business's email address: from its homepage, then its contact page."""
-    return await run_cascade([email_from_the_page, email_from_the_contact_page], ev, ctx)
+    """The business's email address: from its homepage, then its contact page, then a model's
+    judgment of the addresses they show."""
+    steps = [email_from_the_page, email_from_the_contact_page, email_by_decider]
+    return await run_cascade(steps, ev, ctx)

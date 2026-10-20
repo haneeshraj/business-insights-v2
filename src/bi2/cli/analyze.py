@@ -10,11 +10,13 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from bi2.adapters.local.answers import CallLog
 from bi2.adapters.local.snapshots import load_snapshot, saved_folders
 from bi2.cli.options import DEFAULT_CONCURRENCY, AllowPrivate, Browser, Timeout
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable
 from bi2.core.models import FIELD_NAMES, Evidence, SiteResult, Status
+from bi2.core.settings import AiSettings, Settings
 from bi2.core.urls import site_folder
 from bi2.evaluation.gold import GoldSite, load_gold_set, site_key
 from bi2.evaluation.scoring import SCORED_FIELDS, FieldScore, Verdict, score_site
@@ -31,6 +33,8 @@ _SHORT: Final = {
 _SHOWN: Final = (
     ("company_name", "name"),
     ("logo", "logo"),
+    ("mcc", "mcc"),
+    ("address", "address"),
     ("phone", "phone"),
     ("email", "email"),
     ("social_links", "social"),
@@ -51,6 +55,12 @@ class _Run(NamedTuple):
     concurrency: int
     allow_private: bool
     saved: Path | None = None  # the folder of saved pages, when the run uses them
+    ai: bool = True  # whether models are asked about the answers the rules aren't sure of
+
+
+def app_folder() -> Path:
+    """v2's own folder in the user's settings: the day's free-tier counts and kept answers."""
+    return Path(typer.get_app_dir("bi2"))
 
 
 def _progress(done: int, total: int, site: _Analyzed) -> str:
@@ -64,10 +74,14 @@ def _progress(done: int, total: int, site: _Analyzed) -> str:
 
 
 async def _analyze_all(
-    sources: Sequence[str | Path], run: _Run, console: Console
+    sources: Sequence[str | Path], run: _Run, console: Console, log: CallLog
 ) -> list[_Analyzed]:
     """Analyze every source, a few at a time, in the order given."""
     saved = bool(sources) and isinstance(sources[0], Path)
+    settings = Settings() if run.ai else Settings(ai=AiSettings(enabled=False))
+    # Runs on saved pages keep model answers beside the pages, like downloads, so reruns ask
+    # no model; live runs keep them in v2's own folder.
+    answers = run.saved / "answers" if run.saved is not None else app_folder() / "answers"
     async with local_context(
         run.out,
         load_pages=not saved,
@@ -79,6 +93,10 @@ async def _analyze_all(
         kept_downloads=run.saved / "downloads" if run.saved is not None else None,
         kept_lookups=run.saved / "lookups" if run.saved is not None else None,
         saved_pages=run.saved,
+        kept_answers=answers,
+        usage_file=app_folder() / "free-tier-usage.json",
+        call_log=log,
+        settings=settings,
     ) as ctx:
         limit = asyncio.Semaphore(run.concurrency)
 
@@ -129,6 +147,21 @@ def _print_right_answers(totals: dict[str, tuple[int, int]], console: Console) -
     for field, (right, checked) in totals.items():
         table.add_row(field, f"{right} of {checked}", f"{right / checked:.0%}")
     console.print(table)
+
+
+def _print_model_calls(log: CallLog, console: Console) -> None:
+    """What the run asked models, and what it spent on them."""
+    if not log.calls:
+        console.print("Model calls: none", markup=False, highlight=False)
+        return
+    spent = log.spent
+    console.print(
+        f"Model calls: {log.calls} ({log.kept} from kept answers, {log.failed} failed), "
+        f"{spent.input_tokens:,} tokens in, {spent.output_tokens:,} out, "
+        f"${spent.usd:.4f} at list price",
+        markup=False,
+        highlight=False,
+    )
 
 
 def _sources(
@@ -197,9 +230,17 @@ def analyze(
     browser: Browser = "auto",
     timeout: Timeout = 20.0,
     allow_private: AllowPrivate = False,
+    ai: Annotated[
+        bool,
+        typer.Option(
+            "--ai/--no-ai",
+            help="Ask Jev and Gemini about the answers the rules aren't sure of, when their keys "
+            "are set (JEV_API_KEY, GEMINI_API_KEY). --no-ai uses the rules alone.",
+        ),
+    ] = True,
 ) -> None:
-    """Find each business's name, logo, phone number, email address and social media links from
-    its website."""
+    """Find each business's name, logo, MCC, address, phone number, email address and social
+    media links from its website."""
     if urls and saved is not None:
         typer.echo("error: give URLs or --saved, not both", err=True)
         raise typer.Exit(code=2)
@@ -211,9 +252,12 @@ def analyze(
         typer.echo("error: there are no pages to analyze", err=True)
         raise typer.Exit(code=1)
     console = Console()
-    run = _Run(out, browser, timeout, concurrency, allow_private, saved)
+    run = _Run(out, browser, timeout, concurrency, allow_private, saved, ai)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "model-calls.jsonl").unlink(missing_ok=True)
+    log = CallLog(out / "model-calls.jsonl")
     try:
-        analyzed = asyncio.run(_analyze_all(sources, run, console))
+        analyzed = asyncio.run(_analyze_all(sources, run, console, log))
     except BrowserUnavailable as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -239,6 +283,7 @@ def analyze(
         summary_title="Right answers, by the gold set",
         root=out,
     )
+    _print_model_calls(log, console)
     console.print(f"Results: {(out / 'results.jsonl').resolve()}", markup=False, highlight=False)
     console.print(f"Report: {report.resolve()}", markup=False, highlight=False)
     if open_report:

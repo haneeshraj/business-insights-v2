@@ -3,12 +3,12 @@ enough, and record why each step was or wasn't enough. Those records are the fie
 trail."""
 
 from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from bi2.core.context import RunContext
 from bi2.core.errors import Bi2Error
-from bi2.core.models import Evidence, FieldResult, Status, StepOutcome, StepRecord
+from bi2.core.models import Cost, Evidence, FieldResult, Status, StepOutcome, StepRecord
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class Resolved[T]:
     confidence: float
     source: str  # where it came from, like "structured data + site name"
     evidence: tuple[str, ...] = ()  # quotes or URLs that support it
+    cost: Cost = field(default_factory=Cost)  # what the step's model calls cost
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class Escalate:
     """A step had no answer to give, so the next step runs."""
 
     reason: str
+    cost: Cost = field(default_factory=Cost)
 
 
 type Step[T] = Callable[[Evidence, RunContext], Awaitable[Resolved[T] | Escalate]]
@@ -58,13 +60,23 @@ async def run_cascade[T](steps: Sequence[Step[T]], ev: Evidence, ctx: RunContext
             continue
         if isinstance(outcome, Escalate):
             records.append(
-                StepRecord(step=_name(step), outcome=StepOutcome.ESCALATED, detail=outcome.reason)
+                StepRecord(
+                    step=_name(step),
+                    outcome=StepOutcome.ESCALATED,
+                    detail=outcome.reason,
+                    cost=outcome.cost,
+                )
             )
             continue
         confidence = round(outcome.confidence, 2)
         if confidence >= accept:
             records.append(
-                StepRecord(step=_name(step), outcome=StepOutcome.RESOLVED, confidence=confidence)
+                StepRecord(
+                    step=_name(step),
+                    outcome=StepOutcome.RESOLVED,
+                    confidence=confidence,
+                    cost=outcome.cost,
+                )
             )
             return FieldResult(
                 value=outcome.value,
@@ -80,6 +92,7 @@ async def run_cascade[T](steps: Sequence[Step[T]], ev: Evidence, ctx: RunContext
                 outcome=StepOutcome.ESCALATED,
                 detail=f"not sure enough: {confidence:.2f}, below {accept:.2f}",
                 confidence=confidence,
+                cost=outcome.cost,
             )
         )
         if best is None or outcome.confidence > best.confidence:

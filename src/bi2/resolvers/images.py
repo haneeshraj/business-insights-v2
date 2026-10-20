@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Final
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
 from bi2.core.models import Box
 
@@ -81,3 +81,56 @@ def crop(screenshot: bytes, box: Box) -> bytes | None:
     except _NOT_READABLE:
         return None
     return out.getvalue()
+
+
+# Colors that stand out on most pages, one per box in turn, so neighboring boxes differ.
+_MARKS: Final = ("#e6007e", "#0057ff", "#00a86b", "#ff6a00", "#7a00e6", "#d40000")
+
+
+def _overlap(a: tuple[float, ...], b: tuple[float, ...]) -> float:
+    """How much of the smaller of two rectangles (left, top, right, bottom) the other covers."""
+    width = min(a[2], b[2]) - max(a[0], b[0])
+    height = min(a[3], b[3]) - max(a[1], b[1])
+    if width <= 0 or height <= 0:
+        return 0.0
+    smaller = min((a[2] - a[0]) * (a[3] - a[1]), (b[2] - b[0]) * (b[3] - b[1]))
+    return width * height / smaller if smaller > 0 else 0.0
+
+
+def number_boxes(screenshot: bytes, boxes: list[tuple[int, Box]]) -> tuple[bytes, list[int]]:
+    """The screenshot with each box outlined and labeled with its number, as a JPEG, and the
+    numbers drawn: a box that isn't on the screenshot is left out. A model shown it can answer
+    "which number is the logo?"."""
+
+    with Image.open(io.BytesIO(screenshot)) as opened:
+        image = opened.convert("RGB")
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default(size=18)
+    drawn: list[int] = []
+    outlined: list[tuple[int, int, int, int]] = []
+    labels: list[tuple[float, float, float, float]] = []
+    for number, box in boxes:
+        left, top = round(box.x), round(box.y)
+        right, bottom = round(box.x + box.width), round(box.y + box.height)
+        if right - left < 4 or bottom - top < 4 or top >= image.height or left >= image.width:
+            continue  # too small to see, or off the screenshot
+        if any(_overlap((left, top, right, bottom), other) > 0.8 for other in outlined):
+            continue  # drawn in the same place as a likelier candidate, so it's the same image
+        color = _MARKS[len(drawn) % len(_MARKS)]
+        draw.rectangle((left - 2, top - 2, right + 2, bottom + 2), outline=color, width=3)
+        label = str(number)
+        width = draw.textlength(label, font=font) + 10
+        spots = [(left - 2, top - 26), (left + 2, top + 2), (right - width, top - 26),
+                 (right - width - 2, top + 2), (left - 2, bottom + 4)]  # fmt: skip
+        for x, y in spots:
+            spot = (max(0.0, x), max(0.0, y), max(0.0, x) + width, max(0.0, y) + 24)
+            if not any(_overlap(spot, other) > 0 for other in labels):
+                break
+        labels.append(spot)
+        outlined.append((left, top, right, bottom))
+        draw.rectangle(spot, fill=color)
+        draw.text((spot[0] + 5, spot[1] + 2), label, fill="white", font=font)
+        drawn.append(number)
+    out = io.BytesIO()
+    image.save(out, format="JPEG", quality=85)
+    return out.getvalue(), drawn

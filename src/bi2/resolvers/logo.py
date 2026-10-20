@@ -10,12 +10,14 @@ import re
 from typing import Final
 from urllib.parse import unquote, urlsplit
 
+from bi2.core.asking import Ask, Choice
 from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import Evidence, Logo, LogoCandidate, LogoResult
 from bi2.core.urls import site_folder
-from bi2.resolvers.cascade import Escalate, Resolved, run_cascade
-from bi2.resolvers.images import crop, inspect_image, logo_problem
+from bi2.resolvers.asking import NONE, ask_decider, confidence, site_lines
+from bi2.resolvers.cascade import Escalate, Resolved, Step, run_cascade
+from bi2.resolvers.images import crop, inspect_image, logo_problem, number_boxes
 
 _MAX_LOGO_BYTES: Final = 5_000_000
 _TRIES: Final = 3  # candidates checked before giving up
@@ -154,6 +156,123 @@ async def logo_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | 
     return Escalate("no candidate checked out: " + "; ".join(skipped))
 
 
+# The most candidates numbered on the screenshot for a model: past these, the boxes crowd it.
+_MOST_SHOWN: Final = 8
+_PICK_VERSION: Final = "1"
+_PICK: Final = (
+    "Which numbered box in `screenshot` marks the business's own logo: the brand mark or "
+    "name it shows as its own, usually at the top of the page? Not a partner's or a "
+    "supplier's logo, a product photo, a social media or payment icon, or an award badge."
+)
+_KINDS: Final = {
+    "img": "an image",
+    "svg": "a drawing",
+    "background": "a CSS image",
+    "text": "styled text",
+}
+
+
+def _describe(candidate: LogoCandidate) -> str:
+    """What the page says about a candidate, for a model to read beside its box."""
+    parts = [_KINDS.get(candidate.kind, candidate.kind)]
+    if candidate.in_header:
+        parts.append("in the header")
+    if candidate.links_home:
+        parts.append("links to the home page")
+    if candidate.alt:
+        parts.append(f'labeled "{candidate.alt[:80]}"')
+    if candidate.url:
+        parts.append("file " + candidate.url.rsplit("/", 1)[-1].split("?")[0][:60])
+    return ", ".join(parts)
+
+
+def _place(candidate: LogoCandidate) -> tuple[int, float]:
+    box = candidate.box
+    return (round(box.y / 20), box.x) if box else (0, 0.0)
+
+
+def _logo_ask(ev: Evidence, shown: list[LogoCandidate], screenshot: bytes) -> Ask:
+    """Which numbered box is the logo. Options run top to bottom, then left to right, rather
+    than in the rules' order, so a model's lean toward the first option doesn't just repeat
+    the rules."""
+    options = {str(c.number): f"box {c.number}: {_describe(c)}" for c in sorted(shown, key=_place)}
+    options[NONE] = "No box marks the business's own logo"
+    lines = [*site_lines(ev), "The numbered boxes in `screenshot` mark images on the page."]
+    return Ask(
+        task="logo_pick",
+        version=_PICK_VERSION,
+        state="\n".join(lines),
+        questions={"logo": Choice(instructions=_PICK, options=options)},
+        images={"screenshot": screenshot},
+    )
+
+
+async def _numbered_screenshot(
+    ev: Evidence, ctx: RunContext
+) -> tuple[bytes, list[LogoCandidate]] | str:
+    """The screenshot with the likeliest candidates numbered on it, or why there's none."""
+    if ev.screenshot_file is None:
+        return "there's no screenshot to number the candidates on"
+    boxed = [c for c in ev.logo_candidates if c.kind != "icon" and c.box and c.box.width > 0]
+    if not boxed:
+        return "no candidate is drawn on the page"
+    try:
+        screenshot = await ctx.files.read(ev.screenshot_file)
+    except OSError:
+        return "the screenshot wasn't saved"
+    boxes = [(c.number, c.box) for c in boxed[:_MOST_SHOWN] if c.box]
+    image, drawn = number_boxes(screenshot, boxes)
+    if not drawn:
+        return "no candidate is on the screenshot"
+    await ctx.files.save(f"{site_folder(ev.page.url)}/logo-candidates.jpg", image)
+    return image, [c for c in boxed if c.number in drawn]
+
+
+def _logo_by(*, second: bool) -> Step[Logo]:
+    """A step that asks a model which numbered box is the logo: the Decider, or with `second`
+    the second model, for a second opinion."""
+
+    async def ask(ev: Evidence, ctx: RunContext) -> Resolved[Logo] | Escalate:
+        numbered = await _numbered_screenshot(ev, ctx)
+        if isinstance(numbered, str):
+            return Escalate(numbered)
+        image, shown = numbered
+        decision = await ask_decider(_logo_ask(ev, shown, image), ctx, second=second)
+        if isinstance(decision, str):
+            return Escalate(decision)
+        picked = decision.picked("logo")
+        probability = picked.probability(picked.choice)
+        if picked.choice == NONE:
+            why = f"{decision.model} says no box is the logo ({probability:.2f})"
+            return Escalate(why, cost=decision.cost)
+        candidate = next(c for c in shown if str(c.number) == picked.choice)
+        saved, problem = await _logo_file(candidate, ev, ctx)
+        if saved is None:
+            why = f"{decision.model} picked candidate {candidate.number}, which {problem}"
+            return Escalate(why, cost=decision.cost)
+        rules = _in_order(list(ev.logo_candidates))
+        agrees = bool(rules) and rules[0].number == candidate.number
+        icon = next((c.url for c in ev.logo_candidates if c.kind == "icon" and c.url), None)
+        how = ", as the rules ranked it" if agrees else ""
+        return Resolved(
+            value=Logo(url=candidate.url, image_file=saved, icon_url=icon),
+            confidence=confidence(probability, agrees=agrees),
+            source=f"{decision.model}: logo candidate {candidate.number} on the numbered "
+            f"screenshot ({probability:.2f}{how})",
+            evidence=(_where(candidate),),
+            cost=decision.cost,
+        )
+
+    ask.__name__ = "logo_by_second_opinion" if second else "logo_by_decider"
+    return ask
+
+
+logo_by_decider = _logo_by(second=False)
+logo_by_second_opinion = _logo_by(second=True)
+
+
 async def resolve_logo(ev: Evidence, ctx: RunContext) -> LogoResult:
-    """The business's logo. Asking a vision model "which number is the logo?" joins later."""
-    return await run_cascade([logo_from_the_page], ev, ctx)
+    """The business's logo: the page's most logo-like image, and when the rules aren't sure of
+    it, the numbered candidate a model picks on the screenshot, then a second model's pick."""
+    steps = [logo_from_the_page, logo_by_decider, logo_by_second_opinion]
+    return await run_cascade(steps, ev, ctx)

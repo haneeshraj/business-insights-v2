@@ -108,7 +108,7 @@ async def test_a_contact_page_that_wont_load_leaves_the_homepage_to_stand_alone(
     result, ev = await analyze_snapshot(page_snapshot(HOME), fake_context())  # nothing to load
     assert ev.contact_page is None
     assert result.phone.status is Status.NOT_FOUND
-    assert result.phone.steps[-1].detail == "no contact page was read"
+    assert result.phone.steps[1].detail == "no contact page was read"
 
 
 NO_FRILLS_URL = "https://www.nofrills.ca/"

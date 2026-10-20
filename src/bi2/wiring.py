@@ -84,7 +84,9 @@ async def local_context(
         knowledge: KnowledgeBase = await stack.enter_async_context(Wikidata())
         if kept_lookups is not None:
             knowledge = KeptLookups(knowledge, kept_lookups)
-        decider, llm = await _models(stack, settings, keys, kept_answers, usage_file, call_log)
+        decider, llm, second = await _models(
+            stack, settings, keys, kept_answers, usage_file, call_log
+        )
         yield RunContext(
             settings=settings,
             fetcher=fetcher,
@@ -93,6 +95,7 @@ async def local_context(
             knowledge=knowledge,
             decider=decider,
             llm=llm,
+            second=second,
         )
 
 
@@ -103,11 +106,12 @@ async def _models(
     kept: Path | None,
     usage_file: Path | None,
     log: CallLog | None,
-) -> tuple[Decider | None, LanguageModel | None]:
-    """The Decider and the LLM a run uses, from the keys it has."""
+) -> tuple[Decider | None, LanguageModel | None, Decider | None]:
+    """The Decider, the LLM and the second opinion a run uses, from the keys it has: with both
+    keys, Jev decides, with Gemini as its backup and its second opinion."""
     ai = settings.ai
     if not ai.enabled:
-        return None, None
+        return None, None, None
     limits = FreeTier(usage_file, share=ai.daily_share)
     llm: LanguageModel | None = None
     if keys.gemini is not None:
@@ -130,7 +134,11 @@ async def _models(
             decider = KeptDecisions(decider, kept / "jev", model=ai.jev_model)
         if log is not None:
             decider = LoggedDecider(decider, log)
+    second: Decider | None = None
     if llm is not None:
         backup = LlmDecider(llm)
-        decider = backup if decider is None else WithBackup(decider, backup)
-    return decider, llm
+        if decider is None:
+            decider = backup
+        else:
+            decider, second = WithBackup(decider, backup), backup
+    return decider, llm, second

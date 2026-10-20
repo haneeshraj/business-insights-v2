@@ -30,3 +30,4 @@ class RunContext:
     # model calls are turned off; the steps that need them then pass.
     decider: Decider | None = None  # Jev, or an LLM standing in for it
     llm: LanguageModel | None = None  # for generations, and the Decider's backup
+    second: Decider | None = None  # another model, for a second opinion when the first is unsure
