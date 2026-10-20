@@ -171,6 +171,8 @@ class Gemini:
             raise BudgetUsedUp(self._no_search)
         problems: list[ModelUnavailable] = []
         for info in self._models:
+            if prompt.search and self._no_search:
+                break  # refused on this key, so no other model is asked either
             try:
                 return await self._ask(info, prompt)
             except ModelUnavailable as exc:

@@ -110,3 +110,40 @@ def test_only_png_and_jpeg_go_to_a_model() -> None:
     assert media_type(picture(4, 4, "JPEG")) == "image/jpeg"
     with pytest.raises(ValueError, match="PNG and JPEG"):
         media_type(b"GIF89a")
+
+
+async def test_a_refused_web_search_isnt_asked_again() -> None:
+    asked: list[str] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.path)
+        return httpx.Response(429, json={"error": {"message": "You exceeded your current quota"}})
+
+    search = PROMPT.model_copy(update={"search": True, "images": ()})
+    async with _gemini(answer) as gemini:
+        with pytest.raises(BudgetUsedUp, match="grounding is refused"):
+            await gemini.generate(search)
+        with pytest.raises(BudgetUsedUp):
+            await gemini.generate(search)
+    assert len(asked) == 1  # one refusal, no retries, and nothing asked the second time
+
+
+async def test_a_searched_answer_names_its_pages() -> None:
+    def answer(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        assert body["tools"] == [{"google_search": {}}]
+        assert "responseJsonSchema" not in body["generationConfig"]
+        candidate = {
+            "content": {"parts": [{"text": '```json\n{"street": "1 Main St"}\n```'}]},
+            "finishReason": "STOP",
+            "groundingMetadata": {
+                "groundingChunks": [{"web": {"uri": "https://x.example/1", "title": "example.com"}}]
+            },
+        }
+        return httpx.Response(200, json={"candidates": [candidate]})
+
+    search = PROMPT.model_copy(update={"search": True, "images": ()})
+    async with _gemini(answer, backup=None) as gemini:
+        generated = await gemini.generate(search)
+    assert generated.data == {"street": "1 Main St"}
+    assert generated.sources == ("example.com https://x.example/1",)
