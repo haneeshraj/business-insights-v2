@@ -295,11 +295,12 @@ Built on 2026-10-20. The head office, or the only location, as published:
 1. **Structured data:** a `PostalAddress` with a street is the business stating it.
 2. **Address lines** in the footer and on the contact page, found by their postcodes, with a house number before the postcode; or, for countries whose postcodes the rules don't know, by a house number and a street word ("Street", "rue", "Straße" and so on). One line in the footer is the business's. Several, like one per store, go to Jev, which picks the head office, and the address is marked as one of several locations.
 3. **Wikidata's head office,** for big brands, like Rogers' 333 Bloor Street East, which no page on rogers.com gives. It's sure when the pages show the same postcode.
-4. **Gemini reads the footer and the contact page,** but only after Jev says they give a street address at all, and the address must be quoted from them.
-5. **A web search,** through Gemini's Google Search grounding, for a head office the pages never give. Its answer must cite the pages it rests on. Google doesn't offer grounding on Gemini's free tier, so on a free key the first refusal turns the step off for the run.
-6. **The map:** every address is placed with OpenStreetMap's Nominatim, one request a second, which adds its coordinates and says whether the map agrees on its postcode. The published address is never replaced.
+4. **The privacy policy,** read when no other page gives a street address: it names the company that keeps the data, usually with its head office's address, like Home Hardware's in St. Jacobs. An address over two lines is read as one, and a PO box is never sure.
+5. **Gemini reads the footer and the contact page,** but only after Jev says they give a street address at all, and the address must be quoted from them.
+6. **A web search,** through Gemini's Google Search grounding, for a head office the pages never give. Its answer must cite the pages it rests on. Google doesn't offer grounding on Gemini's free tier, so on a free key the first refusal turns the step off for the run.
+7. **The map:** every address is placed with OpenStreetMap's Nominatim, one request a second, which adds its coordinates and says whether the map agrees on its postcode. The published address is never replaced.
 
-On the gold set: 30 of 47 right, from none. Most of the rest are chains whose head office no page gives and Wikidata doesn't list, the search step's job on a paid key.
+On the gold set: 30 of 47 right, from none, 14 of them sure. Most of the rest are chains whose head office no page gives and Wikidata doesn't list, the search step's job on a paid key.
 
 ### Phone number
 

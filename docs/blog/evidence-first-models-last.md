@@ -60,7 +60,7 @@ Five rules hold the design together:
 
 Most of what bi2 asks a model isn't open-ended. Is this numbered box the logo? Which of these five names is the business's? Which of these three numbers is the main one? Which of these 319 codes fits? Those are *decisions*, and a generative LLM is an expensive, slow and occasionally inventive way to make them.
 
-bi2 sends decisions to [Jev](https://docs.typesafe.ai), TypeSafe's "System One" model. Jev takes a state and typed questions (pick one, yes or no, rate, or find in an image) and returns a probability for every answer. It never writes text, so it can only pick from the options it was given. Whatever it picks is one of the rules' own candidates, so it can't invent a phone number. On our runs it answered in 0.3 to 0.6 seconds, at a list price of about $0.04 a million input tokens.
+bi2 sends decisions to [Jev](https://docs.typesafe.ai), TypeSafe's "System One" model. Jev takes a state and typed questions (pick one, yes or no, rate, or find in an image) and returns a probability for every answer. It never writes text, so it can only pick from the options it was given. Whatever it picks is one of the rules' own candidates, so it can't invent a phone number. On our runs it answered in 0.2 to 0.6 seconds, at a list price of about $0.04 a million input tokens.
 
 Generation goes to Gemini, for the few things that are genuinely generative: reading a business name out of a logo, or an address out of a contact page whose format no rule knows. Gemini has to quote the evidence, and code checks that the quote is on the page and the answer is in the quote. A name the page doesn't show is refused.
 
@@ -79,7 +79,8 @@ Generation goes to Gemini, for the few things that are genuinely generative: rea
 Several answers need no model at all:
 
 - **Structured data.** JSON-LD often states the business's name, logo, phone and address outright.
-- **Wikidata.** Big brands list their official websites there, along with their logo files and head offices. Rogers' entry gives 333 Bloor Street East and its postcode, which no page on rogers.com shows. When a page blocks bots, Wikidata still answers.
+- **Wikidata.** Big brands list their official websites there, along with their logo files and head offices. Rogers' entry gives 333 Bloor Street East and its postcode, which rogers.com's homepage doesn't show. When a page blocks bots, Wikidata still answers.
+- **The privacy policy.** It names the company that keeps your data, usually with its head office's address. When no other page gives a street address, bi2 reads that one page too, which found Home Hardware's head office in St. Jacobs.
 - **OpenStreetMap's Nominatim.** Every address gets map coordinates, and a flag when the map disagrees on its postcode. The published address is never replaced.
 - **The logo file itself.** Its colors are the brand's: an SVG's fills, or a picture's main colors without its background.
 
@@ -158,7 +159,7 @@ Two things slow a run on the free tiers: Jev's calls wait their turn in its 20 a
 
 - **Layers checked by a tool.** Core types import nothing; logic never imports infrastructure; providers sit behind ports. import-linter fails CI when that breaks.
 - **Typed everywhere.** mypy in strict mode, Pydantic models that reject unknown keys, and results that can't carry a value for a field marked not found.
-- **Tests that need no keys.** Every model in the tests is a stand-in, so pull requests from forks, which get no secrets, run the same 370 tests.
+- **Tests that need no keys.** Every model in the tests is a stand-in, so pull requests from forks, which get no secrets, run the same 378 tests.
 - **A nightly live eval.** CI runs the gold set against the live sites and models, and fails when a field's accuracy drops below its floor or a site costs more than half a cent.
 - **An MCP server.** `bi2 mcp` lets an AI assistant like Claude analyze a website, ask how any field was decided, and look up MCC codes, on the user's own machine and keys.
 
