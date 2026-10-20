@@ -1,6 +1,8 @@
 # Business Insights v2: architecture draft
 
-Status: brainstorm draft, 2026-10-09. The product shape, tech stack and access model are agreed; the pipeline design is still open for discussion.
+Status: built, 2026-10-20. Every field of v2.0 is built: name, logo, MCC, head-office address with coordinates, phone, email and social links, with the AI pass, the MCP server and CI/CD. The website demo comes next. The scores are in [costs.md](costs.md) and [PROGRESS.md](../PROGRESS.md).
+
+![architecture](assets/architecture.svg)
 
 ## Goal
 
@@ -41,7 +43,11 @@ Produce v1's four fields (company name, logo, MCC, headquarters address), plus t
 | Terminal app | Typer for commands, Rich for live progress and tables, prompt_toolkit for the interactive session's input line | The main product |
 | Distribution | A PyPI package (install with pip, pipx or uv), plus a Docker image with the browser preinstalled | How people get the terminal app |
 | Browser | Playwright | Rendered pages, logo positions, element screenshots |
-| MCC retrieval | A small local embedding model run through fastembed, with the 914 code vectors shipped in the package and searched in memory | Works with any provider key, costs nothing per call, and gives everyone the same candidates |
+| Decisions | Jev, TypeSafe's typed-decision model, over its REST API | Picks among the rules' own candidates with a probability for each: the logo box, the MCC, the main phone. 0.3 to 0.6 seconds a call, and it can't make an answer up |
+| Generation | Gemini (Flash-Lite first, then Flash), over its REST API | Reads what no candidate covers, and must quote the page; Jev's backup and second opinion |
+| MCC | Jev, picking from the official code list in two rounds | Replaced the planned embedding search: Jev reads pages in any language, needs no model download, and the whole list costs about $0.0002 a site |
+| Knowledge and maps | Wikidata, and OpenStreetMap's Nominatim | Free: big brands' logo files and head offices; every address's coordinates |
+| MCP | The official `mcp` SDK (2.x) | `bi2 mcp`, for AI assistants |
 | Observability | OpenTelemetry, plus an LLM-call log | Traces for every pipeline step; tokens, cost, model and prompt version for every model call. In the terminal app the log is a local file, and each run ends with a cost summary. |
 | CI/CD | GitHub Actions (assumed) | See "Delivery" |
 | Website API | FastAPI, REST, OpenAPI/Swagger | The demo website's backend. Swagger docs and the website's typed client come from the same spec. |
@@ -212,19 +218,29 @@ Name         Logo         MCC         Address        resolvers run in parallel;
 SiteResult   per field: value, status, confidence, source, evidence
 ```
 
-Every resolver runs the same cascade:
+Every resolver runs the same cascade, and stops at the first step that's sure:
 
+```mermaid
+flowchart TD
+  R{"Rules: places that agree,<br/>structured data, postcodes"} -->|sure| OK["ok"]
+  R -->|not sure| J{"Jev: a typed pick among<br/>the rules' candidates"}
+  J -->|sure| OK
+  J -->|not sure| G{"Gemini: a quoted reading,<br/>or a second opinion"}
+  G -->|sure| OK
+  G -->|not sure| I{"Investigator:<br/>a web search"}
+  I -->|found| OK
+  I -->|no| N["needs_review, with the best answer kept"]
 ```
-free sources agree? ──────────────────────── yes ────────▶ ok
-   │ no
-Decider: pick one / yes-no / score ───────── confident ──▶ ok
-   │ no
-LLM with a compact task prompt ───────────── confident ──▶ ok
-   │ no
-Investigator agent (fixed tool budget) ───── found ──────▶ ok
-   │ no
-needs_review
-```
+
+| Field | Rules | Jev | Gemini | Programmatic sources |
+|---|---|---|---|---|
+| Name | places that agree, weighted | picks among the page's names, or none | reads it off the evidence or the top of the screenshot; must quote | Wikidata, for pages that block us |
+| Logo | candidates ranked by place, links and words | picks a numbered box on the screenshot | a second opinion on the same boxes | structured data's logo; Wikidata's logo file; colors from the file |
+| MCC | schema.org types as a hint | two rounds over the 319 codes that aren't one chain's, then reversed | none | chain codes, by the business's name |
+| Address | structured data; lines found by postcodes or street words | picks the head office among several; says whether a page gives one | reads it off the footer and contact page; must quote | Wikidata's head office; Nominatim's coordinates |
+| Phone | where each number appears | judges the main number | none | Wikidata, for pages that block us |
+| Email | general addresses on the business's domain | judges the general address | none | Wikidata, for pages that block us |
+| Social links | profile links and `sameAs` | none | none | Wikidata, for pages that block us |
 
 ## Platform pages
 
@@ -262,23 +278,28 @@ The URL a user gives may not be the business's own website. It may be the busine
 
 ### MCC
 
-- Remove the keyword rules and the 13-range first stage.
-- Free hint: the schema.org business type (`Restaurant`, `BarOrPub`, `Brewery`, `CafeOrCoffeeShop`, `HairSalon`, `Hotel` and so on) maps to a short list of likely codes.
-- Retrieval:
-  - Embed all 914 code descriptions once with the local model, expanded with plain-language synonyms, and ship the vectors in the package.
-  - At run time, embed the site's description and take the ~15 closest codes.
-  - This step needs no provider key and costs nothing.
-- Leave out chain-specific codes (3000–3999) unless the business name matches the chain.
-- The Decider picks one code and gives it a probability.
-  - If its lead over the runner-up is small, an LLM breaks the tie and gives reasons.
-  - If the result is still unsure, the field is `needs_review`.
+Built on 2026-10-20, with Jev rather than the planned embedding search: Jev reads the page's own words in any language, needs no model download, and costs about $0.0002 a site.
+
+- **No keyword rules.** v1's matched substrings, so most sites came out as restaurants.
+- **Round one:** the 319 codes that aren't one chain's go in two lists, since Jev takes at most 255 options a question, and Jev picks the best of each, or none, in one call. The state is the page's title, description, schema.org types, the top of the page and its main text.
+- **The final round:** the three likeliest codes of each list, with their descriptions and plain-language synonyms from `data/mcc_synonyms.toml`.
+- **Chains:** a code from 3000 to 3999 joins the final round only when the business's name matches the chain's, like Air Canada's 3009. When Jev picks the chain's family, like any airline (4511), the chain's own code replaces it.
+- **A free hint:** the schema.org type (`data/schema_types.toml`), like `BarOrPub` for 5813. An answer that agrees with it is surer.
+- **Unsure picks are asked again with the options reversed,** since Jev leans toward the first option. The same pick both ways is sure; a different one leaves the field for review.
+- On the gold set: 53 of 56 right.
 
 ### Address
 
-- If the site has a JSON-LD `PostalAddress` (and `geo` coordinates), use it and the field is `ok`.
-- Otherwise, find address blocks anchored on a postcode in the footer and contact page. The Decider picks the primary one and flags businesses with several locations.
-- Otherwise, search. Send only the knowledge-graph and local-result fields, and set the search locale from the country hints (Canada for most of the current test sites).
-- Keep the address as published. Geocode it separately, and flag it when the geocoded match disagrees on postcode or street.
+Built on 2026-10-20. The head office, or the only location, as published:
+
+1. **Structured data:** a `PostalAddress` with a street is the business stating it.
+2. **Address lines** in the footer and on the contact page, found by their postcodes, with a house number before the postcode; or, for countries whose postcodes the rules don't know, by a house number and a street word ("Street", "rue", "Straße" and so on). One line in the footer is the business's. Several, like one per store, go to Jev, which picks the head office, and the address is marked as one of several locations.
+3. **Wikidata's head office,** for big brands, like Rogers' 333 Bloor Street East, which no page on rogers.com gives. It's sure when the pages show the same postcode.
+4. **Gemini reads the footer and the contact page,** but only after Jev says they give a street address at all, and the address must be quoted from them.
+5. **A web search,** through Gemini's Google Search grounding, for a head office the pages never give. Its answer must cite the pages it rests on. Google doesn't offer grounding on Gemini's free tier, so on a free key the first refusal turns the step off for the run.
+6. **The map:** every address is placed with OpenStreetMap's Nominatim, one request a second, which adds its coordinates and says whether the map agrees on its postcode. The published address is never replaced.
+
+On the gold set: 30 of 47 right, from none. Most of the rest are chains whose head office no page gives and Wikidata doesn't list, the search step's job on a paid key.
 
 ### Phone number
 
@@ -308,6 +329,17 @@ The business's general address is the one wanted, like info@, hello@ or customer
 - Share buttons, the platform's own accounts and people's personal profiles are left out.
 - No model call is needed unless the links point at more than one business, as on a restaurant group's shared site.
 
+## Models and free tiers
+
+v2 was built against free API tiers, and they shaped it:
+
+- **Every call takes a turn** from a limiter that knows each model's requests per minute, per day and at once, from `data/models.toml`. Calls wait for room in the minute; past the day's share (90% of the free tier's, by default) they fail, and the step passes to the next.
+- **The day's counts are kept in a file,** so they last across runs, and reset at midnight Pacific, when Google's do.
+- **When a provider says a quota is used up,** v2 stops asking that model for the day, and the backup model answers.
+- **Answers are kept on disk** by a hash of the task, the prompt version, the model and the evidence, so a rerun on saved pages asks no model at all, and a changed prompt is never answered from an old copy.
+- **One site makes at most 12 model calls,** across every model.
+- **What we measured on 2026-10-20:** Gemini 3.5 Flash's free tier allows 20 requests a day; Flash-Lite allows more but took 15 to 60 seconds a call; Google Search grounding isn't offered on the free tier. Jev answered in 0.3 to 0.6 seconds.
+
 ## Shared services
 
 | Service | Responsibility |
@@ -320,12 +352,20 @@ The business's general address is the one wanted, like info@, hello@ or customer
 
 ## Where agents fit
 
-- The normal path is a fixed workflow, not an agent. It is predictable, cheap and testable, and banks need results they can repeat and audit.
-- An investigator agent handles only escalations.
-  - Tools: `fetch_page`, `find_links`, `read_structured_data`, `search` and `geocode`.
-  - Budget: a hard limit, for example five tool calls.
-  - Example: there is no address on the homepage or contact page, so it opens the store locator or tries a second search.
-- Its steps are saved as evidence for the field it resolved.
+The normal path is a fixed workflow, not an agent: predictable, cheap and testable, and banks need results they can repeat and audit. Agency sits at the edges, each piece with one job:
+
+| Agent | Does | Model |
+|---|---|---|
+| Orchestrator | Runs the collector, the evidence and the seven specialists, and assembles the result | none: code |
+| Collector | Loads the page, retries refusals in a full browser, reads the contact page when it's needed | none: a browser |
+| Field specialists | One cascade per field, each with its own evidence | rules first |
+| Decider | Typed picks among the specialists' candidates, with probabilities | Jev, with Gemini as backup |
+| Reader | Reads what no candidate covers, and must quote it | Gemini |
+| Second opinion | A different model on the same question, when the first is unsure | Gemini |
+| Investigator | Web search for what the pages never say, citing its pages | Gemini with Google Search |
+| Budget keeper | At most 12 model calls a site, under each free tier's limits | none: code |
+
+Every step a specialist takes goes into the field's audit trail, with what it cost, and `bi2 mcp`'s `explain_field` tool reads it back.
 
 ## Prompt engineering
 
@@ -445,18 +485,18 @@ business-insights-v2/
 | Browser | Decided | Playwright: its fast Chromium shell first, and a full browser for pages a site refuses the shell (see "Loading pages") |
 | Terminal UI | Decided | Typer and Rich, plus prompt_toolkit for the interactive session |
 | Interactive mode | Decided | `bi2` with no command opens an interactive session in a terminal; the commands stay for scripts |
-| MCC retrieval | Decided | A local embedding model (fastembed), with vectors shipped in the package |
+| MCC | Decided | Jev picking from the official list in two rounds; the embedding search wasn't needed |
 | Terminal app keys | Decided | Environment variables, or the operating system's keychain; never config files |
 | Test pages | Decided | Synthetic pages written for the test suite; no copies of third-party sites in the repository |
 | Demo images | Proposed | Stored in Postgres; separate object storage only if the demo grows |
-| Agent style | Proposed | A fixed workflow, with an investigator agent for escalations only |
-| Default model | Proposed | Gemini Flash for text and images, when the user has a Gemini key; a stronger model only on escalation |
-| Jev | Proposed | Build against the Decider interface now; turn Jev on for users with a Jev key, after testing it on the gold set |
+| Agent style | Decided | A fixed workflow of specialists, with model agents at the decision points and an investigator for escalations only |
+| Default model | Decided | Jev for decisions; Gemini Flash-Lite for generation, then Flash, since Flash's free tier allows 20 requests a day |
+| Jev | Decided | The Decider for every typed question, with Gemini as its backup; tested on the gold set on 2026-10-20 |
 | v2.0 scope | Decided | v1's four fields plus phone number, email address and social media links, with statuses and sources; banking fields in v2.1 |
 
 ## Open questions
 
-- Is Jev access available yet, and does Jev accept images?
+- ~~Is Jev access available yet, and does Jev accept images?~~ Yes, and yes: v2 sends it the numbered screenshot.
 - Who confirms the gold-set answers?
 - How long should a shared result stay reusable? Proposed: 7 days.
 - Package and command name (`bi2` is a placeholder).
