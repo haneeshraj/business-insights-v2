@@ -92,3 +92,30 @@ def extract_contact_pages(doc: Document, base_url: str) -> tuple[str, ...]:
             points[url] = max(points.get(url, 0), score)
     ranked = sorted(points, key=lambda url: -points[url])  # ties keep page order
     return tuple(ranked[:_KEEP_PAGES])
+
+
+# Words in a link's address or text that point to the site's legal pages. A privacy policy
+# names the company that keeps the data, usually with its head office's address, so it comes
+# first; then legal notices and terms.
+_LEGAL_WORDS: Final = {
+    "privacy": 3, "privacidad": 3, "privacite": 3, "confidentialite": 3, "datenschutz": 3,
+    "privacy-policy": 3, "tietosuoja": 3, "integritet": 3, "privatliv": 3,
+    "legal": 2, "imprint": 2, "impressum": 2, "mentions-legales": 2, "aviso-legal": 2,
+    "terms": 1, "conditions": 1, "condiciones": 1, "agb": 1,
+}  # fmt: skip
+
+
+def extract_legal_pages(doc: Document, base_url: str) -> tuple[str, ...]:
+    """The site's own legal pages, the likeliest to give its head office's address first: its
+    privacy policy, then its legal notices and terms."""
+    here = urldefrag(base_url).url.rstrip("/")
+    points: dict[str, int] = {}
+    for url, text in links(doc, base_url):
+        url = urldefrag(url).url
+        if url.rstrip("/") == here or not same_site(url, base_url):
+            continue
+        found_in = urlsplit(url).path.casefold() + " " + fold(text).replace(" ", "-")
+        score = max((w for word, w in _LEGAL_WORDS.items() if word in found_in), default=0)
+        if score and len(fold(text).split()) <= _LONGEST_LINK_LABEL:
+            points[url] = max(points.get(url, 0), score)
+    return tuple(sorted(points, key=lambda url: -points[url])[:2])

@@ -410,6 +410,10 @@ class Evidence(_Frozen):
     contact_pages: tuple[WebUrl, ...] = ()  # the site's own pages likely to hold contact details
     extra_pages: tuple[WebUrl, ...] = ()  # contact and about pages that were also read
     contact_page: ContactPage | None = None  # the contact details on the contact page, if read
+    legal_pages: tuple[WebUrl, ...] = ()  # the site's privacy policy and legal notices
+    # The first legal page, read when no other page gives a street address: a privacy policy
+    # usually names the company with its head office's address.
+    legal_page: ContactPage | None = None
     # Why the page couldn't be read, like a bot check, when it couldn't. Its fields then come
     # only from what Wikidata knows about the business, in `known`.
     unreadable: str | None = None

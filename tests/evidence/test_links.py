@@ -55,3 +55,17 @@ def test_pages_for_one_purpose_and_teasers_are_never_the_contact_page() -> None:
         '<a href="/pages/pickup">Order online and pick up in store, ready in two hours</a>'
     )
     assert extract_contact_pages(page, BASE) == ()
+
+
+def test_legal_pages_put_the_privacy_policy_first() -> None:
+    from bi2.evidence.document import parse_html
+    from bi2.evidence.links import extract_legal_pages
+
+    doc = parse_html(
+        '<footer><a href="/terms">Terms of use</a> <a href="/privacy-policy">Privacy</a>'
+        ' <a href="https://other.example/privacy">Partner privacy</a></footer>'
+    )
+    assert extract_legal_pages(doc, "https://example-cafe.ca/") == (
+        "https://example-cafe.ca/privacy-policy",
+        "https://example-cafe.ca/terms",
+    )

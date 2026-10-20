@@ -97,6 +97,19 @@ async def _save_contact_page(fetcher: BrowserFetcher, snapshot: PageSnapshot, si
     return pages[0]
 
 
+async def _save_legal_page(fetcher: BrowserFetcher, snapshot: PageSnapshot, site: Path) -> None:
+    """Save the site's first legal page, usually its privacy policy, which a run reads when no
+    other page gives a street address."""
+    pages = build_evidence(snapshot).legal_pages
+    if not pages:
+        return
+    try:
+        legal = await fetcher.fetch(pages[0])
+    except FetchError:
+        return
+    await asyncio.to_thread(save_extra_page, legal, site)
+
+
 async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
     started = time.monotonic()
     try:
@@ -115,6 +128,7 @@ async def _check(fetcher: BrowserFetcher, url: str, out: Path) -> FetchCheck:
         )
     folder = await asyncio.to_thread(save_snapshot, snapshot, out)  # so others keep loading
     contact_page = await _save_contact_page(fetcher, snapshot, folder)
+    await _save_legal_page(fetcher, snapshot, folder)
     status = snapshot.status_code
     return FetchCheck(
         url=url,

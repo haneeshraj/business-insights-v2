@@ -23,7 +23,7 @@ from bi2.evidence.countries import (
     page_languages,
 )
 from bi2.evidence.document import Document, links, parse_html
-from bi2.evidence.links import extract_contact_pages, extract_social_links
+from bi2.evidence.links import extract_contact_pages, extract_legal_pages, extract_social_links
 from bi2.evidence.logos import extract_logo_candidates
 from bi2.evidence.meta import extract_meta
 from bi2.evidence.platforms import (
@@ -162,4 +162,5 @@ def build_evidence(snapshot: PageSnapshot) -> Evidence:
         ),
         countries=countries,
         contact_pages=extract_contact_pages(doc, base) if profile is None else (),
+        legal_pages=extract_legal_pages(doc, base) if profile is None else (),
     )

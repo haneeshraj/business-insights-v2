@@ -71,6 +71,15 @@ def _line_around(text: str, start: int, end: int) -> str:
     return clean_space(f"{before}{text[start:end]}{after}").strip(" ,;-")
 
 
+def gives_an_address(ev: Evidence) -> bool:
+    """Whether the evidence already gives a street address: the structured data's, an address
+    line on the homepage or the contact page, or Wikidata's head office."""
+    if ev.structured.address is not None or (ev.known is not None and ev.known.head_office):
+        return True
+    texts = [ev.text.footer, ev.text.main, ev.contact_page.text if ev.contact_page else ""]
+    return any(address_lines(text) for text in texts if text)
+
+
 def address_lines(text: str) -> list[tuple[str, str, CountryCode]]:
     """Address lines in the text, found by their postcodes: (line, postcode, country), each
     line with a house number before its postcode, in page order, without repeats."""
@@ -79,7 +88,16 @@ def address_lines(text: str) -> list[tuple[str, str, CountryCode]]:
         for match in re.finditer(re.escape(postcode), text):
             line = _line_around(text, match.start(), match.end())
             ahead = line[: line.find(postcode)] if postcode in line else line
-            if _HOUSE_NUMBER.search(ahead) and fold(line) not in found:
+            if not _HOUSE_NUMBER.search(ahead):
+                # An address over two lines: "34 Henry St. W." above "St. Jacobs, ON N0B 2N0".
+                above = text[: match.start()].rsplit(chr(10), 2)  # the line break before
+                street = clean_space(above[-2]) if len(above) > 1 else ""
+                if not (street and len(street) <= 80 and _STREET.search(street)):
+                    continue
+                if not _NUMBER.search(street):
+                    continue
+                line = f"{street}, {line}"
+            if fold(line) not in found:
                 found[fold(line)] = (line, postcode, country)
     return list(found.values())
 
@@ -128,6 +146,8 @@ def _page_lines(ev: Evidence) -> list[tuple[str, str, str | None, CountryCode | 
     texts = [("footer", ev.text.footer), ("main text", ev.text.main)]
     if ev.contact_page is not None and ev.contact_page.text:
         texts.append(("contact page", ev.contact_page.text))
+    if ev.legal_page is not None and ev.legal_page.text:
+        texts.append(("legal page", ev.legal_page.text))
     found: list[tuple[str, str, str | None, CountryCode | None]] = []
     for where, text in texts:
         found += [(where, *line) for line in address_lines(text)]
@@ -180,6 +200,19 @@ async def address_from_wikidata(ev: Evidence, ctx: RunContext) -> Resolved[Addre
     )
 
 
+_PO_BOX: Final = re.compile(
+    r"\b(?:P\.?\s?O\.?\s?Box|Post(?:al)? Box|Case postale|Postfach|Apartado)\b", re.I
+)
+
+
+def _one_line_sure(where: str, line: str, postcode: str | None) -> float:
+    """How sure the only address line the pages show is the business's: surest in the footer
+    with a postcode; a PO box is where mail goes, not where the business is."""
+    if _PO_BOX.search(line):
+        return 0.6
+    return 0.86 if where == "footer" and postcode else 0.75
+
+
 async def address_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[Address] | Escalate:
     """The address line the footer or the contact page shows. When there are several, like
     one per store, Jev picks the head office or main location."""
@@ -190,7 +223,7 @@ async def address_from_the_page(ev: Evidence, ctx: RunContext) -> Resolved[Addre
         where, line, postcode, country = lines[0]
         return Resolved(
             value=_with_parts(line, postcode, country),
-            confidence=0.86 if where == "footer" and postcode else 0.75,
+            confidence=_one_line_sure(where, line, postcode),
             source=where,
             evidence=(line,),
         )

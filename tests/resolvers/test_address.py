@@ -88,3 +88,31 @@ async def test_wikidata_gives_a_big_brands_head_office() -> None:
     assert result.value is not None
     assert result.value.text == "333 Bloor Street East, Toronto M4W 1G9"
     assert result.status.value == "ok"  # the pages show the same postcode
+
+
+def test_an_address_over_two_lines_is_one_line() -> None:
+    text = "Head office\n34 Henry St. W.\nSt. Jacobs, ON N0B 2N0\nCanada"
+    assert address_lines(text) == [("34 Henry St. W., St. Jacobs, ON N0B 2N0", "N0B 2N0", "CA")]
+
+
+async def test_a_po_box_is_where_mail_goes_not_the_business() -> None:
+    ev = Evidence(
+        page=PAGE,
+        contact_page=ContactPage(
+            url=f"{URL}contact", text="Mailing Address: P.O. Box 2305, Oshawa, ON L1H 7V5"
+        ),
+    )
+    result = await resolve_address(ev, fake_context())
+    assert result.confidence == 0.6
+
+
+async def test_the_legal_page_gives_the_head_office_when_no_other_page_does() -> None:
+    legal = ContactPage(
+        url=f"{URL}privacy",
+        text="Questions? Write to us at 34 Henry St. W.\nSt. Jacobs, ON N0B 2N0",
+    )
+    ev = Evidence(page=PAGE, legal_page=legal)
+    result = await resolve_address(ev, fake_context())
+    assert result.value is not None
+    assert result.value.postal_code == "N0B 2N0"
+    assert result.source == "legal page"

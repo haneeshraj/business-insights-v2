@@ -34,7 +34,7 @@ from bi2.core.ports import Decider, Downloader, LanguageModel
 from bi2.core.urls import site_folder
 from bi2.evidence.build import build_contact_page, build_evidence
 from bi2.resolvers import RESOLVERS
-from bi2.resolvers.address import address_lines
+from bi2.resolvers.address import address_lines, gives_an_address
 from bi2.resolvers.cascade import Escalate, Resolved, Step, not_built_yet, run_cascade
 from bi2.resolvers.email import shows_an_email
 from bi2.resolvers.known import KNOWN_STEPS
@@ -144,6 +144,19 @@ async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
     return ev.model_copy(update={"contact_page": page, "extra_pages": (*ev.extra_pages, page.url)})
 
 
+async def _with_legal_page(ev: Evidence, ctx: RunContext) -> Evidence:
+    """The evidence with the site's first legal page too, usually its privacy policy, when no
+    other page gives a street address. One more page, only for the sites that need it."""
+    if gives_an_address(ev) or not ev.legal_pages:
+        return ev
+    try:
+        snapshot = await ctx.fetcher.fetch(ev.legal_pages[0])
+    except FetchError:
+        return ev
+    page = build_contact_page(snapshot)
+    return ev.model_copy(update={"legal_page": page, "extra_pages": (*ev.extra_pages, page.url)})
+
+
 def _page_couldnt_be_read(why: str) -> Step[Any]:
     """A first step that fails with why the page couldn't be read, for the audit trail."""
 
@@ -219,6 +232,7 @@ async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[Sit
         known = None
     if known is not None:
         ev = ev.model_copy(update={"known": known})
+    ev = await _with_legal_page(ev, ctx)
     folder = site_folder(snapshot.url)
     if snapshot.screenshot:
         saved = await ctx.files.save(f"{folder}/screenshot.jpg", snapshot.screenshot)
