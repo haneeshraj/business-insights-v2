@@ -24,3 +24,27 @@ def find_mcc_description(code: str) -> str:
     from bi2.resolvers.mcc import mcc_codes
 
     return mcc_codes()[code]
+
+
+async def test_analyze_website_returns_every_field_and_explain_reads_its_steps() -> None:
+    from types import SimpleNamespace
+
+    from bi2.adapters.local.answers import CallLog
+    from bi2.mcp.server import _State, analyze_website, explain_field
+    from tests.factories import page_snapshot
+    from tests.fakes import fake_context
+
+    page = page_snapshot(
+        '<title>Example Cafe</title><meta property="og:site_name" content="Example Cafe">',
+        url="https://example-cafe.ca/",
+    )
+    state = _State(ctx=fake_context(pages={page.url: page}), log=CallLog(None), results={})
+    context = SimpleNamespace(request_context=SimpleNamespace(lifespan_context=state))
+    summary = json.loads(await analyze_website("example-cafe.ca", context))  # type: ignore[arg-type]
+    assert summary["url"] == "https://example-cafe.ca/"
+    assert summary["fields"]["company_name"]["value"] == "Example Cafe"
+    assert set(summary["fields"]) == {
+        "company_name", "logo", "mcc", "address", "phone", "email", "social_links",
+    }  # fmt: skip
+    steps = json.loads(await explain_field("example-cafe.ca", "mcc", context))  # type: ignore[arg-type]
+    assert steps["steps"][0]["step"] == "mcc_by_decider"

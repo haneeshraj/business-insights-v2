@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import typer
 from mcp.server.mcpserver import Context, MCPServer
@@ -67,6 +68,14 @@ def _state(context: Context[Any, Any]) -> _State:
     return state
 
 
+def _web_address(url: str) -> str:
+    """An address as the assistant may write it, like "example.com", as a web address."""
+    url = url.strip()
+    if "://" not in url:
+        url = f"https://{url}"
+    return url if urlsplit(url).path else f"{url}/"
+
+
 def _summary(result: SiteResult) -> dict[str, Any]:
     """A result as the assistant reads it: each field's value, status, confidence and source."""
     fields = {
@@ -96,8 +105,7 @@ async def analyze_website(url: str, context: Context[Any, Any]) -> str:
     Takes 5 to 60 seconds: it loads the page in a browser, then asks models only about the
     answers its rules aren't sure of."""
     state = _state(context)
-    if "://" not in url:
-        url = f"https://{url}"
+    url = _web_address(url)
     result, _ = await analyze_url(url, state.ctx)
     state.results[url] = result
     return json.dumps(_summary(result), indent=2)
@@ -111,8 +119,7 @@ async def explain_field(url: str, field: str, context: Context[Any, Any]) -> str
     if field not in FIELD_NAMES:
         return f"unknown field {field}; the fields are {', '.join(FIELD_NAMES)}"
     state = _state(context)
-    if "://" not in url:
-        url = f"https://{url}"
+    url = _web_address(url)
     result = state.results.get(url)
     if result is None:
         return f"{url} hasn't been analyzed in this session; call analyze_website first"
