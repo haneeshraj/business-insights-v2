@@ -111,7 +111,7 @@ On the 56 gold sites' saved pages, so every run sees the same pages and only the
 | Company name | 54 of 56 | **56 of 56** | 50 | **55** |
 | Logo | 36 of 46 | 36 of 46 | 33 | **36** |
 | MCC | not built | **55 of 56** | | 51 |
-| Head-office address | not built | **31 of 47** | | 14 |
+| Head-office address | not built | **31 of 47** | | 25 |
 | Phone | 19 of 23 | 19 of 23 | 18 | 18 |
 | Email | 42 of 45 | 42 of 45 | 21 | 22 |
 | Social links | 37 of 37 | 37 of 37 | 37 | 37 |
