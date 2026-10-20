@@ -121,3 +121,12 @@ async def test_a_blocked_page_is_judged_by_wikidatas_description() -> None:
     assert result.value is not None
     assert result.value.code == "5411"
     assert "Canadian supermarket chain" in jev.asked[0].state
+
+
+def test_a_chain_matches_by_its_distinctive_words() -> None:
+    def named(url: str, name: str) -> Evidence:
+        return Evidence(page=PageInfo(url=url), meta=PageMeta(site_name=name))
+
+    assert chain_codes(named("https://www.westjet.com/", "WestJet")) == ["3180"]
+    assert chain_codes(named("https://www.budget.ca/", "Budget Car Rental Canada")) == ["3366"]
+    assert chain_codes(named("https://www.budgetblinds.com/", "Budget Blinds")) == []

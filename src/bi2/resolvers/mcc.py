@@ -17,6 +17,7 @@ again with the options in the other order; the same pick both ways is sure.
 
 import csv
 import io
+import re
 import tomllib
 from functools import cache
 from importlib.resources import files
@@ -26,7 +27,7 @@ from bi2.core.asking import Ask, Choice, Decision, Question
 from bi2.core.context import RunContext
 from bi2.core.errors import ModelUnavailable
 from bi2.core.models import Evidence, Mcc, MccResult
-from bi2.core.text import names_match
+from bi2.core.text import fold, names_match
 from bi2.evidence.names import name_candidates
 from bi2.resolvers.asking import NONE, ask_decider, site_lines
 from bi2.resolvers.cascade import Escalate, Resolved, run_cascade
@@ -91,15 +92,63 @@ def hinted_codes(ev: Evidence) -> tuple[str, ...]:
     return tuple(dict.fromkeys(found))
 
 
+# Words that say what kind of business a chain is, rather than which one: "WestJet" is the
+# chain "Westjet Airlines", and "Budget Car Rental Canada" the chain "Budget Rent-A-Car".
+_KIND_WORDS: Final = frozenset(
+    [
+        "airlines",
+        "airline",
+        "airways",
+        "air",
+        "hotels",
+        "hotel",
+        "resorts",
+        "resort",
+        "inns",
+        "inn",
+        "suites",
+        "rent",
+        "a",
+        "car",
+        "cars",
+        "rental",
+        "rentals",
+        "corporation",
+        "corp",
+        "company",
+        "co",
+        "inc",
+        "ltd",
+        "canada",
+        "international",
+        "group",
+        "the",
+        "and",
+        "of",
+        "official",
+        "site",
+    ]
+)
+
+
+def _chain_core(name: str) -> str:
+    """A name without the words that say what kind of business it is, to match a chain by."""
+    words = re.sub(r"[^a-z0-9]+", " ", fold(name)).split()
+    core = [word for word in words if word not in _KIND_WORDS]
+    return " ".join(core) or " ".join(words)
+
+
 def chain_codes(ev: Evidence) -> list[str]:
     """The chain codes whose chain is the business, by the names the page gives it."""
     names = [name for _, name in name_candidates(ev)][:8]
     if ev.page.profile_name:
         names.insert(0, ev.page.profile_name)
+    cores = {_chain_core(name) for name in names if name}
     return [
         code
         for code, chain in mcc_codes().items()
-        if _is_chain(code) and any(names_match(name, chain) for name in names)
+        if _is_chain(code)
+        and (any(names_match(name, chain) for name in names) or _chain_core(chain) in cores)
     ][:3]
 
 
