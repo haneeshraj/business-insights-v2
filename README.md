@@ -71,12 +71,14 @@ Free keys work. bi2 keeps every model under its free tier's limits per minute an
 
 | Command | Does |
 |---|---|
-| `bi2 analyze <url> [<url>...]` | Analyze sites; results, logos and an HTML report go to `bi2-results/analyze` |
+| `bi2 analyze <url> [<url>...]` | Analyze sites; results (JSON Lines and CSV), logos and an HTML report go to `bi2-results/analyze` |
+| `bi2 analyze --file sites.txt` | Analyze a list of sites, one a line |
 | `bi2 analyze --gold eval/gold.toml` | Analyze the gold set and score it |
 | `bi2 analyze ... --fast` | Jev alone, no Gemini: a second or two a site on top of loading the page |
 | `bi2 analyze ... --no-ai` | Rules alone, no model calls |
 | `bi2 review <results>` | Check answers right or wrong in the browser |
 | `bi2 eval score` / `bi2 eval compare` | Score a run, or say what got better or worse between two |
+| `bi2 eval check` | Ask the checker about a run's sure answers, and measure it against people's checks |
 | `bi2 doctor` | Check the setup |
 | `bi2 keys set\|show\|delete` | Keep keys in the system keychain |
 | `bi2 mcp` | Run as an MCP server for AI assistants |
