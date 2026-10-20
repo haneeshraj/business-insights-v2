@@ -82,7 +82,8 @@ Checked answers right, before and after the AI pass (`bi2-results/test-rules-1` 
 
 ## Next
 
-- Other ideas, not started: one Jev call per site for every field's question at once (Jev's fan-out pattern), which would double what the free tier's 20 calls a minute cover; and a website demo, build phase 4.
+- Done since the 17:50 reset: Jev fan-out (a site's questions in one call: 154 Jev calls instead of 176 on the gold set, answers as good), and the report shows logo colors and address map links.
+- Not started: the website demo, build phase 4.
 
 ## Questions for you
 

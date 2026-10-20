@@ -339,6 +339,7 @@ v2 was built against free API tiers, and they shaped it:
 - **When a provider says a quota is used up,** v2 stops asking that model for the day, and the backup model answers.
 - **Answers are kept on disk** by a hash of the task, the prompt version, the model and the evidence, so a rerun on saved pages asks no model at all, and a changed prompt is never answered from an old copy.
 - **One site makes at most 12 model calls,** across every model.
+- **A site's questions go to Jev together** when its specialists ask at the same time, Jev's fan-out pattern: each one's evidence in its own labeled section, and each question told to answer from its own. They go when every specialist still running is waiting for Jev, so a call holds the same questions on every run, whatever the timing. The MCC's first round, with its long lists, goes on its own. On the gold set it took 154 Jev calls instead of 176, with the answers as good; `BI2_AI__FAN_OUT=false` turns it off.
 - **What we measured on 2026-10-20:** Gemini 3.5 Flash's free tier allows 20 requests a day; Flash-Lite allows more but took 15 to 60 seconds a call; Google Search grounding isn't offered on the free tier. Jev answered in 0.3 to 0.6 seconds.
 
 ## Shared services
@@ -365,6 +366,7 @@ The normal path is a fixed workflow, not an agent: predictable, cheap and testab
 | Second opinion | A different model on the same question, when the first is unsure | Gemini |
 | Investigator | Web search for what the pages never say, citing its pages | Gemini with Google Search |
 | Budget keeper | At most 12 model calls a site, under each free tier's limits | none: code |
+| Fan-out | Sends a site's questions for Jev together when the specialists ask at the same time | none: code |
 
 Every step a specialist takes goes into the field's audit trail, with what it cost, and `bi2 mcp`'s `explain_field` tool reads it back.
 

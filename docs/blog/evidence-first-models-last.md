@@ -72,6 +72,8 @@ Generation goes to Gemini, for the few things that are genuinely generative: rea
 
 **Ask again, reversed.** Jev's own documentation notes that it leans toward the first option. So when its final MCC pick is unsure, bi2 asks again with the options in the opposite order. The same pick both ways is a sure one. It's self-consistency for a few hundredths of a cent.
 
+**One call for a site's questions.** The specialists run at once, and when several need Jev at the same moment, their questions wait for each other and go together, each with its own labeled evidence: Jev's fan-out pattern. They go when every specialist still running is waiting, so the same questions go together on every run and kept answers still match. The MCC's long first round goes on its own, since small questions read less well beside it.
+
 **Cheapest first, even inside a step.** Before Gemini reads an address off a page, Jev answers a yes-or-no question: does this text give a street address at all? Most of the time it doesn't, and the slow call is never made.
 
 ## Programmatic sources first

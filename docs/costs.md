@@ -99,6 +99,10 @@ Three at a time kept the browser's memory low on a machine shared with other wor
 - **Gemini on its free tier is slower still.** A site that needs one Gemini call waits as long as the page took to load, or longer. `--fast` leaves Gemini out and keeps Jev.
 - **Several sites at once:** one site for every two cores, up to 8. On 2026-10-13, 45 live sites took 223 seconds at 8 at once, about 5 seconds a site of wall-clock time.
 
+## Fewer calls: fan-out
+
+When a site's specialists ask Jev at the same time, their questions go in one call. On the gold set, with every question new, that took 154 Jev calls instead of 176, with one name less sure and one phone and one email surer. Sending the MCC's first round along too would save 38% of calls, but left one more answer unsure, so it goes on its own.
+
 ## The free tiers' capacity
 
 What a day of free tiers covers, at the gold set's calls per site:
