@@ -80,7 +80,7 @@ Several answers need no model at all:
 
 - **Structured data.** JSON-LD often states the business's name, logo, phone and address outright.
 - **Wikidata.** Big brands list their official websites there, along with their logo files and head offices. Rogers' entry gives 333 Bloor Street East and its postcode, which rogers.com's homepage doesn't show. When a page blocks bots, Wikidata still answers.
-- **The privacy policy.** It names the company that keeps your data, usually with its head office's address. When no other page gives a street address, bi2 reads that one page too, which found Home Hardware's head office in St. Jacobs.
+- **The privacy policy.** It names the company that keeps your data, usually with its head office's address. When no other page gives a street address, bi2 reads that one page too, which found Home Hardware's head office in St. Jacobs and Indigo's on King Street West.
 - **OpenStreetMap's Nominatim.** Every address gets map coordinates, and a flag when the map disagrees on its postcode. The published address is never replaced.
 - **The logo file itself.** Its colors are the brand's: an SVG's fills, or a picture's main colors without its background.
 
@@ -111,7 +111,7 @@ On the 56 gold sites' saved pages, so every run sees the same pages and only the
 | Company name | 54 of 56 | **56 of 56** | 50 | **55** |
 | Logo | 36 of 46 | 36 of 46 | 33 | **36** |
 | MCC | not built | **53 of 56** | | 49 |
-| Head-office address | not built | **30 of 47** | | |
+| Head-office address | not built | **31 of 47** | | 14 |
 | Phone | 19 of 23 | 19 of 23 | 18 | 18 |
 | Email | 42 of 45 | 42 of 45 | 21 | 22 |
 | Social links | 37 of 37 | 37 of 37 | 37 | 37 |

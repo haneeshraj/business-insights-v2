@@ -43,7 +43,7 @@ On the 56 gold sites, with Jev and Gemini, on the same saved pages every run:
 | Company name | 56 of 56 | 54 |
 | Logo | 36 of 46 | 36 |
 | MCC | 53 of 56 | not built |
-| Head-office address | 30 of 47 (14 sure) | not built |
+| Head-office address | 31 of 47 (14 sure) | not built |
 | Phone | 19 of 23 | 19 |
 | Email | 42 of 45 | 42 |
 | Social links | 37 of 37 | 37 |

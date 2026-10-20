@@ -300,7 +300,7 @@ Built on 2026-10-20. The head office, or the only location, as published:
 6. **A web search,** through Gemini's Google Search grounding, for a head office the pages never give. Its answer must cite the pages it rests on. Google doesn't offer grounding on Gemini's free tier, so on a free key the first refusal turns the step off for the run.
 7. **The map:** every address is placed with OpenStreetMap's Nominatim, one request a second, which adds its coordinates and says whether the map agrees on its postcode. The published address is never replaced.
 
-On the gold set: 30 of 47 right, from none, 14 of them sure. Most of the rest are chains whose head office no page gives and Wikidata doesn't list, the search step's job on a paid key.
+On the gold set: 31 of 47 right, from none, 14 of them sure. Most of the rest are chains whose head office no page gives and Wikidata doesn't list, the search step's job on a paid key.
 
 ### Phone number
 

@@ -32,7 +32,7 @@ On the 56 gold sites' saved pages (the same pages every run, so only the code ch
 | Email | 42 of 45 | 42 of 45 | 21 | 22 |
 | Social links | 37 of 37 | 37 of 37 | 37 | 37 |
 | MCC | not built | 53 of 56 | | 49 |
-| Address | not built | 26 of 47 | | 11 |
+| Address | not built | 31 of 47 | | 14 |
 
 - About 3 to 4 model calls a site, almost all to Jev. A whole gold-set run cost $0.04 at list price, under a tenth of a cent a site; on the free tiers it costs nothing.
 - Jev answers in 0.3 to 0.6 seconds. Gemini's free tier takes 15 to 60 seconds a call, and gives Gemini Flash only 20 requests a day, so v2 asks Gemini as little as it can.
