@@ -105,6 +105,8 @@ The logo's eight are mostly the same logo in another file: an SVG saved from the
 
 - **Push to GitHub?** Every commit is local. CI and the release workflow run once it's pushed. The nightly eval needs two repository secrets, `GEMINI_API_KEY` and `JEV_API_KEY`, in an environment named `eval`, and publishing to PyPI needs trusted publishing set up for the project on pypi.org.
 - **Google Search grounding** is refused on your free Gemini key, so the head-office search step is skipped. A paid key would turn it on. Without it, a chain's head office comes from Wikidata when it's there.
+- **Jev's real free-tier limits** aren't published. v2 caps itself at 20 requests a minute and 1,800 a day (90% of a guessed 2,000), and reached that cap tonight; Jev never refused a request. If TypeSafe tells you the real numbers, change them in `src/bi2/data/models.toml`, and runs get faster.
+- **The nightly eval in CI** would spend the keys it's given every night: about 150 Jev calls and 50 Gemini calls. Use separate keys for it, or run it weekly.
 - **Gold-set answers to check:** Warby Parker's MCC (v2 says 8044, "Optical Goods and Eyeglasses"; the gold set says 8043), Grace O'Malley's (7801, licensed online gambling, against 7995).
 
 ## Notes
