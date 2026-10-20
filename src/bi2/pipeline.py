@@ -37,6 +37,7 @@ from bi2.resolvers import RESOLVERS
 from bi2.resolvers.address import address_lines, gives_an_address
 from bi2.resolvers.cascade import Escalate, Resolved, Step, not_built_yet, run_cascade
 from bi2.resolvers.email import shows_an_email
+from bi2.resolvers.fanout import FanOut
 from bi2.resolvers.known import KNOWN_STEPS
 
 # Statuses a site answers with when it won't give its page, like a bot check's "Access
@@ -124,6 +125,25 @@ def _within_budget(ctx: RunContext) -> RunContext:
         llm=_BudgetedModel(ctx.llm, budget) if ctx.llm else None,
         second=_BudgetedDecider(ctx.second, budget) if ctx.second else None,
     )
+
+
+async def _resolve_together(
+    names: list[str], ev: Evidence, ctx: RunContext
+) -> list[FieldResult[Any]]:
+    """Every field's resolver at once, sharing one Jev call for the questions they ask together,
+    unless fan-out is turned off."""
+    if ctx.decider is None or not ctx.settings.ai.fan_out:
+        return list(await asyncio.gather(*(RESOLVERS[name](ev, ctx) for name in names)))
+    fan_out = FanOut(ctx.decider, running=len(names))
+    shared = replace(ctx, decider=fan_out)
+
+    async def one(name: str) -> FieldResult[Any]:
+        try:
+            return await RESOLVERS[name](ev, shared)
+        finally:
+            fan_out.finished()
+
+    return list(await asyncio.gather(*(one(name) for name in names)))
 
 
 async def _with_contact_page(ev: Evidence, ctx: RunContext) -> Evidence:
@@ -237,9 +257,10 @@ async def analyze_snapshot(snapshot: PageSnapshot, ctx: RunContext) -> tuple[Sit
     if snapshot.screenshot:
         saved = await ctx.files.save(f"{folder}/screenshot.jpg", snapshot.screenshot)
         ev = ev.model_copy(update={"screenshot_file": saved})
-    # The fields don't depend on each other, so they're resolved at the same time.
+    # The fields don't depend on each other, so they're resolved at the same time, and their
+    # questions for Jev go together in one call when they're asked at the same time.
     names = list(RESOLVERS)
-    answers = await asyncio.gather(*(RESOLVERS[name](ev, ctx) for name in names))
+    answers = await _resolve_together(names, ev, ctx)
     fields: dict[str, FieldResult[Any]] = dict(zip(names, answers, strict=True))
     for name in FIELD_NAMES:
         fields.setdefault(name, not_built_yet())

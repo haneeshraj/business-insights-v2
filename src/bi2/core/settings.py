@@ -40,6 +40,8 @@ class AiSettings(BaseModel):
     # tier, which takes 15 to 60 seconds a call, for a few more answers left to review.
     gemini: bool = True
     jev_images: bool = True  # whether Jev is shown screenshots, like the numbered logo boxes
+    # Whether a site's questions for Jev that are asked at the same time go in one call.
+    fan_out: bool = True
     # Whether a field the pages don't answer, like a chain's head-office address, may be looked
     # up with a web search, through Gemini's Google Search grounding.
     search: bool = True
