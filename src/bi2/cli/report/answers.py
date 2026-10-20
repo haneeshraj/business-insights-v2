@@ -60,13 +60,31 @@ def _value(name: str, field: FieldResult[Any], page: Path, root: Path) -> str:
             )
         if value.url:
             parts.append(link(value.url, value.url.rsplit("/", 1)[-1][:50] or value.url))
+        if value.colors:
+            swatches = "".join(
+                f'<span title="{e(color)}" style="display:inline-block;width:14px;height:14px;'
+                f'margin-right:3px;border-radius:3px;border:1px solid #9994;background:{e(color)}">'
+                "</span>"
+                for color in value.colors
+            )
+            parts.append(f"{swatches} {e(' '.join(value.colors))}")
         return "<br>".join(parts)
     if name == "social_links":
         return lines(link(profile.url) for profile in value)
     if name == "mcc":
         return e(f"{value.code} {value.description}")
     if name == "address":
-        return e(value.text)
+        shown = e(value.text)
+        if value.coordinates is not None:
+            at = value.coordinates
+            place = f"{at.latitude:.5f}/{at.longitude:.5f}"
+            url = f"https://www.openstreetmap.org/?mlat={at.latitude}&mlon={at.longitude}#map=17/{place}"
+            shown += "<br>" + link(url, f"on the map ({at.latitude:.4f}, {at.longitude:.4f})")
+        if value.geocode_agrees is False:
+            shown += " <span class=muted>the map gives another postcode</span>"
+        if value.multiple_locations:
+            shown += " <span class=muted>one of several locations</span>"
+        return shown
     return e(value)
 
 
