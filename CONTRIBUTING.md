@@ -57,6 +57,22 @@ uv run bi2 eval score eval/gold.toml bi2-results/analyze/results.jsonl   # accur
 
 Results go to `bi2-results/analyze/`: `results.jsonl` with every site, a folder per site with its result, evidence, screenshot and logo, and `report.html` with the answers next to the evidence.
 
+## Models and keys
+
+The AI pass asks Jev and Gemini about the answers the rules aren't sure of. Set either key, or both, to use it; without them, every run is rules-only.
+
+```
+export JEV_API_KEY=...      # or: uv run bi2 keys set jev
+export GEMINI_API_KEY=...   # or: uv run bi2 keys set gemini
+uv run bi2 doctor           # where each key was found, the models' limits, today's requests
+```
+
+- **Saved pages cost nothing to rerun.** A run on saved pages keeps every model answer beside the pages, in `answers/`, by a hash of the question, so only questions a change makes new reach a model. Change a prompt's wording and bump its version, and it's asked afresh.
+- **Free tiers have small daily quotas.** Gemini 3.5 Flash's free tier allows 20 requests a day. v2 counts each day's requests in `free-tier-usage.json` in its settings folder, keeps to 90% of each model's quota in `src/bi2/data/models.toml`, and stops asking a model the provider says is used up.
+- `--no-ai` uses the rules alone, `--fast` asks Jev alone, and `--answers <folder>` keeps answers elsewhere, like an empty folder to time a run whose every question is new.
+- `python eval/cost_per_site.py bi2-results/<run>` says what a run's sites cost, how long their calls took, and what the same calls would cost on other providers' models.
+- Tests never call a model: every Decider and LLM in them is a stand-in.
+
 ## Checking answers
 
 `bi2 review` opens the last run's report in your browser with a check on every answer:
