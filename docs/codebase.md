@@ -329,7 +329,6 @@ Each dependency is here for a reason, and anything new needs one too.
 | pydantic, pydantic-settings | Typed models and the layered config |
 | httpx | Async HTTP for plain fetches, SerpAPI and Nominatim |
 | playwright | Rendered pages, element positions and screenshots |
-| google-genai, openai, anthropic | Provider SDKs, all installed so any key works out of the box |
 | typer, rich | Terminal app commands and display |
 | keyring | Saving keys in the operating system's keychain |
 | prompt_toolkit | The interactive session's input line: history, completion of `/` commands and multi-line paste, on Windows, macOS and Linux |
@@ -337,12 +336,11 @@ Each dependency is here for a reason, and anything new needs one too.
 | pillow | Shrinking screenshots before they go to a model, drawing numbered boxes for the logo question, detecting real image types |
 | phonenumbers | Reliable phone parsing, and country hints from phone numbers |
 | tldextract (with its bundled suffix list) | Correct registrable domains (`.co.uk`, `.com.au`) |
-| fastembed | The local embedding model for MCC search, without PyTorch. It downloads the small model once and caches it. |
-| numpy | Searching the 914 MCC vectors in memory |
 | opentelemetry-api | Tracing hooks; an exporter is optional |
+| Extra `mcp` | The MCP server (`bi2 mcp`), through the official SDK |
 | Extra `server` (build phase 4) | FastAPI, uvicorn, the Postgres and Redis clients, the OAuth library |
 
-Jev needs no package of its own: `JevDecider` calls its REST API with httpx.
+Jev and Gemini need no packages of their own: both are called over their REST APIs with httpx. The MCC is picked by Jev, so there's no embedding model either. Provider SDKs join if an adapter for another provider needs one.
 
 **Dev tools:**
 - uv: environments and the lockfile

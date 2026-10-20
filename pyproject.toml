@@ -39,10 +39,6 @@ dependencies = [
     # Fetching: async HTTP, and a real browser for rendered pages and screenshots
     "httpx>=0.28",
     "playwright>=1.50",
-    # Model providers, all installed so any one key works out of the box
-    "google-genai>=2.0",
-    "openai>=3.0",
-    "anthropic>=1.0",
     # Terminal app: commands, display, the interactive session's input line, key storage
     "typer>=0.27",
     "rich>=15.0",
@@ -53,13 +49,11 @@ dependencies = [
     "pillow>=12.0",
     "phonenumbers>=9.0",
     "tldextract>=5.1",
-    # MCC search: a local embedding model, with vectors searched in memory
-    "fastembed>=0.9",
-    "numpy>=2.0",
     # Tracing hooks; exporting traces is optional
     "opentelemetry-api>=1.27",
 ]
-# Jev is called over its REST API with httpx, so it needs no package of its own.
+# Jev and Gemini are called over their REST APIs with httpx, so neither needs a package of its
+# own, and the MCC is picked by Jev, with no embedding model to install.
 # The website's `server` extra is added in build phase 4.
 
 [project.scripts]
@@ -133,10 +127,6 @@ plugins = ["pydantic.mypy"]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-
-[[tool.mypy.overrides]]
-module = ["fastembed.*"]
-ignore_missing_imports = true
 
 # --- pytest ------------------------------------------------------------------
 

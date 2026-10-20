@@ -1,7 +1,5 @@
-"""The investigator agent. It handles the fields the cascade couldn't settle, using a small set
-of read-only tools and a fixed tool-call budget.
-
-Belongs here: the agent loop and its tool definitions.
-
-Doesn't belong here: the normal path for a field, which is a fixed workflow in resolvers/.
+"""The investigator agent, for the fields the cascade couldn't settle from the site's own
+pages. Today it's one step, `address_by_search` in resolvers/address.py: a web search through
+Gemini's Google Search grounding, whose answer must cite its pages. A tool-using loop with a
+fixed call budget belongs here, when a field needs more than one search.
 """
