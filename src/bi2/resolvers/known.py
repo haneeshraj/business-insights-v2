@@ -29,6 +29,7 @@ from bi2.core.urls import domain_name
 from bi2.evidence.contacts import normalize_phone
 from bi2.resolvers.cascade import Resolved, Step
 from bi2.resolvers.logo import save_logo_file
+from bi2.resolvers.mcc import mcc_by_decider
 
 _SURE: Final = 0.85
 _LESS_SURE: Final = 0.7  # a name that doesn't match the domain, or details that can be stale
@@ -100,8 +101,10 @@ async def email_from_wikidata(ev: Evidence, ctx: RunContext) -> Resolved[EmailAd
     return Resolved(value=email, confidence=_LESS_SURE, source=f"{known.source}: its email")
 
 
-# The step for each field that Wikidata can answer.
+# The step for each field that Wikidata can answer. The MCC is Jev's pick from Wikidata's
+# description of the business, like "Canadian supermarket chain".
 KNOWN_STEPS: Final[dict[str, Step[Any]]] = {
+    "mcc": mcc_by_decider,
     "company_name": name_from_wikidata,
     "logo": logo_from_wikidata,
     "phone": phone_from_wikidata,

@@ -104,6 +104,12 @@ def chain_codes(ev: Evidence) -> list[str]:
 
 
 def _state(ev: Evidence) -> str:
+    if ev.unreadable and ev.known is not None:
+        # A page that blocks us says nothing, but Wikidata knows big brands.
+        known = ev.known
+        return "\n".join(
+            [f"Business: {known.name}", f"Wikidata describes it as: {known.description}"]
+        )
     lines = site_lines(ev)
     if ev.structured.types:
         lines.append("Its structured data calls it: " + ", ".join(ev.structured.types[:6]))
@@ -178,7 +184,7 @@ async def mcc_by_decider(ev: Evidence, ctx: RunContext) -> Resolved[Mcc] | Escal
     """The code Jev picks from the official list, in two rounds. When it isn't sure of the
     final pick, a second model picks among the same finalists: the same pick makes it sure,
     and a different one leaves the likelier of the two for review."""
-    if ev.unreadable:
+    if ev.unreadable and (ev.known is None or not ev.known.description):
         return Escalate("the page couldn't be read, so there's nothing to judge its business by")
     state = _state(ev)
     first = await ask_decider(_first_round(state), ctx)

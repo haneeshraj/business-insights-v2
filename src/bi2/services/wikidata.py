@@ -95,6 +95,15 @@ def _business(item: str, entity: dict[str, Any]) -> KnownBusiness:
         next((label["value"] for label in labels.values()), ""),
     )
     logo = _first(claims, _LOGO)
+    descriptions = entity.get("descriptions", {})
+    description = next(
+        (
+            descriptions[language]["value"]
+            for language in _LABEL_LANGUAGES
+            if language in descriptions
+        ),
+        "",
+    )
     accounts = [
         SocialProfile(platform=platform, url=pattern.format(quote(value, safe="@._-")))
         for prop, (platform, pattern) in _ACCOUNTS.items()
@@ -109,6 +118,7 @@ def _business(item: str, entity: dict[str, Any]) -> KnownBusiness:
         phone=_first(claims, _PHONE),
         email=_first(claims, _EMAIL).removeprefix("mailto:"),
         social_links=tuple(accounts),
+        description=description,
         head_office=street,
         head_office_postcode=postcode,
     )
@@ -177,7 +187,7 @@ class Wikidata:
             {
                 "action": "wbgetentities",
                 "ids": "|".join(items),
-                "props": "labels|claims",
+                "props": "labels|claims|descriptions",
                 "languages": "|".join(_LABEL_LANGUAGES),
             }
         )

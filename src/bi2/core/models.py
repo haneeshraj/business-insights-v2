@@ -384,6 +384,7 @@ class KnownBusiness(_Frozen):
     phone: str = ""
     email: str = ""
     social_links: tuple[SocialProfile, ...] = ()
+    description: str = ""  # Wikidata's one-line description, like "Canadian supermarket chain"
     # Its head office's street address, postcode and city, when Wikidata gives them.
     head_office: str = ""
     head_office_postcode: str = ""

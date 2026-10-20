@@ -107,3 +107,17 @@ async def test_a_decisive_first_round_needs_no_final_round() -> None:
     assert jev.asked == ["mcc_round_1"]
     assert result.value is not None
     assert (result.value.code, result.status.value) == ("5813", "ok")
+
+
+async def test_a_blocked_page_is_judged_by_wikidatas_description() -> None:
+    from bi2.core.models import KnownBusiness
+
+    known = KnownBusiness(item="Q1867036", name="Loblaws", description="Canadian supermarket chain")
+    blocked = Evidence(
+        page=PageInfo(url="https://www.loblaws.ca/"), unreadable="a bot check", known=known
+    )
+    jev = Rounds(low="5411", high=NONE, final="5411", probability=0.95)
+    result = await resolve_mcc(blocked, replace(fake_context(), decider=jev))
+    assert result.value is not None
+    assert result.value.code == "5411"
+    assert "Canadian supermarket chain" in jev.asked[0].state
