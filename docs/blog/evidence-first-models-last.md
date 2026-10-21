@@ -32,22 +32,6 @@ So v2 started with a gold set of 56 sites with checked answers, and a test set o
 
 ![architecture](../assets/architecture.svg)
 
-```mermaid
-flowchart TD
-  U["Website address"] --> C["Collector: a browser"]
-  C --> E["Evidence, no model:<br/>structured data, logo candidates, contacts,<br/>postcodes, links, Wikidata facts"]
-  E --> S["Seven field specialists, in parallel"]
-  S --> R{"Rules sure?"}
-  R -->|yes| OK["ok"]
-  R -->|no| J{"Jev sure?<br/>(a typed pick)"}
-  J -->|yes| OK
-  J -->|no| G{"Gemini sure?<br/>(a quoted reading)"}
-  G -->|yes| OK
-  G -->|no| I{"Investigator<br/>(web search)"}
-  I -->|found| OK
-  I -->|no| NR["needs review,<br/>best answer kept"]
-```
-
 Five rules hold the design together:
 
 1. **Models never see raw HTML.** They see a few labeled lines of evidence, chosen for the one question they're asked.

@@ -29,19 +29,7 @@ On the 56 gold-set sites, with no AI:
 
 ## 3. The pipeline
 
-```mermaid
-flowchart TD
-  W["A website address"] --> R["Free rules<br/>no AI, no tokens"]
-  R -->|"sure"| K["Kept"]
-  R -->|"unsure, or nothing found"| A["AI pass<br/>sees only the evidence<br/>for that one answer"]
-  A -->|"answered"| C["LLM check"]
-  A -->|"still missing"| P["A person looks it up<br/>and fills it in"]
-  K -->|"1 in 20, at random"| C
-  K --> D["Final answer"]
-  C -->|"agrees"| D
-  C -->|"disagrees"| P
-  P --> D
-```
+![Accurate answers: free rules first, an AI pass for what they're unsure of, an LLM check, and a person for what's still missing](../assets/accuracy-flow.svg)
 
 - An answer the rules are sure of is kept as it is. A random 1 in 20 also goes to the LLM check, to catch rules that start to slip.
 - Each step is measured the same way before the next one is built: on the review page, with the four groups (kept and right, kept but wrong, sent on but right, sent on and wrong).
@@ -49,15 +37,7 @@ flowchart TD
 
 ## 4. How we measure
 
-```mermaid
-flowchart LR
-  CH["Change a rule"] --> RUN["Run v2 on saved copies<br/>of the tuning sites' pages<br/>offline and free"]
-  RUN --> CMP["Compare with the last run:<br/>what got better, what got worse"]
-  CMP -->|"something got worse"| CH
-  CMP -->|"only better"| KEEP["Keep the change"]
-  KEEP --> TEST["From time to time, run the test set:<br/>sites never used while writing rules"]
-  TEST --> SCORE["The accuracy we report"]
-```
+![How a change is measured: run on saved copies, compare with the last run, keep only what's better, and score on the test set](../assets/measurement-loop.svg)
 
 - **Two sets of sites:**
   - A tuning set we write rules against: today's 56, growing as we go.

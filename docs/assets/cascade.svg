@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 690" width="1000" height="690" role="img" aria-labelledby="title desc" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="title">Each field&#x27;s cascade</title>
+<desc id="desc">A field stops at the first step that&#x27;s sure. With no answer at all, it&#x27;s not found; nothing is guessed.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+<rect width="1000" height="690" fill="#f1f5f9"/>
+<text x="40" y="52" font-size="26" font-weight="800" fill="#0b1f3a">Each field&#x27;s cascade</text>
+<text x="40" y="78" font-size="14" fill="#334155">A field stops at the first step that&#x27;s sure. With no answer at all, it&#x27;s not found; nothing is guessed.</text>
+<path d="M600.0 150.0 L720.0 150.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M600.0 272.0 L720.0 272.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M600.0 394.0 L720.0 394.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M600.0 516.0 L720.0 516.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M320.0 190.0 L320.0 232.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M320.0 312.0 L320.0 354.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M320.0 434.0 L320.0 476.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M320.0 556.0 L320.0 598.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="110" width="560" height="80" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<rect x="40" y="110" width="10" height="80" rx="5" fill="#16a34a"/>
+<text x="66.0" y="144.5" text-anchor="start" font-size="16" font-weight="700" fill="#0b1f3a">1. Rules</text>
+<text x="66.0" y="166.5" text-anchor="start" font-size="13.5" fill="#334155">places on the page that agree, structured data, postcodes</text>
+<rect x="40" y="232" width="560" height="80" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<rect x="40" y="232" width="10" height="80" rx="5" fill="#0891b2"/>
+<text x="66.0" y="266.5" text-anchor="start" font-size="16" font-weight="700" fill="#0b1f3a">2. Jev, a typed pick</text>
+<text x="66.0" y="288.5" text-anchor="start" font-size="13.5" fill="#334155">among the rules&#x27; own candidates, with a probability for each</text>
+<rect x="40" y="354" width="560" height="80" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<rect x="40" y="354" width="10" height="80" rx="5" fill="#7c3aed"/>
+<text x="66.0" y="388.5" text-anchor="start" font-size="16" font-weight="700" fill="#0b1f3a">3. Gemini, a quoted reading</text>
+<text x="66.0" y="410.5" text-anchor="start" font-size="13.5" fill="#334155">or a second opinion; what it reads must be on the page</text>
+<rect x="40" y="476" width="560" height="80" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<rect x="40" y="476" width="10" height="80" rx="5" fill="#ea580c"/>
+<text x="66.0" y="510.5" text-anchor="start" font-size="16" font-weight="700" fill="#0b1f3a">4. Investigator, a web search</text>
+<text x="66.0" y="532.5" text-anchor="start" font-size="13.5" fill="#334155">for what the pages never say; its answer must cite its pages</text>
+<rect x="40" y="598" width="560" height="60" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="320.0" y="632.0" text-anchor="middle" font-size="16" font-weight="700" fill="#78350f">needs_review, with the best answer kept</text>
+<rect x="720" y="110" width="240" height="446" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="840.0" y="308.5" text-anchor="middle" font-size="16" font-weight="700" fill="#14532d">ok</text>
+<text x="840.0" y="330.5" text-anchor="middle" font-size="13.5" fill="#166534">the value, its confidence,</text>
+<text x="840.0" y="349.5" text-anchor="middle" font-size="13.5" fill="#166534">its source and the evidence,</text>
+<text x="840.0" y="368.5" text-anchor="middle" font-size="13.5" fill="#166534">and every step that ran</text>
+<rect x="638.8" y="138.0" width="42.4" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="660.0" y="155.0" text-anchor="middle" font-size="12.5" fill="#475569">sure</text>
+<rect x="638.8" y="260.0" width="42.4" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="660.0" y="277.0" text-anchor="middle" font-size="12.5" fill="#475569">sure</text>
+<rect x="638.8" y="382.0" width="42.4" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="660.0" y="399.0" text-anchor="middle" font-size="12.5" fill="#475569">sure</text>
+<rect x="635.5" y="504.0" width="49.0" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="660.0" y="521.0" text-anchor="middle" font-size="12.5" fill="#475569">found</text>
+<rect x="355.6" y="199.0" width="68.8" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="390.0" y="216.0" text-anchor="middle" font-size="12.5" fill="#475569">not sure</text>
+<rect x="355.6" y="321.0" width="68.8" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="390.0" y="338.0" text-anchor="middle" font-size="12.5" fill="#475569">not sure</text>
+<rect x="355.6" y="443.0" width="68.8" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="390.0" y="460.0" text-anchor="middle" font-size="12.5" fill="#475569">not sure</text>
+<rect x="355.6" y="565.0" width="68.8" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="390.0" y="582.0" text-anchor="middle" font-size="12.5" fill="#475569">not sure</text>
+</svg>

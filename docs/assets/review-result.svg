@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 350" width="1260" height="350" role="img" aria-labelledby="title desc" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="title">What a result contains</title>
+<desc id="desc">From what the browser captured, to the evidence, to one entry per field.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+<rect width="1260" height="350" fill="#f1f5f9"/>
+<text x="40" y="52" font-size="26" font-weight="800" fill="#0b1f3a">What a result contains</text>
+<text x="40" y="78" font-size="14" fill="#334155">From what the browser captured, to the evidence, to one entry per field.</text>
+<path d="M340.0 210.0 L390.0 210.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M680.0 210.0 L730.0 210.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M910.0 210.0 L960.0 210.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="140" width="300" height="140" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="190.0" y="185.5" text-anchor="middle" font-size="16" font-weight="700" fill="#0b1f3a">What the browser captured</text>
+<text x="190.0" y="207.5" text-anchor="middle" font-size="13.5" fill="#334155">the page as drawn, every image</text>
+<text x="190.0" y="226.5" text-anchor="middle" font-size="13.5" fill="#334155">and where it sits, the text</text>
+<text x="190.0" y="245.5" text-anchor="middle" font-size="13.5" fill="#334155">by area, a screenshot</text>
+<rect x="390" y="140" width="290" height="140" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="535.0" y="185.5" text-anchor="middle" font-size="16" font-weight="700" fill="#0b1f3a">The evidence</text>
+<text x="535.0" y="207.5" text-anchor="middle" font-size="13.5" fill="#334155">names, structured data,</text>
+<text x="535.0" y="226.5" text-anchor="middle" font-size="13.5" fill="#334155">contacts, countries, links,</text>
+<text x="535.0" y="245.5" text-anchor="middle" font-size="13.5" fill="#334155">ranked logo candidates</text>
+<rect x="730" y="160" width="180" height="100" rx="12" fill="#0b1f3a" stroke="#0b1f3a" stroke-width="1.5"/>
+<text x="820.0" y="195.0" text-anchor="middle" font-size="16" font-weight="700" fill="#f8fafc">The result</text>
+<text x="820.0" y="217.0" text-anchor="middle" font-size="13.5" fill="#cbd5e1">for the site:</text>
+<text x="820.0" y="236.0" text-anchor="middle" font-size="13.5" fill="#cbd5e1">one entry per field</text>
+<rect x="960" y="100" width="260" height="220" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="980.0" y="147.5" text-anchor="start" font-size="16" font-weight="700" fill="#14532d">Each field has</text>
+<text x="980.0" y="169.5" text-anchor="start" font-size="13.5" fill="#166534">• the answer</text>
+<text x="980.0" y="188.5" text-anchor="start" font-size="13.5" fill="#166534">• a status: ok, needs review,</text>
+<text x="980.0" y="207.5" text-anchor="start" font-size="13.5" fill="#166534">   not found or error</text>
+<text x="980.0" y="226.5" text-anchor="start" font-size="13.5" fill="#166534">• a confidence from 0 to 1</text>
+<text x="980.0" y="245.5" text-anchor="start" font-size="13.5" fill="#166534">• where it came from</text>
+<text x="980.0" y="264.5" text-anchor="start" font-size="13.5" fill="#166534">• the quotes or links behind it</text>
+<text x="980.0" y="283.5" text-anchor="start" font-size="13.5" fill="#166534">• every step tried, and why</text>
+</svg>

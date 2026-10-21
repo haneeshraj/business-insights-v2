@@ -143,4 +143,4 @@ Keep the summary short. A longer body isn't needed.
 
 - Keep each pull request to one change, with tests.
 - If you change a prompt, a model or a threshold, say so in the description. A maintainer will run the live eval and post the scores before merging.
-- Update the docs when behavior or structure changes.
+- Update the docs when behavior or structure changes. The diagrams are drawn by `docs/assets/diagrams.py`: change one there and run `uv run python docs/assets/diagrams.py`. `architecture.svg` is edited by hand.

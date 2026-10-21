@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="title">How a change is measured</title>
+<desc id="desc">Every run sees the same saved pages, so only the rules change; the test set is never used while writing them.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+<rect width="960" height="440" fill="#f1f5f9"/>
+<text x="40" y="52" font-size="26" font-weight="800" fill="#0b1f3a">How a change is measured</text>
+<text x="40" y="78" font-size="14" fill="#334155">Every run sees the same saved pages, so only the rules change; the test set is never used while writing them.</text>
+<path d="M250.0 185.0 L300.0 185.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M590.0 185.0 L640.0 185.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M780.0 136.0 L780.0 112.0 L145.0 112.0 L145.0 150.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M780.0 234.0 L780.0 320.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M670.0 350.0 L620.0 350.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M330.0 350.0 L270.0 350.0" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="150" width="210" height="70" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="145.0" y="189.0" text-anchor="middle" font-size="16" font-weight="700" fill="#0b1f3a">Change a rule</text>
+<rect x="300" y="136" width="290" height="98" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="445.0" y="170.0" text-anchor="middle" font-size="16" font-weight="700" fill="#0b1f3a">Run v2 on saved copies</text>
+<text x="445.0" y="192.0" text-anchor="middle" font-size="13.5" fill="#334155">of the tuning sites&#x27; pages,</text>
+<text x="445.0" y="211.0" text-anchor="middle" font-size="13.5" fill="#334155">offline and free</text>
+<rect x="640" y="136" width="280" height="98" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="780.0" y="170.0" text-anchor="middle" font-size="16" font-weight="700" fill="#0b1f3a">Compare with the last run</text>
+<text x="780.0" y="192.0" text-anchor="middle" font-size="13.5" fill="#334155">what got better,</text>
+<text x="780.0" y="211.0" text-anchor="middle" font-size="13.5" fill="#334155">what got worse</text>
+<rect x="670" y="320" width="220" height="60" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="780.0" y="354.0" text-anchor="middle" font-size="16" font-weight="700" fill="#14532d">Keep the change</text>
+<rect x="330" y="304" width="290" height="92" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="475.0" y="335.0" text-anchor="middle" font-size="16" font-weight="700" fill="#0b1f3a">Run the test set</text>
+<text x="475.0" y="357.0" text-anchor="middle" font-size="13.5" fill="#334155">from time to time: sites never</text>
+<text x="475.0" y="376.0" text-anchor="middle" font-size="13.5" fill="#334155">used while writing rules</text>
+<rect x="40" y="318" width="230" height="64" rx="12" fill="#0b1f3a" stroke="#0b1f3a" stroke-width="1.5"/>
+<text x="155.0" y="354.0" text-anchor="middle" font-size="16" font-weight="700" fill="#f8fafc">The accuracy we report</text>
+<rect x="399.3" y="100.0" width="141.4" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="470.0" y="117.0" text-anchor="middle" font-size="12.5" fill="#475569">something got worse</text>
+<rect x="735.7" y="265.0" width="88.6" height="24" rx="9" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="780.0" y="282.0" text-anchor="middle" font-size="12.5" fill="#475569">only better</text>
+</svg>

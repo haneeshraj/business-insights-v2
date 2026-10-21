@@ -23,20 +23,7 @@ Status: updated 2026-10-20, with the model layer, the MCC, the address and the M
 
 ## Layers
 
-```
-   cli · server · eval · wiring               entry points: build a RunContext, call the pipeline
-                  │
-     ┌────────────┴─────────────┐
-     ▼                          ▼
-  logic                      infrastructure
-  pipeline, resolvers,       fetch, llm, decide, retrieval,
-  agent, evidence            services, adapters
-  (pure, or uses ports)      (implements ports, does the I/O)
-     │                          │
-     └────────────┬─────────────┘
-                  ▼
-                core                          models, ports, errors, settings, events, pure helpers
-```
+![The layers: entry points over logic and infrastructure, which never import each other, over core](assets/layers.svg)
 
 - **`core`** imports nothing else from `bi2`.
 - **Logic** never imports infrastructure. It reaches the outside world only through the interfaces ("ports") defined in `core/ports.py`, which it receives in the `RunContext`.

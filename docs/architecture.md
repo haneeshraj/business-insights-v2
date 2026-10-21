@@ -140,20 +140,7 @@ The MCP server (later) can run in local mode, so AI assistants use the user's ow
 
 ## How a website request flows
 
-```
-Website (React) ──▶ API (FastAPI) ──────────────────────▶ Postgres
-                       │          ▲                       users, encrypted keys, jobs, results,
-                       │ enqueue  │ progress              evidence, images, LLM-call log
-                       ▼          │ (server-sent events)
-                     Redis        queue, rate limits, cache, progress
-                       │          ▲
-                       ▼          │
-                    Worker        pipeline + browser
-                       │
-                       ▼
-        Gemini · OpenAI · Anthropic · Jev · SerpAPI   (the user's own keys, or the project's key for free tries)
-        Nominatim                                     (keyless, shared by all users)
-```
+![How a website request flows: the website, the API, Redis, the workers, Postgres and the providers](assets/website-flow.svg)
 
 1. A signed-in user submits a URL. If the site has a recent shared result (see "Shared results"), the API returns it immediately. Otherwise it checks that the user has a free try left or keys of their own, checks their quota, and adds a job to the Redis queue. The job says which keys to use (the user's own, or the project's free-try key) by ID; the keys themselves never go into the queue.
 2. A worker loads and decrypts those keys, runs the pipeline with them and publishes each stage's progress to Redis. The API streams that progress to the website.
@@ -194,43 +181,11 @@ Website (React) ──▶ API (FastAPI) ─────────────�
 
 ## Pipeline
 
-```
-URL
- │
- ▼
-Fetch        rendered homepage (browser) + contact/about pages (plain HTTP, browser fallback)
- │
- ▼
-Evidence     no model calls:
- │           structured data (JSON-LD, microdata, OpenGraph), title, meta tags, icons
- │           logo candidates with on-screen position and size
- │           visible text by region (header, main, footer)
- │           phones, emails, postcodes, copyright line, classified links
- │           country hints (domain, language, phone codes, postcode format), one screenshot
- │           the contact page's phones and emails, when the homepage lacks a phone or a general email
- │
- ├────────────┬────────────┬────────────┐
- ▼            ▼            ▼            ▼
-Name         Logo         MCC         Address        resolvers run in parallel;
- │            │            │            │            address waits for name only
- └────────────┴─────┬──────┴────────────┘            when it has to search
-                    ▼
-SiteResult   per field: value, status, confidence, source, evidence
-```
+![The pipeline for one site: fetch, evidence with no model, seven field specialists at the same time, and the SiteResult](assets/pipeline.svg)
 
 Every resolver runs the same cascade, and stops at the first step that's sure:
 
-```mermaid
-flowchart TD
-  R{"Rules: places that agree,<br/>structured data, postcodes"} -->|sure| OK["ok"]
-  R -->|not sure| J{"Jev: a typed pick among<br/>the rules' candidates"}
-  J -->|sure| OK
-  J -->|not sure| G{"Gemini: a quoted reading,<br/>or a second opinion"}
-  G -->|sure| OK
-  G -->|not sure| I{"Investigator:<br/>a web search"}
-  I -->|found| OK
-  I -->|no| N["needs_review, with the best answer kept"]
-```
+![Each field's cascade: rules, then Jev, then Gemini, then the investigator, stopping at the first that's sure](assets/cascade.svg)
 
 | Field | Rules | Jev | Gemini | Programmatic sources |
 |---|---|---|---|---|
