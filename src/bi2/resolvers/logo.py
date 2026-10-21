@@ -7,7 +7,7 @@ neither a file nor code, such as one drawn with CSS, is cut out of the screensho
 """
 
 import re
-from typing import Final
+from typing import Final, NamedTuple
 from urllib.parse import unquote, urlsplit
 
 from bi2.core.asking import Ask, Choice
@@ -83,23 +83,36 @@ _COLOR_WORDS: Final = frozenset(
 )
 
 
-def _logo_words(url: str | None) -> tuple[str, frozenset[str]]:
-    """A logo file's host, and the words of its name that aren't a color or a size."""
+class _LogoName(NamedTuple):
+    folder: str  # the host and the path's folders
+    words: frozenset[str]  # the name's words that aren't a color or a size
+    colored: bool  # whether the name had a color word, like "white" or "blanc"
+
+
+def _logo_name(url: str | None) -> _LogoName:
+    """What a logo file's address says about which logo it is."""
     if not url:
-        return "", frozenset()
+        return _LogoName("", frozenset(), colored=False)
     parts = urlsplit(url)
-    name = unquote(parts.path.rsplit("/", 1)[-1]).lower().rsplit(".", 1)[0]
-    words = {w for w in re.split(r"[^a-z0-9]+", name) if w and w not in _COLOR_WORDS}
-    words -= {w for w in words if re.fullmatch(r"\d+x|\d+w|\d+px", w)}
-    return parts.netloc, frozenset(words)
+    folder, _, file = unquote(parts.path).lower().rpartition("/")
+    all_words = [w for w in re.split(r"[^a-z0-9]+", file.rsplit(".", 1)[0]) if w]
+    words = {w for w in all_words if w not in _COLOR_WORDS}
+    words -= {w for w in words if re.fullmatch(r"\d+x|\d+w|\d+px|\d+x\d+", w)}
+    colored = len(words) < len(set(all_words))
+    return _LogoName(parts.netloc + folder, frozenset(words), colored)
 
 
 def same_logo(a: LogoCandidate, b: LogoCandidate) -> bool:
-    """Whether two candidates are versions of one logo file: on the same host, with the same
-    name once its color and size words are left out."""
-    host_a, words_a = _logo_words(a.url)
-    host_b, words_b = _logo_words(b.url)
-    return bool(words_a) and host_a == host_b and words_a == words_b
+    """Whether two candidates are versions of one logo file: in the same folder, with the same
+    name once its color and size words are left out. A name that says no more than "logo",
+    maybe with a number, is too common to tell by, like a partner's logo.png beside the
+    business's logo-white.svg, unless both are color versions, like logo-brown-2.png and
+    logo-blanc-2.png."""
+    first, second = _logo_name(a.url), _logo_name(b.url)
+    if not first.words or first.folder != second.folder or first.words != second.words:
+        return False
+    telling = {w for w in first.words if w not in {"logo", "logos"} and not w.isdigit()}
+    return bool(telling) or (first.colored and second.colored)
 
 
 def _runner_up(ranked: list[LogoCandidate]) -> int:

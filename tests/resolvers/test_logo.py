@@ -158,3 +158,14 @@ def test_color_versions_of_one_logo_file_are_the_same_logo() -> None:
     partner = candidate(3, "https://granjaviader.cat/uploads/visa.png")
     assert same_logo(brown, white)
     assert not same_logo(brown, partner)
+
+
+def test_a_bare_logo_file_name_is_too_common_to_be_the_same_logo() -> None:
+    from bi2.core.models import LogoCandidate
+    from bi2.resolvers.logo import same_logo
+
+    partner = LogoCandidate(
+        number=1, kind="img", url="https://example-cafe.ca/files/partners/logo.png"
+    )
+    white = LogoCandidate(number=2, kind="img", url="https://example-cafe.ca/files/logo-white.svg")
+    assert not same_logo(partner, white)
