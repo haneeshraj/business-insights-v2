@@ -32,7 +32,7 @@ Evidence first, models last. bi2 reads the page once, with no model: its structu
 
 ![architecture](docs/assets/architecture.svg)
 
-Read more in [the architecture](docs/architecture.md), [what a site costs](docs/costs.md), and [the blog post](docs/blog/evidence-first-models-last.md).
+Read more in [the architecture](docs/architecture.md) and [what a site costs](docs/costs.md).
 
 ## Results
 
@@ -48,7 +48,30 @@ On the 56 gold sites, with Jev and Gemini, on the same saved pages every run:
 | Email | 42 of 45 | 42 |
 | Social links | 37 of 37 | 37 |
 
-On the 166-site test set, which no rule was tuned on, MCC codes were right 142 times of 148, by drafted checks against each site's own title and description.
+On the 166-site test set, which no rule was tuned on, counting the answers a person or a drafted check against the site's own pages has verified:
+
+| Field | Right | Right and sure | Right and sure, rules alone |
+|---|---|---|---|
+| Company name | 110 of 116 | 106 | 94 |
+| Logo | 101 of 116 | 96 | 86 |
+| Phone | 115 of 133 | 99 | 83 |
+| Email | 139 of 145 | 89 | 80 |
+| Social links | 107 of 115 | 95 | 95 |
+| MCC | 142 of 148 | 128 | not built |
+
+The MCC checks are drafted against each site's title and description, and not yet confirmed by a person.
+
+A sure answer is one nobody checks, so the costliest mistake is a sure answer that's wrong. How often that happened, counted with `python eval/calibration.py`:
+
+| Field | Gold set | Test set |
+|---|---|---|
+| Company name | 0 of 54 | 3 of 109 |
+| MCC | 0 of 51 | 2 of 130 |
+| Phone | 1 of 20 | 3 of 102 |
+| Email | 0 of 23 | 0 of 89 |
+| Social links | 0 of 37 | 4 of 99 |
+| Logo | 1 of 38 | 8 of 104 |
+| Head-office address | 3 of 28 | not checked yet |
 
 About 3 model calls a site, almost all to Jev: under a tenth of a cent a site at list prices, and nothing on the free tiers.
 

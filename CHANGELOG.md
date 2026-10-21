@@ -15,7 +15,7 @@ v2 follows [semantic versioning](https://semver.org). The output format, `SiteRe
 - **Free tiers:** a limiter per model for requests a minute, a day and at once, counted across runs; answers kept on disk; at most 12 model calls a site.
 - **Commands:** `bi2` alone opens an interactive session; `bi2 doctor`, `bi2 keys`, `bi2 mcp`, `bi2 eval check`, `bi2 analyze --fast`, `--no-ai`, `--file` and `--answers`; results as CSV too.
 - **CI/CD:** a nightly live eval with accuracy floors and a cost ceiling, releases to PyPI and ghcr.io, a Dockerfile, Dependabot.
-- **Docs:** the architecture as built, costs per provider and model, a blog article, a logo, and every diagram as an SVG image, drawn by `docs/assets/diagrams.py`.
+- **Docs:** the architecture as built, costs per provider and model, a logo, and every diagram as an SVG image, drawn by `docs/assets/diagrams.py`.
 
 ### Removed
 
