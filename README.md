@@ -113,7 +113,6 @@ docker run --rm -e JEV_API_KEY -e GEMINI_API_KEY -v "$PWD:/data" ghcr.io/haneesh
 - [Codebase guide](docs/codebase.md): how the code is organized
 - [Evaluation](eval/README.md): the gold set, the test set and how answers are judged
 - [Contributing](CONTRIBUTING.md): setup and checks
-- [Progress](PROGRESS.md): the latest work log
 
 ## License
 

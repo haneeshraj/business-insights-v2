@@ -1,6 +1,6 @@
 # Business Insights v2: architecture draft
 
-Status: built, 2026-10-20. Every field of v2.0 is built: name, logo, MCC, head-office address with coordinates, phone, email and social links, with the AI pass, the MCP server and CI/CD. The website demo comes next. The scores are in [costs.md](costs.md) and [PROGRESS.md](../PROGRESS.md).
+Status: built, 2026-10-20. Every field of v2.0 is built: name, logo, MCC, head-office address with coordinates, phone, email and social links, with the AI pass, the MCP server and CI/CD. The website demo comes next. The scores and costs are in [costs.md](costs.md) and the [blog article](blog/evidence-first-models-last.md).
 
 ![architecture](assets/architecture.svg)
 
