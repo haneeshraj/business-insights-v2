@@ -101,6 +101,20 @@ The logo's eight are mostly the same logo in another file: an SVG saved from the
 - Done since the 17:50 reset: Jev fan-out (a site's questions in one call: 154 Jev calls instead of 176 on the gold set, answers as good), and the report shows logo colors and address map links.
 - Not started: the website demo, build phase 4.
 
+## From the code review, not yet fixed
+
+The review of tonight's changes stopped at the usage limit, with one of its angles done. It found these; the first finding it made, the same-logo rule's false match, is fixed:
+
+- `brand_colors` doesn't strip a UTF-8 BOM before looking for SVG code, so such a logo gets no colors (`resolvers/images.py`).
+- `_runner_up` and `same_logo` judge "versions of one logo" by two different rules; build one on `evidence.logos._file_name` and `core.urls`' size tags.
+- `address_by_search` picks the name to search by itself, so a title like "Home | Acme" searches for "Home"; use `evidence.names.name_candidates` (`resolvers/address.py`).
+- `bi2 doctor` reads the usage file by hand, without the Pacific-day check; use `FreeTier(...).requests_today` (`cli/doctor.py`).
+- `/keys` in the session masks keys differently from `bi2 keys show`; share one helper (`cli/interactive/commands.py`).
+- CSV, `/show` and the review page each format answers their own way; keep one formatter.
+- `bi2 eval check` reads every site folder, including ones from older runs; read the run's `results.jsonl` (`cli/check.py`).
+- `name_from_wikidata` matches the domain without `normalize_company_name`, so "The Home Depot" or "Roots Corporation" stay unsure on blocked pages (`resolvers/known.py`).
+- A truncated kept answer or lookup file stops a run instead of being asked again (`adapters/local/lookups.py`, `answers.py`).
+
 ## Questions for you
 
 - **Push to GitHub?** Every commit is local. CI and the release workflow run once it's pushed. The nightly eval needs two repository secrets, `GEMINI_API_KEY` and `JEV_API_KEY`, in an environment named `eval`, and publishing to PyPI needs trusted publishing set up for the project on pypi.org.
