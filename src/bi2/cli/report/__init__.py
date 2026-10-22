@@ -8,6 +8,7 @@ escaped before it's written, since it comes from other sites.
 """
 
 import re
+import webbrowser
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
@@ -23,6 +24,7 @@ __all__ = [
     "ReviewPage",
     "label_html",
     "learned_section",
+    "open_in_browser",
     "render_report",
     "write_report",
 ]
@@ -107,3 +109,10 @@ def write_report(
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(html, encoding="utf-8")
+
+
+def open_in_browser(path: Path) -> bool:
+    """Open a written report in the default browser, or say False when none would start.
+    `typer.launch` isn't used for this: on Windows, Typer's copy of Click runs `start`, which is
+    only a command inside cmd.exe, without a shell, so it fails without a word."""
+    return webbrowser.open(path.resolve().as_uri())

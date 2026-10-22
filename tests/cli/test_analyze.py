@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from bi2.adapters.local.snapshots import save_snapshot
@@ -58,6 +59,26 @@ def test_saved_pages_are_analyzed_checked_and_reported(tmp_path: Path, site: str
     report = (out / "report.html").read_text(encoding="utf-8")
     assert "Analysis report" in report
     assert 'class="answer-logo"' in report
+
+
+def test_open_shows_the_report_in_the_browser_or_says_it_cant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    saved = tmp_path / "saved"
+    save_snapshot(page_snapshot(PAGE), saved)
+    out = tmp_path / "out"
+    opened: list[str] = []
+
+    def browser(url: str) -> bool:
+        opened.append(url)
+        return True
+
+    monkeypatch.setattr("webbrowser.open", browser)
+    args = ["analyze", "--saved", str(saved), "--out", str(out), "--open"]
+    assert runner.invoke(app, args).exit_code == 0
+    assert opened == [(out / "report.html").resolve().as_uri()]
+    monkeypatch.setattr("webbrowser.open", lambda url: False)
+    assert "No browser would start" in runner.invoke(app, args).output
 
 
 def test_analyze_needs_something_to_analyze() -> None:

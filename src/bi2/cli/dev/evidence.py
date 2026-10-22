@@ -12,7 +12,7 @@ from rich.table import Table
 
 from bi2.adapters.local.snapshots import load_snapshot, save_snapshot, saved_folders
 from bi2.cli.options import AllowPrivate, Browser, Timeout
-from bi2.cli.report import ReportSite, write_report
+from bi2.cli.report import ReportSite, open_in_browser, write_report
 from bi2.core.errors import BrowserUnavailable, FetchError
 from bi2.core.models import Evidence, PageSnapshot
 from bi2.evaluation.coverage import evidence_coverage, summarize
@@ -212,5 +212,5 @@ def evidence(
     if report is None:
         raise typer.Exit(code=1)
     console.print(f"Report: {report.resolve()}", markup=False, highlight=False)
-    if open_report:
-        typer.launch(str(report.resolve()))
+    if open_report and not open_in_browser(report):
+        console.print("No browser would start: open the report above yourself.", markup=False)

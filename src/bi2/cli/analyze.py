@@ -15,7 +15,7 @@ from bi2.adapters.local.snapshots import load_snapshot, saved_folders
 from bi2.cli.doctor import check_models
 from bi2.cli.options import DEFAULT_CONCURRENCY, AllowPrivate, Browser, Timeout
 from bi2.cli.output import results_csv
-from bi2.cli.report import ReportSite, write_report
+from bi2.cli.report import ReportSite, open_in_browser, write_report
 from bi2.core.errors import BrowserUnavailable
 from bi2.core.models import FIELD_NAMES, Evidence, SiteResult, Status
 from bi2.core.settings import Settings
@@ -367,5 +367,5 @@ def analyze(
         f"For spreadsheets: {(out / 'results.csv').resolve()}", markup=False, highlight=False
     )
     console.print(f"Report: {report.resolve()}", markup=False, highlight=False)
-    if open_report:
-        typer.launch(str(report.resolve()))
+    if open_report and not open_in_browser(report):
+        console.print("No browser would start: open the report above yourself.", markup=False)
