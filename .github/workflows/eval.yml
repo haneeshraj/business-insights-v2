@@ -89,7 +89,7 @@ jobs:
         env:
           COST_CEILING: ${{ inputs.cost_ceiling }}  # empty on the nightly run: the usual ceiling
         run: uv run python eval/check_scores.py scores.json "$COST_CEILING"
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: scores
