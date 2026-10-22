@@ -62,7 +62,7 @@ jobs:
           uv pip install --python /tmp/fresh "$(ls dist/*.whl)[mcp]"
           /tmp/fresh/bin/bi2 --version
           /tmp/fresh/bin/bi2 --help
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
