@@ -4,6 +4,11 @@ name: Live eval
 # runs every night on main, and on demand, like for a pull request that changes a prompt, a
 # model or a threshold, since recorded answers no longer apply to those. It publishes scores
 # only, never copies of the sites' pages.
+#
+# The models are bi2's defaults, or the ones the repository variables BI2_LLM_MODEL and
+# BI2_BACKUP_MODEL name, and a run started by hand can name its own. A model is named
+# "provider:model", like openai:gpt-5.4-mini, and its provider's key has to be one of the eval
+# environment's secrets, under the name the analyze step below gives it.
 
 on:
   schedule:
@@ -11,9 +16,25 @@ on:
   workflow_dispatch:
     inputs:
       ai:
-        description: "Ask Jev and Gemini about unsure answers"
+        description: "Ask the models about unsure answers"
         type: boolean
         default: true
+      model:
+        description: "The LLM, like openai:gpt-5.4-mini or anthropic:claude-haiku-5-5; empty for the usual one"
+        type: string
+        default: ""
+      backup_model:
+        description: "The LLM asked when the first can't answer; empty for the usual one, none for none"
+        type: string
+        default: ""
+      jev:
+        description: "Let Jev make the typed choices; without it, the LLM makes them"
+        type: boolean
+        default: true
+      cost_ceiling:
+        description: "The most a site may cost on average, in US dollars"
+        type: string
+        default: "0.005"
 
 permissions:
   contents: read
@@ -27,7 +48,7 @@ jobs:
     name: Gold set, live
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: eval  # holds GEMINI_API_KEY and JEV_API_KEY; maintainers approve runs
+    environment: eval  # holds the providers' keys, like GEMINI_API_KEY; maintainers approve runs
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0
@@ -37,15 +58,37 @@ jobs:
       - run: uv run playwright install --with-deps chromium
       - name: Analyze the gold set
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # An empty value counts as unset, so these keep bi2's defaults unless a model is named.
+          BI2_AI__LLM_MODEL: ${{ inputs.model || vars.BI2_LLM_MODEL }}
+          BI2_AI__BACKUP_MODEL: ${{ inputs.backup_model || vars.BI2_BACKUP_MODEL }}
+          BI2_AI__JEV: ${{ (github.event_name == 'workflow_dispatch' && !inputs.jev) && 'false' || '' }}
+          # Each provider's key, under its usual name; a secret the environment doesn't hold is
+          # empty, and a provider without a key is skipped.
           JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
-        run: >
-          uv run bi2 analyze --gold eval/gold.toml --out results --concurrency 4
-          ${{ (github.event_name == 'workflow_dispatch' && !inputs.ai) && '--no-ai' || '' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        # `config show` says which models this run uses and which keys it found, by name only.
+        run: |
+          uv run bi2 config show
+          uv run bi2 analyze --gold eval/gold.toml --out results --concurrency 4 ${{ (github.event_name == 'workflow_dispatch' && !inputs.ai) && '--no-ai' || '' }}
       - name: Score it
         run: uv run bi2 eval score eval/gold.toml results/results.jsonl --json scores.json
       - name: Fail on a drop in accuracy
-        run: uv run python eval/check_scores.py scores.json
+        env:
+          COST_CEILING: ${{ inputs.cost_ceiling }}  # empty on the nightly run: the usual ceiling
+        run: uv run python eval/check_scores.py scores.json "$COST_CEILING"
       - uses: actions/upload-artifact@v5
         if: always()
         with:

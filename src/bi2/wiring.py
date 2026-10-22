@@ -25,13 +25,15 @@ from bi2.core.context import RunContext
 from bi2.core.errors import FetchError
 from bi2.core.models import PageSnapshot
 from bi2.core.ports import Decider, Downloader, Fetcher, Geocoder, KnowledgeBase, LanguageModel
+from bi2.core.providers import ModelRef
 from bi2.core.settings import Keys, Settings, keys_from_environment
 from bi2.decide.jev import Jev
 from bi2.decide.llm import LlmDecider, WithBackup
 from bi2.fetch.browser import BrowserChoice, BrowserFetcher
 from bi2.fetch.http import HttpDownloader
-from bi2.llm.gemini import Gemini
+from bi2.llm.clients import client_for
 from bi2.llm.limits import FreeTier
+from bi2.llm.routing import Fallback, Searching
 from bi2.services.nominatim import Nominatim
 from bi2.services.wikidata import Wikidata
 
@@ -66,12 +68,14 @@ async def local_context(
     that folder and reused on later runs, and with `kept_lookups`, every Wikidata answer.
 
     Models join when there's a key for them and model calls aren't turned off: Jev as the
-    Decider, with Gemini as its backup, or Gemini alone. Their answers are kept in
+    Decider, with the configured LLM as its backup, or the LLM alone, on whichever provider
+    the settings name. Their answers are kept in
     `kept_answers`, their calls logged in `call_log`, and their day's requests counted in
     `usage_file`, so the free tiers' limits hold across runs. The browser closes when the
     block ends."""
     settings = settings or Settings()
-    keys = keys or with_keychain(keys_from_environment())[0]
+    known = settings.all_providers()
+    keys = keys or with_keychain(keys_from_environment(known), known)[0]
     async with AsyncExitStack() as stack:
         fetcher: Fetcher = SavedPages(saved_pages) if saved_pages is not None else _NoPages()
         if load_pages:
@@ -112,27 +116,16 @@ async def _models(
     usage_file: Path | None,
     log: CallLog | None,
 ) -> tuple[Decider | None, LanguageModel | None, Decider | None]:
-    """The Decider, the LLM and the second opinion a run uses, from the keys it has: with both
-    keys, Jev decides, with Gemini as its backup and its second opinion."""
+    """The Decider, the LLM and the second opinion a run uses, from its settings and the keys
+    it has: with Jev's key, Jev decides, with the LLM as its backup and its second opinion;
+    without it, the LLM decides too."""
     ai = settings.ai
     if not ai.enabled:
         return None, None, None
     limits = FreeTier(usage_file, share=ai.daily_share)
-    llm: LanguageModel | None = None
-    if keys.gemini is not None and ai.gemini:
-        gemini = Gemini(
-            keys.gemini.get_secret_value(),
-            limits=limits,
-            model=ai.llm_model,
-            backup=ai.backup_model,
-        )
-        llm = await stack.enter_async_context(gemini)
-        if kept is not None:
-            llm = KeptGenerations(llm, kept / "gemini", model=ai.llm_model)
-        if log is not None:
-            llm = LoggedModel(llm, log)
+    llm = await _llm(stack, settings, keys, limits, kept, log) if ai.llm else None
     decider: Decider | None = None
-    if keys.jev is not None:
+    if ai.jev and keys.jev is not None:
         jev = Jev(keys.jev.get_secret_value(), limits=limits, model=ai.jev_model)
         decider = await stack.enter_async_context(jev)
         if kept is not None:
@@ -147,3 +140,77 @@ async def _models(
         else:
             decider, second = WithBackup(decider, backup), backup
     return decider, llm, second
+
+
+async def _llm(
+    stack: AsyncExitStack,
+    settings: Settings,
+    keys: Keys,
+    limits: FreeTier,
+    kept: Path | None,
+    log: CallLog | None,
+) -> LanguageModel | None:
+    """The run's LLM: the model, then its backup, each on its own provider when they differ,
+    with web searches sent to the search model when one is set. A model whose provider needs
+    a key the run doesn't have is left out."""
+    known = settings.all_providers()
+    named = settings.llm_models()
+    refs = [named[setting] for setting in ("llm_model", "backup_model") if setting in named]
+    # Two Gemini models share one client, which asks the second when the first is busy or out
+    # of requests, as v2 always has; any other pair is a chain of clients.
+    gemini = [ref for ref in refs if known[ref.provider].api == "gemini"]
+    pairs: list[tuple[ModelRef, ModelRef | None]]
+    if len(refs) == 2 and len(gemini) == 2 and refs[0].provider == refs[1].provider:
+        pairs = [(refs[0], refs[1])]
+    else:
+        pairs = [(ref, None) for ref in refs]
+    chain = [
+        model
+        for ref, backup in pairs
+        if (model := await _client(stack, ref, backup, settings, keys, limits, kept, log))
+    ]
+    main: LanguageModel | None = chain[0] if len(chain) == 1 else Fallback(chain) if chain else None
+    if main is not None and "search_model" in named:
+        search = await _client(
+            stack, named["search_model"], None, settings, keys, limits, kept, log
+        )
+        if search is not None:
+            main = Searching(main, search)
+    return main
+
+
+async def _client(
+    stack: AsyncExitStack,
+    ref: ModelRef,
+    backup: ModelRef | None,
+    settings: Settings,
+    keys: Keys,
+    limits: FreeTier,
+    kept: Path | None,
+    log: CallLog | None,
+) -> LanguageModel | None:
+    """One model's client, with its answers kept and its calls logged, or None when its
+    provider needs a key the run doesn't have."""
+    provider = settings.all_providers()[ref.provider]
+    key = keys.get(ref.provider)
+    if key is None and provider.needs_key:
+        return None
+    client = client_for(
+        ref,
+        provider=provider,
+        key=key.get_secret_value() if key else None,
+        settings=settings,
+        limits=limits,
+        backup=backup,
+    )
+    model: LanguageModel = await stack.enter_async_context(client)
+    if kept is not None:
+        # Gemini's answers stay where they always were, under the model's bare name, so the
+        # answers kept before still match; other providers' go under "provider:model".
+        if provider.api == "gemini":
+            model = KeptGenerations(model, kept / "gemini", model=ref.model)
+        else:
+            model = KeptGenerations(model, kept / ref.provider, model=str(ref))
+    if log is not None:
+        model = LoggedModel(model, log)
+    return model

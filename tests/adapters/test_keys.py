@@ -12,7 +12,7 @@ def test_the_environment_comes_first_and_the_keychain_fills_in(
 ) -> None:
     saved = {"jev": "jev-from-keychain", "gemini": "gemini-from-keychain"}
     monkeypatch.setattr(keychain, "keychain_key", lambda provider: saved.get(provider))
-    keys, found = keychain.with_keychain(Keys(gemini=SecretStr("gemini-from-env")))
+    keys, found = keychain.with_keychain(Keys(llm={"gemini": SecretStr("gemini-from-env")}))
     assert keys.gemini is not None
     assert keys.gemini.get_secret_value() == "gemini-from-env"
     assert keys.jev is not None

@@ -49,6 +49,7 @@ src/bi2/
 │   ├── ports.py            interfaces for everything that does I/O
 │   ├── errors.py           exception types, and the field status each one maps to
 │   ├── settings.py         the config schema and loader; the only file that reads env vars
+│   ├── providers.py        the LLM providers (data/providers.toml) and "provider:model" names
 │   ├── events.py           progress events and the EventSink interface
 │   ├── text.py             whitespace, accents, company-name normalization, name matching
 │   ├── urls.py             URL normalization, registrable domain, same-site checks
@@ -67,8 +68,10 @@ src/bi2/
 ├── agent/                  the investigator and its read-only tools
 ├── pipeline.py             fetch → evidence → resolvers → SiteResult, emitting events
 ├── fetch/                  Playwright and plain-HTTP fetchers, with the DNS safety check
-├── llm/                    gemini.py (the LanguageModel), limits.py (free-tier limits), registry.py
-│                           (data/models.toml)
+├── llm/                    the LanguageModels: gemini.py, anthropic.py and openai_compatible.py (one
+│                           client per API); clients.py (which client a model gets), routing.py (a
+│                           backup on another provider, web searches to the search model),
+│                           limits.py (free-tier limits), registry.py (data/models.toml)
 ├── decide/                 jev.py (the Decider), llm.py (an LLM standing in for Jev, and a
 │                           Decider with a backup)
 ├── retrieval/              unused: the MCC is picked by Jev, with no embedding search
@@ -77,8 +80,8 @@ src/bi2/
 │   ├── local/              files, in-memory cache and rate limiter, keys from env or keychain
 │   └── hosted/             Postgres store, Redis cache, limiter and queue, encrypted keys
 ├── wiring.py               builds a RunContext from real implementations: local and hosted
-├── cli/                    Typer commands: analyze, review, eval (score, compare, check), doctor,
-│                           keys, mcp, dev
+├── cli/                    Typer commands: analyze, review, eval (score, compare, check), config,
+│                           doctor, keys, mcp, dev
 ├── mcp/                    the MCP server (installed with the `mcp` extra)
 └── server/                 FastAPI app, accounts, worker (later, with the `server` extra)
 ```
@@ -174,7 +177,8 @@ Most contributions should mean adding files plus one registry line:
 | To add | You create | You register it in |
 |---|---|---|
 | A field | A model in `core/models.py`, a resolver, its prompts, gold-set labels | `resolvers/__init__.py` |
-| An LLM provider | An adapter implementing `LLMProvider` | `llm/providers/__init__.py` and `data/models.toml` |
+| An LLM provider that speaks OpenAI's chat API | Nothing: an entry is enough | `data/providers.toml`, and its prices in `data/models.toml` |
+| An LLM provider with its own API | A client in `llm/`, like `anthropic.py` | `client_for` in `llm/clients.py`, the `api` values in `core/providers.py` |
 | A search or geocoding provider | An adapter implementing the port | `services/__init__.py` |
 | A country | Its names, domains, main languages, postcode format and provinces | `data/countries.toml` |
 | A platform (Pinterest, Yelp and so on) | Its domains and profile URL patterns | `data/platforms.toml` |
@@ -189,73 +193,82 @@ Each of these gets a step-by-step guide in `docs/recipes/`. Third-party plugins 
 
 **Settings come in layers, lowest priority first:**
 1. Defaults in the schema
-2. The chosen profile: `cheap`, `balanced` (the default) or `accurate`, from `data/profiles.toml`
-3. The user's config file, then a project file (`./bi2.toml`) for team or CI settings. The user's file lives in the user's config folder, found with Typer's `get_app_dir` so the location is right on Windows, macOS and Linux.
-4. Environment variables (`BI2_…`)
-5. Command-line flags
+2. The user's config file, `bi2.toml` in the user's config folder, for every folder they run v2 in. The folder is the one Typer's `get_app_dir` gives, so it's right on Windows, macOS and Linux.
+3. The project's file, `./bi2.toml`, for team or CI settings, or the file `BI2_CONFIG` names
+4. Environment variables: `BI2_` and the setting's path, with `__` between levels, like `BI2_AI__LLM_MODEL` or `BI2_PROVIDERS__OLLAMA__BASE_URL`. An empty one counts as unset, like a CI input left blank.
+5. Command-line flags, which change only what they say, so a flag left out never undoes a config file
 
 **Example config file:**
 
 ```toml
-profile = "balanced"
-
-[run]
-concurrency = 4            # sites analyzed at once
-page_timeout_s = 20
-output_dir = "./bi2-results"
-
-[models]                   # aliases from data/models.toml; override the profile per task
-decide = "jev"             # falls back to an LLM when there's no Jev key
-vision = "fast"
-fallback = "fast"
-escalation = "strong"
+[ai]
+llm_model = "anthropic:claude-haiku-5-5"   # "provider:model"
+backup_model = "gemini-flash-lite-latest"  # a listed model can go by its name alone; "none" for none
+search_model = "gemini-3.5-flash"          # where web searches go; only Gemini searches here
+temperature = 0.0
+timeout_s = 90                             # how long one model call may take
+jev = true                                 # Jev makes the typed choices when its key is set
+calls_per_site = 12                        # the most model calls one site may make
+daily_share = 0.9                          # the share of each free tier's day v2 may use
 
 [thresholds]
-accept = 0.85              # confidence needed to accept an answer
-mcc_margin = 0.15          # lead the top MCC needs over the runner-up
+accept = 0.85                              # confidence needed to accept an answer
 
-[search]
-enabled = true             # needs a SerpAPI key
-locale = "auto"            # taken from the site's country hints
+[providers.ollama]                         # a provider's fields, changed one by one...
+base_url = "http://gpu-box:11434/v1"
 
-[agent]
-enabled = true
-max_tool_calls = 5
+[providers.office]                         # ...or a new one: any server that speaks OpenAI's API
+title = "Our gateway"
+base_url = "https://llm.example.internal/v1"
+keys = ["OFFICE_LLM_KEY"]
 
-[cache]
-evidence_ttl_hours = 24
+[models."office:llama-3.3-70b"]            # a model's own prices and limits
+input_per_million = 0.0
+per_minute = 300
 ```
 
 **Keys are never in config files**, because config files often get committed or shared. The terminal app looks for each key in two places, in this order:
-1. The provider's usual environment variable (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `SERPAPI_KEY` and Jev's). This is what CI, Docker and servers use.
-2. The operating system's keychain: macOS Keychain, Windows Credential Manager, or Secret Service on Linux. `bi2 init` offers to save keys there when one is available. When there isn't one, as on most headless servers, it explains the environment variables instead.
+1. The provider's usual environment variables, which `data/providers.toml` lists: `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` and so on, and Jev's `JEV_API_KEY`. This is what CI, Docker and servers use.
+2. The operating system's keychain: macOS Keychain, Windows Credential Manager, or Secret Service on Linux. `bi2 keys set <provider>` saves a key there, and `bi2 config` offers to when a provider has none. Where there's no keychain, as on most headless servers, use the environment variables.
 
 There is no automatic `.env` loading, because a `.env` file in a project folder is easy to commit by accident. `bi2 doctor` shows where each key was found, with all but the last four characters hidden.
 
 **The website** uses the same schema, with its settings taken from environment variables: database and Redis URLs, OAuth client IDs, free tries per account, the free-try daily cap and the shared-result reuse window.
 
 **Two helper commands:**
-- `bi2 config show` prints every effective setting and where it came from: default, profile, file, environment or flag.
-- `bi2 config schema` prints a JSON schema, so editors can autocomplete and check config files.
+- `bi2 config` chooses the provider, the model and any settings with the arrow keys, and saves them in the user's file or the project's. It never writes a key to a file.
+- `bi2 config show` prints every setting and where it came from: the default, the user's file, the project's file or the environment.
 
 ## Model registry
 
-`data/models.toml` is the one place that knows about specific models:
+Two data files are the one place that knows about specific providers and models:
+
+- `data/providers.toml`: each provider's API (`openai`, `anthropic` or `gemini`), its address, the environment variables its key may be in, and the models to suggest. Most providers speak OpenAI's chat API, so adding one is an entry here.
+- `data/models.toml`: each model's list prices and the limits v2 keeps it under, by provider.
 
 ```toml
-[aliases]
-fast = "gemini:gemini-2.5-flash"     # example IDs
-strong = "gemini:gemini-2.5-pro"
+# data/providers.toml
+[groq]
+title = "Groq"
+base_url = "https://api.groq.com/openai/v1"
+keys = ["GROQ_API_KEY"]
+json = "object"              # it's asked for a JSON object, since it refuses JSON schemas
 
-[models."gemini:gemini-2.5-flash"]
-vision = true
-structured_output = true
-# plus the context window and per-token prices, copied from the provider's pricing page
+# data/models.toml
+[anthropic."claude-haiku-5-5"]
+input_per_million = 0.10     # US dollars, at list price
+output_per_million = 0.50
+per_minute = 50
+per_day = 10000
+at_once = 4
 ```
 
-- Config and code refer to aliases or full IDs, never to hard-coded model names.
+- A model is named `provider:model`. One that `models.toml` lists, or whose name says whose it is (`gpt-`, `claude-`, `gemini-`, `mistral-` and so on), can go by its name alone, as in v1. `core/providers.py` reads the names.
+- A model that isn't listed still runs, with modest limits and no price, until a config file's `[models."provider:model"]` gives it its own.
+- Three clients speak the three APIs: `llm/gemini.py`, `llm/anthropic.py` and `llm/openai_compatible.py`. `llm/clients.py` picks the one for a model, and `llm/routing.py` chains a backup on another provider and sends web searches to the search model.
+- The OpenAI-compatible client asks for a JSON schema first and steps down to a JSON object, then plain text, when a provider refuses; it also drops a setting a model refuses, like the temperature on a reasoning model. That's how one entry fits so many providers.
 - When a provider retires a model or changes its prices, one file changes, followed by an eval run.
-- `bi2 doctor` warns when a configured model isn't available with the user's keys.
+- `bi2 doctor` checks that each configured model's provider takes its key and lists the model for it.
 
 ## Data files
 
@@ -267,8 +280,8 @@ Data files ship inside the package and are loaded with `importlib.resources`, so
 | `mcc_synonyms.toml` | Plain-language terms for each code ("taproom" and "brewpub" for 5813) | By hand, followed by an eval run |
 | `mcc_vectors.npy` + `mcc_vectors.json` | Embeddings of the codes plus synonyms, with the embedding model's name and a checksum of the inputs | Rebuilt by a dev command. CI fails if the checksum doesn't match the inputs. |
 | `schema_types.toml` | schema.org business types → likely MCC codes | By hand |
-| `models.toml` | Model aliases, capabilities and prices | When providers change models or prices |
-| `profiles.toml` | The `cheap`, `balanced` and `accurate` presets | Alongside eval runs |
+| `models.toml` | Each model's prices and the limits v2 keeps it under, by provider | When providers change models or prices |
+| `providers.toml` | Each LLM provider's API, address, key variables and suggested models | When a provider is added or moves |
 | `countries.toml` | Each country's names, domains, main languages, postcode pattern and provinces | By hand; adding a country is one entry |
 | `legal_suffixes.txt` | Inc., Ltd., LLC, GmbH, S.A. and so on | By hand |
 | `platforms.toml` | Platforms where businesses have pages (Pinterest, Instagram, Yelp, TripAdvisor…), with their profile URL patterns | By hand; adding a platform is one entry |
@@ -327,7 +340,7 @@ Each dependency is here for a reason, and anything new needs one too.
 | Extra `mcp` | The MCP server (`bi2 mcp`), through the official SDK |
 | Extra `server` (build phase 4) | FastAPI, uvicorn, the Postgres and Redis clients, the OAuth library |
 
-Jev and Gemini need no packages of their own: both are called over their REST APIs with httpx. The MCC is picked by Jev, so there's no embedding model either. Provider SDKs join if an adapter for another provider needs one.
+Jev and the LLM providers need no packages of their own: all are called over their REST APIs with httpx, through three small clients, one for Gemini's API, one for Anthropic's and one for OpenAI's, which most other providers speak too. The MCC is picked by Jev, so there's no embedding model either.
 
 **Dev tools:**
 - uv: environments and the lockfile

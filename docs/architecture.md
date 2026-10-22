@@ -66,15 +66,15 @@ Considered and not used, because v2 doesn't need them at its size: Java and Spri
 - **Commands** (names to be decided):
   - `bi2 analyze <url>`: analyze one site and print each field with its status, confidence and source.
   - `bi2 analyze --file sites.txt`: analyze a list, several sites at once, with live progress.
-  - `bi2 init`: create the config file and add keys.
+  - `bi2 config`: choose the LLM, its provider and its settings with the arrow keys, save them in a config file, and add the provider's key.
   - `bi2 doctor`: check the keys, the browser install and network access.
   - `bi2 eval`: run the gold set (for contributors).
   - `bi2 review`: check a run's answers in the browser, right or wrong with a note, and see how often v2 is right (for contributors).
 - **Output:** a readable table by default, and `--json`, `--jsonl` or `--csv` for scripts and spreadsheets. Results, evidence and images are saved to a local folder.
 - **Scripting:** exit codes report failures, and `--fail-on needs_review` lets a script treat unsure fields as failures.
 - **Cost:** every run ends with the tokens and money spent on the user's keys.
-- **Keys:** environment variables, or the operating system's keychain (`bi2 init` offers to save them there). Never the config file. They leave the machine only in calls to the providers.
-- **Config:** which model to use for each task, confidence thresholds, concurrency.
+- **Keys:** environment variables, or the operating system's keychain (`bi2 keys set` and `bi2 config` save them there). Never the config file. They leave the machine only in calls to the providers.
+- **Config:** `bi2.toml`, the user's own and a project's, then environment variables, then flags: the LLM on any provider, its backup, confidence thresholds, how many calls a site may make.
 - **Privacy:** no usage data is collected.
 
 ### Interactive mode
@@ -294,6 +294,7 @@ v2 was built against free API tiers, and they shaped it:
 - **When a provider says a quota is used up,** v2 stops asking that model for the day, and the backup model answers.
 - **Answers are kept on disk** by a hash of the task, the prompt version, the model and the evidence, so a rerun on saved pages asks no model at all, and a changed prompt is never answered from an old copy.
 - **One site makes at most 12 model calls,** across every model.
+- **Other providers' models** keep to the limits `data/models.toml` or a config file gives them; a model neither lists gets modest ones: 60 requests a minute, 2 at once.
 - **A site's questions go to Jev together** when its specialists ask at the same time, Jev's fan-out pattern: each one's evidence in its own labeled section, and each question told to answer from its own. They go when every specialist still running is waiting for Jev, so a call holds the same questions on every run, whatever the timing. The MCC's first round, with its long lists, goes on its own. On the gold set it took 154 Jev calls instead of 176, with the answers as good; `BI2_AI__FAN_OUT=false` turns it off.
 - **What we measured on 2026-10-20:** Gemini 3.5 Flash's free tier allows 20 requests a day; Flash-Lite allows more but took 15 to 60 seconds a call; Google Search grounding isn't offered on the free tier. Jev answered in 0.3 to 0.6 seconds.
 
@@ -301,7 +302,7 @@ v2 was built against free API tiers, and they shaped it:
 
 | Service | Responsibility |
 |---|---|
-| LLM gateway | One interface for Gemini, OpenAI and Anthropic, called with the user's own keys. Structured output from Pydantic schemas. Retries only on rate-limit and server errors. Token and cost accounting on every call, written to the LLM-call log. Versioned prompts. A response cache keyed by model, prompt version and input hash. |
+| LLM gateway | One interface for Gemini, Anthropic, OpenAI and every provider that speaks OpenAI's API, local servers included, called with the user's own keys. A backup model may be on another provider. Structured output from Pydantic schemas. Retries only on rate-limit and server errors. Token and cost accounting on every call, written to the LLM-call log. Versioned prompts. A response cache keyed by model, prompt version and input hash. |
 | Decider | `yes_no()`, `choose()` (up to 255 options) and `score()` against a rubric, with several questions per call. Two implementations, `JevDecider` and `LLMDecider`, chosen by which keys the user has. |
 | Search and geocoding | Cached, rate-limited, locale-aware. |
 | Rate limiter | Limits on requests and tokens per minute for each provider key, replacing fixed sleeps. In memory in the terminal app; shared through Redis on the website, which also adds a global limit for Nominatim. |
@@ -407,7 +408,7 @@ Every step a specialist takes goes into the field's audit trail, with what it co
 2. **Core pipeline and terminal app:** evidence layer, resolvers, Decider (LLM first, Jev when access arrives), LLM gateway, local adapters, and the commands above.
 3. **First open-source release:** PyPI package, Docker image, README and a contributor guide.
 4. **Website demo:** API, worker, Postgres, Redis, sign-in, saved keys, shared results, React front end.
-5. **Later:** MCP server, banking fields (v2.1), and support for local models through OpenAI-compatible endpoints.
+5. **Later:** banking fields (v2.1). The MCP server and models on other providers, local ones through OpenAI-compatible endpoints included, came early.
 
 ## Proposed layout
 
@@ -449,6 +450,7 @@ business-insights-v2/
 | Demo images | Proposed | Stored in Postgres; separate object storage only if the demo grows |
 | Agent style | Decided | A fixed workflow of specialists, with model agents at the decision points and an investigator for escalations only |
 | Default model | Decided | Jev for decisions; Gemini Flash-Lite for generation, then Flash, since Flash's free tier allows 20 requests a day |
+| LLM providers | Decided | Any: Gemini, Anthropic, OpenAI, the providers that speak OpenAI's API and local servers, from `data/providers.toml`, with the model named `provider:model` in `bi2.toml`, the environment or a flag |
 | Jev | Decided | The Decider for every typed question, with Gemini as its backup; tested on the gold set on 2026-10-20 |
 | v2.0 scope | Decided | v1's four fields plus phone number, email address and social media links, with statuses and sources; banking fields in v2.1 |
 

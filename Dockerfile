@@ -1,5 +1,7 @@
 # The terminal app and the MCP server, with Playwright's Chromium preinstalled.
 #   docker run --rm -e GEMINI_API_KEY -e JEV_API_KEY ghcr.io/haneeshraj/business-insights-v2 analyze https://example.com
+# Another LLM comes from the environment, like -e BI2_AI__LLM_MODEL=openai:gpt-5.4-mini
+# -e OPENAI_API_KEY, or from a bi2.toml in the folder mounted at /data.
 FROM python:3.12-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.13 /uv /bin/uv
 WORKDIR /app

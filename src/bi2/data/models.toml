@@ -10,7 +10,7 @@
 # published earlier in 2026. When a provider says a daily quota is used up, v2 stops asking that
 # model until the quota resets (midnight Pacific time for Gemini).
 
-version = 3
+version = 4
 
 [jev."jev-latest"]
 input_per_million = 0.042
@@ -48,4 +48,45 @@ output_per_million = 2.50
 per_minute = 12
 per_day = 800
 at_once = 2
+thinking = "minimal"
+
+# Paid models on other providers, at list prices on 2026-10-20: Anthropic's from its pricing
+# page, OpenAI's from third-party price lists. Their limits are a new paid account's; raise them
+# for yours in bi2.toml, under [models."provider:model"].
+
+[anthropic."claude-haiku-5-5"]
+input_per_million = 0.10
+output_per_million = 0.50
+per_minute = 50
+per_day = 10000
+at_once = 4
+
+[anthropic."claude-sonnet-5-5"]
+input_per_million = 2.00
+output_per_million = 10.00
+per_minute = 50
+per_day = 10000
+at_once = 4
+
+[anthropic."claude-opus-5-5"]
+input_per_million = 4.00
+output_per_million = 20.00
+per_minute = 50
+per_day = 10000
+at_once = 4
+
+[openai."gpt-5.4-nano"]
+input_per_million = 0.20
+output_per_million = 1.25
+per_minute = 500
+per_day = 10000
+at_once = 4
+thinking = "minimal"
+
+[openai."gpt-5.4-mini"]
+input_per_million = 0.75
+output_per_million = 4.50
+per_minute = 500
+per_day = 10000
+at_once = 4
 thinking = "minimal"

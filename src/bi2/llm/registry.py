@@ -1,16 +1,23 @@
-"""The model registry, data/models.toml: each model's prices and free-tier limits."""
+"""The model registry, data/models.toml: each model's prices and limits.
+
+A model the registry doesn't list can still be used, by its "provider:model" name: it gets no
+price, so its calls count as free in the logs, and limits loose enough for a paid key. A config
+file's [models."provider:model"] gives any model its own prices and limits.
+"""
 
 import tomllib
+from collections.abc import Mapping
 from decimal import Decimal
 from functools import cache
 from importlib.resources import files
-from typing import Final, Literal
+from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from bi2.core.models import Cost
+from bi2.core.providers import ModelRef
+from bi2.core.settings import ModelSettings
 
-Provider = Literal["jev", "gemini"]
 _MILLION: Final = Decimal(1_000_000)
 
 
@@ -19,14 +26,19 @@ class ModelInfo(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    provider: Provider
+    provider: str
     model: str
-    input_per_million: Decimal = Field(ge=0)
-    output_per_million: Decimal = Field(ge=0)
+    input_per_million: Decimal = Field(default=Decimal(0), ge=0)
+    output_per_million: Decimal = Field(default=Decimal(0), ge=0)
     per_minute: int = Field(ge=1)
     per_day: int = Field(ge=1)
     at_once: int = Field(default=2, ge=1)
-    thinking: str | None = None  # Gemini's thinking level, when the model takes one
+    thinking: str | None = None  # how hard a reasoning model thinks, when it takes a level
+    listed: bool = True  # in data/models.toml, so its prices are known
+
+    @property
+    def ref(self) -> ModelRef:
+        return ModelRef(self.provider, self.model)
 
     def cost(self, input_tokens: int, output_tokens: int) -> Cost:
         """What a call with these token counts costs at list price."""
@@ -42,22 +54,49 @@ class ModelInfo(BaseModel):
 
 
 @cache
-def _registry() -> dict[str, ModelInfo]:
+def _registry() -> dict[ModelRef, ModelInfo]:
     text = files("bi2.data").joinpath("models.toml").read_text(encoding="utf-8")
     data = tomllib.loads(text)
-    found = {}
-    for provider in ("jev", "gemini"):
-        for model, info in data.get(provider, {}).items():
-            found[model] = ModelInfo(provider=provider, model=model, **info)
-    return found
+    return {
+        ModelRef(provider, model): ModelInfo(provider=provider, model=model, **info)
+        for provider, table in data.items()
+        if isinstance(table, dict)
+        for model, info in table.items()
+    }
 
 
-def model_info(model: str) -> ModelInfo:
-    """A model's entry. Raises KeyError for a model the registry doesn't list."""
-    found = _registry().get(model)
-    if found is None:
-        raise KeyError(f"{model} isn't in data/models.toml")
-    return found
+def listed_models(provider: str | None = None) -> list[ModelInfo]:
+    """The models the registry lists, for one provider or all."""
+    return [info for ref, info in _registry().items() if provider in (None, ref.provider)]
+
+
+def model_info(
+    model: str | ModelRef, overrides: Mapping[str, ModelSettings] | None = None
+) -> ModelInfo:
+    """A model's entry, with a config file's prices and limits for it laid over.
+
+    By a bare name, the model must be listed: raises KeyError otherwise. By its ModelRef, an
+    unlisted model gets no price and loose limits."""
+    if isinstance(model, ModelRef):
+        ref = model
+        # A model the registry doesn't list: no known price, and a paid key's usual room.
+        info = _registry().get(ref) or ModelInfo(
+            provider=ref.provider,
+            model=ref.model,
+            per_minute=60,
+            per_day=100_000,
+            at_once=2,
+            listed=False,
+        )
+    else:
+        found = [info for key, info in _registry().items() if key.model == model]
+        if not found:
+            raise KeyError(f"{model} isn't in data/models.toml")
+        info = found[0]
+    change = (overrides or {}).get(str(info.ref)) or (overrides or {}).get(info.model)
+    if change is not None:
+        info = info.model_copy(update=change.model_dump(exclude_none=True))
+    return info
 
 
 def registry_version() -> str:

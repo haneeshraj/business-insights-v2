@@ -10,6 +10,7 @@ import asyncio
 import base64
 import json
 import re
+from collections.abc import Mapping
 from types import TracebackType
 from typing import Any, Final, Self
 
@@ -17,31 +18,32 @@ import httpx
 
 from bi2.core.asking import Generated, Prompt
 from bi2.core.errors import BudgetUsedUp, ModelUnavailable
+from bi2.core.providers import ModelRef
+from bi2.core.settings import ModelSettings
+from bi2.llm.common import json_part as _json_part
+from bi2.llm.common import media_type
 from bi2.llm.limits import FreeTier
 from bi2.llm.registry import ModelInfo, model_info
 
-_API: Final = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+__all__ = ["Gemini", "media_type"]
+
+_BASE: Final = "https://generativelanguage.googleapis.com/v1beta"
+_API: Final = _BASE + "/models/{model}:generateContent"
 _BUSY: Final = frozenset({500, 502, 503, 504})
 _TRIES: Final = 3
 _LONGEST_WAIT_S: Final = 60.0
 
 
-def media_type(image: bytes) -> str:
-    """An image's media type, from its first bytes: PNG or JPEG, the two every model takes."""
-    if image.startswith(b"\x89PNG\r\n\x1a\n"):
-        return "image/png"
-    if image.startswith(b"\xff\xd8"):
-        return "image/jpeg"
-    raise ValueError("only PNG and JPEG images can be sent to a model")
-
-
-def _body(prompt: Prompt, info: ModelInfo) -> dict[str, Any]:
+def _body(prompt: Prompt, info: ModelInfo, temperature: float = 0.0) -> dict[str, Any]:
     parts: list[dict[str, Any]] = [{"text": prompt.evidence}]
     parts += [
         {"inline_data": {"mime_type": media_type(image), "data": base64.b64encode(image).decode()}}
         for image in prompt.images
     ]
-    config: dict[str, Any] = {"temperature": 0, "maxOutputTokens": prompt.max_output_tokens}
+    config: dict[str, Any] = {
+        "temperature": temperature,
+        "maxOutputTokens": prompt.max_output_tokens,
+    }
     instructions = prompt.instructions
     if prompt.search:
         # Google Search grounding doesn't take a response schema, so the schema goes in the
@@ -81,13 +83,6 @@ def _daily_quota(error: dict[str, Any]) -> bool:
         for detail in error.get("details", [])
         for violation in detail.get("violations", [])
     )
-
-
-def _json_part(text: str) -> str:
-    """The JSON object in an answer's text, without the code fence or words a searched answer
-    can come with."""
-    start, end = text.find("{"), text.rfind("}")
-    return text[start : end + 1] if 0 <= start < end else text
 
 
 def _sources(data: dict[str, Any]) -> tuple[str, ...]:
@@ -138,12 +133,17 @@ class Gemini:
         limits: FreeTier,
         model: str = "gemini-3.5-flash",
         backup: str | None = "gemini-flash-lite-latest",
+        temperature: float = 0.0,
         timeout_s: float = 90.0,
+        overrides: Mapping[str, ModelSettings] | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._key = key
         self._limits = limits
-        self._models = [model_info(model)] + ([model_info(backup)] if backup else [])
+        self._models = [
+            model_info(ModelRef("gemini", name), overrides) for name in (model, backup) if name
+        ]
+        self._temperature = temperature
         self._timeout_s = timeout_s
         self._transport = transport  # for tests, which answer without the network
         self._client: httpx.AsyncClient | None = None
@@ -187,7 +187,7 @@ class Gemini:
         its own turn from the free tier's limits."""
         if self._client is None:
             raise RuntimeError("use Gemini inside an `async with` block")
-        body = _body(prompt, info)
+        body = _body(prompt, info, self._temperature)
         url = _API.format(model=info.model)
         for attempt in range(_TRIES):
             last = attempt + 1 == _TRIES
@@ -219,6 +219,25 @@ class Gemini:
             wait = _retry_delay(error) or 2.0 * 2**attempt
             await asyncio.sleep(min(wait, _LONGEST_WAIT_S))
         raise ModelUnavailable(f"{info.model} didn't answer")  # pragma: no cover
+
+    async def models(self) -> list[str]:
+        """The models the key can use to generate content, as Google lists them."""
+        if self._client is None:
+            raise RuntimeError("use Gemini inside an `async with` block")
+        try:
+            response = await self._client.get(
+                f"{_BASE}/models", params={"pageSize": 200}, headers={"x-goog-api-key": self._key}
+            )
+        except httpx.HTTPError as exc:
+            raise ModelUnavailable(f"Gemini couldn't be reached: {exc}") from exc
+        if response.status_code != 200:
+            message = str(_error(response).get("message", ""))[:200]
+            raise ModelUnavailable(f"Gemini answered {response.status_code}: {message}")
+        return [
+            str(entry["name"]).removeprefix("models/")
+            for entry in response.json().get("models", [])
+            if "generateContent" in entry.get("supportedGenerationMethods", [])
+        ]
 
     def _generated(self, response: httpx.Response, info: ModelInfo) -> Generated:
         try:

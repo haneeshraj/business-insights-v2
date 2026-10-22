@@ -15,6 +15,16 @@ from PIL import Image
 from bi2.core.errors import BrowserUnavailable
 from bi2.fetch.browser import BrowserFetcher, BrowserName
 
+
+@pytest.fixture(autouse=True)
+def _no_config_files(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests never read the machine's own bi2.toml files; the ones about config files point
+    the settings at their own."""
+    monkeypatch.setattr("bi2.core.settings.config_files", list)
+    for name in ("BI2_AI__LLM_MODEL", "BI2_AI__BACKUP_MODEL", "BI2_AI__SEARCH_MODEL", "BI2_CONFIG"):
+        monkeypatch.delenv(name, raising=False)
+
+
 # A fake cafe homepage with the cases page loading has to handle: a header logo that links
 # home, a lazy-loaded image showing a blank placeholder, and an inline SVG logo with no URL.
 CAFE_PAGE = b"""<!doctype html>

@@ -12,12 +12,13 @@ from rich.table import Table
 
 from bi2.adapters.local.answers import CallLog
 from bi2.adapters.local.snapshots import load_snapshot, saved_folders
+from bi2.cli.doctor import check_models
 from bi2.cli.options import DEFAULT_CONCURRENCY, AllowPrivate, Browser, Timeout
 from bi2.cli.output import results_csv
 from bi2.cli.report import ReportSite, write_report
 from bi2.core.errors import BrowserUnavailable
 from bi2.core.models import FIELD_NAMES, Evidence, SiteResult, Status
-from bi2.core.settings import AiSettings, Settings
+from bi2.core.settings import Settings
 from bi2.core.urls import site_folder
 from bi2.evaluation.gold import GoldSite, load_gold_set, site_key
 from bi2.evaluation.scoring import SCORED_FIELDS, FieldScore, Verdict, score_site
@@ -56,9 +57,28 @@ class _Run(NamedTuple):
     concurrency: int
     allow_private: bool
     saved: Path | None = None  # the folder of saved pages, when the run uses them
-    ai: bool = True  # whether models are asked about the answers the rules aren't sure of
-    fast: bool = False  # Jev alone, without Gemini
     answers: Path | None = None  # where model answers are kept, instead of the usual folder
+
+
+def run_settings(
+    *,
+    ai: bool = True,
+    fast: bool = False,
+    model: str | None = None,
+    backup_model: str | None = None,
+) -> Settings:
+    """The run's settings: the config files' and the environment's, with only what the command
+    was told laid over them, so a flag left out never undoes a config file."""
+    told: dict[str, object] = {}
+    if not ai:
+        told["enabled"] = False
+    if fast:
+        told["llm"] = False
+    if model:
+        told["llm_model"] = model
+    if backup_model is not None:
+        told["backup_model"] = backup_model
+    return Settings(ai=told) if told else Settings()  # type: ignore[arg-type]
 
 
 def app_folder() -> Path:
@@ -77,11 +97,10 @@ def _progress(done: int, total: int, site: _Analyzed) -> str:
 
 
 async def _analyze_all(
-    sources: Sequence[str | Path], run: _Run, console: Console, log: CallLog
+    sources: Sequence[str | Path], run: _Run, settings: Settings, console: Console, log: CallLog
 ) -> list[_Analyzed]:
     """Analyze every source, a few at a time, in the order given."""
     saved = bool(sources) and isinstance(sources[0], Path)
-    settings = Settings(ai=AiSettings(enabled=run.ai, gemini=not run.fast))
     # Runs on saved pages keep model answers beside the pages, like downloads, so reruns ask
     # no model; live runs keep them in v2's own folder.
     answers = run.answers or (
@@ -255,15 +274,15 @@ def analyze(
         bool,
         typer.Option(
             "--ai/--no-ai",
-            help="Ask Jev and Gemini about the answers the rules aren't sure of, when their keys "
-            "are set (JEV_API_KEY, GEMINI_API_KEY). --no-ai uses the rules alone.",
+            help="Ask Jev and the LLM about the answers the rules aren't sure of, when their "
+            "keys are set, like JEV_API_KEY and GEMINI_API_KEY. --no-ai uses the rules alone.",
         ),
     ] = True,
     fast: Annotated[
         bool,
         typer.Option(
             "--fast",
-            help="Ask Jev alone, never Gemini: a second or two a site instead of up to a minute "
+            help="Ask Jev alone, never the LLM: a second or two a site instead of up to a minute "
             "on Gemini's free tier, with a few more answers left to review.",
         ),
     ] = False,
@@ -273,6 +292,22 @@ def analyze(
             help="Keep model answers in this folder instead of the usual one, like an empty "
             "one to time a run whose every question is new.",
             file_okay=False,
+        ),
+    ] = None,
+    model: Annotated[
+        str | None,
+        typer.Option(
+            "--model",
+            help='The LLM, as "provider:model", like "openai:gpt-5.4-mini" or '
+            '"anthropic:claude-haiku-5-5", instead of the one in the config file. '
+            "See `bi2 config`.",
+        ),
+    ] = None,
+    backup_model: Annotated[
+        str | None,
+        typer.Option(
+            "--backup-model",
+            help='The model asked when the first one fails, as "provider:model"; "none" for none.',
         ),
     ] = None,
 ) -> None:
@@ -290,13 +325,15 @@ def analyze(
     if not sources:
         typer.echo("error: there are no pages to analyze", err=True)
         raise typer.Exit(code=1)
+    settings = run_settings(ai=ai, fast=fast, model=model, backup_model=backup_model)
+    check_models(settings)
     console = Console()
-    run = _Run(out, browser, timeout, concurrency, allow_private, saved, ai, fast, answers)
+    run = _Run(out, browser, timeout, concurrency, allow_private, saved, answers)
     out.mkdir(parents=True, exist_ok=True)
     (out / "model-calls.jsonl").unlink(missing_ok=True)
     log = CallLog(out / "model-calls.jsonl")
     try:
-        analyzed = asyncio.run(_analyze_all(sources, run, console, log))
+        analyzed = asyncio.run(_analyze_all(sources, run, settings, console, log))
     except BrowserUnavailable as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc

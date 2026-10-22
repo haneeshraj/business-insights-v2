@@ -9,10 +9,8 @@ from typing import Final
 from rich.console import RenderableType
 from rich.table import Table
 
-from bi2.adapters.local.keys import PROVIDERS, with_keychain
 from bi2.cli.output import results_csv
 from bi2.core.models import FIELD_NAMES, SiteResult
-from bi2.core.settings import keys_from_environment
 from bi2.core.urls import registrable_domain
 
 type Results = dict[str, SiteResult]
@@ -112,15 +110,15 @@ def export(
 
 def keys(results: Results, words: list[str]) -> RenderableType:
     """Which keys are set, and where."""
-    found_keys, found = with_keychain(keys_from_environment())
-    lines = []
-    for provider in PROVIDERS:
-        key = getattr(found_keys, provider)
-        shown = (
-            f"...{key.get_secret_value()[-4:]}, from the {found[provider]}" if key else "not set"
-        )
-        lines.append(f"{provider}: {shown}")
-    return "\n".join(lines)
+    from bi2.cli.doctor import found_keys, hidden
+
+    held, found = found_keys()
+    lines = [
+        f"{provider}: {hidden(key.get_secret_value())}, from the {where}"
+        for provider, where in found.items()
+        if (key := held.get(provider)) is not None
+    ]
+    return "\n".join(lines) or "No keys are set. Run `bi2 config` to choose a provider."
 
 
 def help_text(results: Results, words: list[str]) -> RenderableType:

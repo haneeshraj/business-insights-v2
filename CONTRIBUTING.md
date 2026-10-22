@@ -59,7 +59,7 @@ Results go to `bi2-results/analyze/`: `results.jsonl` with every site, a folder 
 
 ## Models and keys
 
-The AI pass asks Jev and Gemini about the answers the rules aren't sure of. Set either key, or both, to use it; without them, every run is rules-only.
+The AI pass asks Jev and an LLM, Gemini by default, about the answers the rules aren't sure of. Set either key, or both, to use it; without them, every run is rules-only.
 
 ```
 export JEV_API_KEY=...      # or: uv run bi2 keys set jev
@@ -67,11 +67,19 @@ export GEMINI_API_KEY=...   # or: uv run bi2 keys set gemini
 uv run bi2 doctor           # where each key was found, the models' limits, today's requests
 ```
 
+To try another LLM, run `uv run bi2 config`, pass `--model provider:model` to `bi2 analyze`, or set `BI2_AI__LLM_MODEL`; the README's "Choose the LLM" lists the providers. Kept answers are kept per provider, in `answers/gemini/`, `answers/anthropic/` and so on, so a run on another model asks it afresh.
+
 - **Saved pages cost nothing to rerun.** A run on saved pages keeps every model answer beside the pages, in `answers/`, by a hash of the question, so only questions a change makes new reach a model. Change a prompt's wording and bump its version, and it's asked afresh.
 - **Free tiers have small daily quotas.** Gemini 3.5 Flash's free tier allows 20 requests a day. v2 counts each day's requests in `free-tier-usage.json` in its settings folder, keeps to 90% of each model's quota in `src/bi2/data/models.toml`, and stops asking a model the provider says is used up.
 - `--no-ai` uses the rules alone, `--fast` asks Jev alone, and `--answers <folder>` keeps answers elsewhere, like an empty folder to time a run whose every question is new.
 - `python eval/cost_per_site.py bi2-results/<run>` says what a run's sites cost, how long their calls took, and what the same calls would cost on other providers' models.
 - Tests never call a model: every Decider and LLM in them is a stand-in.
+
+## Adding an LLM provider
+
+- **One that speaks OpenAI's chat completions API**, as most do, is an entry in `src/bi2/data/providers.toml`: its title, its address, the environment variables its key may be in, and the models to suggest. Set `json = "object"` if it refuses JSON schemas, and `token_param` if it wants another name for the token limit. Nothing else changes.
+- **One with its own API** also needs a client in `src/bi2/llm/`, like `anthropic.py`: a class with `generate(prompt)` and `models()` that raises the errors in `core/errors.py`, a new `api` value in `core/providers.py`, and a line in `client_for` in `llm/clients.py`. Its tests answer with `httpx.MockTransport`, as `tests/llm/test_anthropic.py` does.
+- **Its models' prices and limits** go in `src/bi2/data/models.toml`, under the provider's name, with a comment saying where and when the prices were copied from. A model that isn't there still runs, with modest limits and no price.
 
 ## Checking answers
 

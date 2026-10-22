@@ -1,0 +1,123 @@
+# The LLM providers v2 can call, by the name a model is given under: "openai:gpt-5.4-mini".
+#
+# Most providers speak OpenAI's chat API, so adding one is an entry here: its address, and the
+# environment variables its key may be in. A bi2.toml can add providers or change these under
+# [providers.<name>], like another server's address. Keys are never written here or in bi2.toml.
+#
+# api        which API it speaks: "openai" (the chat completions API), "anthropic" or "gemini"
+# base_url   where the API is
+# keys       the environment variables its key may be in, in order
+# needs_key  false for servers that take no key, like a local Ollama
+# local      true for servers that run on your own machine
+# json       how it's asked for JSON: "schema" (a JSON schema), "object" (any JSON object, with
+#            the schema in the instructions) or "text"; a provider that refuses one is asked the
+#            next way, so this only saves a refused first call
+# models     models to suggest when choosing one; `bi2 config` also lists what the key can use
+
+version = 1
+
+[gemini]
+title = "Google Gemini"
+api = "gemini"
+base_url = "https://generativelanguage.googleapis.com/v1beta"
+keys = ["GEMINI_API_KEY", "GOOGLE_API_KEY"]
+models = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite", "gemini-3.5-flash"]
+
+[anthropic]
+title = "Anthropic Claude"
+api = "anthropic"
+base_url = "https://api.anthropic.com/v1"
+keys = ["ANTHROPIC_API_KEY"]
+models = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
+
+[openai]
+title = "OpenAI"
+base_url = "https://api.openai.com/v1"
+keys = ["OPENAI_API_KEY"]
+token_param = "max_completion_tokens"
+models = ["gpt-5.4-nano", "gpt-5.4-mini"]
+
+[mistral]
+title = "Mistral AI"
+base_url = "https://api.mistral.ai/v1"
+keys = ["MISTRAL_API_KEY"]
+models = ["mistral-small-latest", "mistral-medium-latest", "mistral-large-latest"]
+
+[groq]
+title = "Groq"
+base_url = "https://api.groq.com/openai/v1"
+keys = ["GROQ_API_KEY"]
+json = "object"
+models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+
+[deepseek]
+title = "DeepSeek"
+base_url = "https://api.deepseek.com/v1"
+keys = ["DEEPSEEK_API_KEY"]
+json = "object"
+models = ["deepseek-chat"]
+
+[xai]
+title = "xAI Grok"
+base_url = "https://api.x.ai/v1"
+keys = ["XAI_API_KEY"]
+
+[openrouter]
+title = "OpenRouter (hundreds of models, one key)"
+base_url = "https://openrouter.ai/api/v1"
+keys = ["OPENROUTER_API_KEY"]
+
+[together]
+title = "Together AI"
+base_url = "https://api.together.xyz/v1"
+keys = ["TOGETHER_API_KEY"]
+
+[fireworks]
+title = "Fireworks AI"
+base_url = "https://api.fireworks.ai/inference/v1"
+keys = ["FIREWORKS_API_KEY"]
+
+[cerebras]
+title = "Cerebras"
+base_url = "https://api.cerebras.ai/v1"
+keys = ["CEREBRAS_API_KEY"]
+json = "object"
+
+[cohere]
+title = "Cohere"
+base_url = "https://api.cohere.ai/compatibility/v1"
+keys = ["COHERE_API_KEY", "CO_API_KEY"]
+json = "object"
+
+[perplexity]
+title = "Perplexity"
+base_url = "https://api.perplexity.ai"
+keys = ["PERPLEXITY_API_KEY", "PPLX_API_KEY"]
+models = ["sonar", "sonar-pro"]
+
+[huggingface]
+title = "Hugging Face Inference Providers"
+base_url = "https://router.huggingface.co/v1"
+keys = ["HF_TOKEN", "HUGGINGFACE_API_KEY"]
+json = "object"
+
+[ollama]
+title = "Ollama (local)"
+base_url = "http://localhost:11434/v1"
+keys = ["OLLAMA_API_KEY"]
+needs_key = false
+local = true
+
+[lmstudio]
+title = "LM Studio (local)"
+base_url = "http://localhost:1234/v1"
+keys = ["LMSTUDIO_API_KEY"]
+needs_key = false
+local = true
+
+[vllm]
+title = "vLLM (your own server)"
+base_url = "http://localhost:8000/v1"
+keys = ["VLLM_API_KEY"]
+needs_key = false
+local = true

@@ -21,6 +21,7 @@ from mcp.server.mcpserver import Context, MCPServer
 from bi2.adapters.local.answers import CallLog
 from bi2.core.context import RunContext
 from bi2.core.models import FIELD_NAMES, SiteResult
+from bi2.core.settings import Settings
 from bi2.core.text import fold
 from bi2.pipeline import analyze_url
 from bi2.resolvers.mcc import mcc_codes
@@ -38,15 +39,21 @@ def _folder() -> Path:
     return Path(typer.get_app_dir("bi2"))
 
 
+# What `bi2 mcp` was told, like --model, laid over the config files' settings.
+_TOLD: dict[str, Any] = {}
+
+
 @asynccontextmanager
 async def _lifespan(server: MCPServer[Any]) -> AsyncIterator[_State]:
     folder = _folder()
     log = CallLog(folder / "mcp" / "model-calls.jsonl")
+    settings = Settings(ai=dict(_TOLD)) if _TOLD else Settings()  # type: ignore[arg-type]
     async with local_context(
         folder / "mcp" / "results",
         kept_answers=folder / "answers",
         usage_file=folder / "free-tier-usage.json",
         call_log=log,
+        settings=settings,
     ) as ctx:
         yield _State(ctx=ctx, log=log, results={})
 
@@ -168,8 +175,11 @@ def model_usage(context: Context[Any, Any]) -> str:
     )
 
 
-def serve() -> None:
-    """Run the server over standard input and output, the way MCP clients start servers. The
-    HTTP client's log of every request stays out of the client's server log."""
+def serve(told: dict[str, Any] | None = None) -> None:
+    """Run the server over standard input and output, the way MCP clients start servers, with
+    `told` laid over the [ai] settings, like {"llm_model": "openai:gpt-5.4-mini"}. The HTTP
+    client's log of every request stays out of the client's server log."""
+    _TOLD.clear()
+    _TOLD.update(told or {})
     logging.getLogger("httpx").setLevel(logging.WARNING)
     mcp.run()

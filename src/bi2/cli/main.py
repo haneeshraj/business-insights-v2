@@ -12,10 +12,12 @@ import typer
 
 from bi2 import __version__
 from bi2.cli.analyze import analyze
+from bi2.cli.config import config_app
 from bi2.cli.dev import dev_app
-from bi2.cli.doctor import doctor, keys_app
+from bi2.cli.doctor import check_models, doctor, keys_app
 from bi2.cli.evaluate import eval_app
 from bi2.cli.review import review
+from bi2.core.settings import Settings
 
 app = typer.Typer(name="bi2", invoke_without_command=True, add_completion=False)
 app.command()(analyze)
@@ -24,10 +26,24 @@ app.add_typer(eval_app, name="eval")
 app.add_typer(dev_app, name="dev")
 app.command()(doctor)
 app.add_typer(keys_app, name="keys")
+app.add_typer(config_app, name="config")
 
 
 @app.command(name="mcp")
-def mcp_server() -> None:
+def mcp_server(
+    model: Annotated[
+        str | None,
+        typer.Option(
+            "--model", help='The LLM, as "provider:model", instead of the configured one.'
+        ),
+    ] = None,
+    backup_model: Annotated[
+        str | None,
+        typer.Option(
+            "--backup-model", help='The backup LLM, as "provider:model"; "none" for none.'
+        ),
+    ] = None,
+) -> None:
     r"""Run v2 as an MCP server over standard input and output, for AI assistants such as
     Claude. Needs the mcp extra: pip install "business-insights\[mcp]"."""
     try:
@@ -38,7 +54,11 @@ def mcp_server() -> None:
             err=True,
         )
         raise typer.Exit(code=1) from exc
-    serve()
+    told = {"llm_model": model} if model else {}
+    if backup_model is not None:
+        told["backup_model"] = backup_model
+    check_models(Settings(ai=told) if told else Settings())  # type: ignore[arg-type]
+    serve(told)
 
 
 def _show_version(value: bool) -> None:
@@ -71,4 +91,5 @@ def main(
 
     from bi2.cli.interactive.session import run_session
 
+    check_models(Settings())
     asyncio.run(run_session(Console()))
