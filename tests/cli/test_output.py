@@ -39,3 +39,9 @@ def test_a_site_list_leaves_out_blank_and_comment_lines(tmp_path: Path) -> None:
     path = tmp_path / "sites.txt"
     path.write_text("# cafes\nhttps://example-cafe.ca/\n\n  example-bakery.ca \n", encoding="utf-8")
     assert urls_in_file(path) == ["https://example-cafe.ca/", "example-bakery.ca"]
+
+
+def test_a_site_list_saved_by_windows_powershell_reads_the_same(tmp_path: Path) -> None:
+    path = tmp_path / "sites.txt"
+    path.write_bytes(b"\xef\xbb\xbfhttps://example-cafe.ca/\r\nexample-bakery.ca\r\n")  # a BOM
+    assert urls_in_file(path) == ["https://example-cafe.ca/", "example-bakery.ca"]

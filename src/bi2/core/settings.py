@@ -21,6 +21,7 @@ import sys
 import tomllib
 from collections.abc import Mapping
 from decimal import Decimal
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any, Final
 
@@ -128,6 +129,14 @@ def config_files() -> list[Path]:
     return [project_config_file(), user_config_file()]
 
 
+class _ConfigFile(TomlConfigSettingsSource):
+    """A config file, read whether or not its editor began it with a byte order mark, as
+    Windows PowerShell does."""
+
+    def _read_file(self, file_path: Path | Traversable) -> dict[str, Any]:
+        return tomllib.loads(file_path.read_text(encoding="utf-8-sig"))
+
+
 class Settings(BaseSettings):
     """Every setting a run uses."""
 
@@ -158,9 +167,7 @@ class Settings(BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         """What a command is told first, then the environment, then the config files."""
         found = [
-            TomlConfigSettingsSource(settings_cls, toml_file=path)
-            for path in config_files()
-            if path.is_file()
+            _ConfigFile(settings_cls, toml_file=path) for path in config_files() if path.is_file()
         ]
         return (init_settings, env_settings, *found)
 
@@ -190,7 +197,7 @@ class Settings(BaseSettings):
 
 def _from_file(path: Path) -> dict[str, Any]:
     try:
-        return tomllib.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+        return tomllib.loads(path.read_text(encoding="utf-8-sig")) if path.is_file() else {}
     except (OSError, tomllib.TOMLDecodeError):
         return {}
 

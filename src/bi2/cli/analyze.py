@@ -191,7 +191,8 @@ def _print_model_calls(log: CallLog, console: Console) -> None:
 def urls_in_file(path: Path) -> list[str]:
     """The site addresses in a text file, one a line; blank lines and lines starting with #
     are left out."""
-    lines = path.read_text(encoding="utf-8").splitlines()
+    # "utf-8-sig" also reads a file Windows PowerShell saved, which begins with a byte order mark.
+    lines = path.read_text(encoding="utf-8-sig").splitlines()
     return [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
 
 

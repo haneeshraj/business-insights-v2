@@ -73,6 +73,16 @@ def test_a_provider_can_be_changed_from_the_environment(monkeypatch: pytest.Monk
     assert ollama.local  # the rest stays as listed
 
 
+def test_a_file_that_begins_with_a_byte_order_mark_is_read(files: tuple[Path, Path]) -> None:
+    project, _ = files
+    # As Windows PowerShell's Set-Content -Encoding utf8 saves it.
+    project.write_bytes(b'\xef\xbb\xbf[ai]\r\nllm_model = "openai:gpt-5.4-mini"\r\n')
+    settings = Settings()
+    assert settings.ai.llm_model == "openai:gpt-5.4-mini"
+    sources = {name: source for name, _, source in where_set(settings)}
+    assert sources["ai.llm_model"].startswith("this folder's file")
+
+
 def test_a_file_gives_a_model_its_own_prices_and_limits(files: tuple[Path, Path]) -> None:
     project, _ = files
     project.write_text(

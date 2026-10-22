@@ -437,7 +437,7 @@ def save(path: Path, changes: dict[str, Any]) -> None:
     """Write the chosen settings into a config file, keeping what else it holds."""
     data: dict[str, Any] = {}
     if path.is_file():
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
+        data = tomllib.loads(path.read_text(encoding="utf-8-sig"))  # with a byte order mark too
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(to_toml(_merge(data, changes)), encoding="utf-8")
 
