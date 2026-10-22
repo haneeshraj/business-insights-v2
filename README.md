@@ -4,6 +4,8 @@
 
 Find a business's name, logo, merchant category code (MCC), head-office address with map coordinates, phone number, email address and social media links from its website. It's built for bank teams that do merchant onboarding, KYB, merchant risk and transaction enrichment.
 
+https://github.com/user-attachments/assets/c81a6b4b-88c0-450d-95f9-4b7f3657b9bd
+
 Every answer comes with a status (`ok`, `needs_review`, `not_found` or `error`), a confidence, its source and the evidence it rests on, so an analyst can check it. Nothing is guessed.
 
 ```
