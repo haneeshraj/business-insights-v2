@@ -1,6 +1,6 @@
 # Plan: accurate answers, from free rules to AI to a person
 
-Agreed on 2026-10-12. This plan covers how v2 gets each field right without manual work: first with free rules, then with AI for the answers the rules are unsure of, and only then with a person for what's still missing. It also covers how we prove the accuracy at each step. The progress review it builds on is [reviews/2026-10-12.md](../reviews/2026-10-12.md).
+Agreed on 2026-10-12. This plan covers how v2 gets each field right without manual work: first with free rules, then with AI for the answers the rules are unsure of, and only then with a person for what's still missing. It also covers how we prove the accuracy at each step.
 
 ## 1. The goal
 
