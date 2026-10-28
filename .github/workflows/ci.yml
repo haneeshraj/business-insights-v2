@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.0  # setup-uv has no moving major-version tag
+      - uses: astral-sh/setup-uv@v10.3.2  # setup-uv has no moving major-version tag
         with:
           enable-cache: true
       - run: uv sync --locked --all-extras
@@ -38,7 +38,7 @@ jobs:
         python: ["3.12", "3.14"]  # the oldest and newest supported versions
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: ${{ matrix.python }}
           enable-cache: true
@@ -54,7 +54,7 @@ jobs:
     needs: checks
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
       - run: uv build
       # The wheel installs on its own, with its data files, and its command runs.
       - run: |
@@ -62,7 +62,7 @@ jobs:
           uv pip install --python /tmp/fresh "$(ls dist/*.whl)[mcp]"
           /tmp/fresh/bin/bi2 --version
           /tmp/fresh/bin/bi2 --help
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
